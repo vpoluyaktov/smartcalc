@@ -102,6 +102,20 @@ func AdjustReferences(oldText, newText string) string {
 	return AdjustReferencesForDelete(newText, deleteAt, -delta)
 }
 
+// ReplaceReferencesWithValues replaces \n references with actual numeric values.
+// values is a map from line number (1-based) to the formatted result string.
+func ReplaceReferencesWithValues(text string, values map[int]string) string {
+	re := regexp.MustCompile(`\\(\d+)`)
+	return re.ReplaceAllStringFunc(text, func(match string) string {
+		numStr := match[1:] // strip leading \
+		n, _ := strconv.Atoi(numStr)
+		if val, ok := values[n]; ok {
+			return val
+		}
+		return match // keep original if no value found
+	})
+}
+
 // ExprReferencesCurrency detects references like \1, \2 in the expression
 // and returns true if any referenced line was currency.
 func ExprReferencesCurrency(expr string, currencyByLine []bool) bool {

@@ -219,6 +219,61 @@ func TestAdjustReferences(t *testing.T) {
 	}
 }
 
+func TestReplaceReferencesWithValues(t *testing.T) {
+	tests := []struct {
+		name     string
+		text     string
+		values   map[int]string
+		expected string
+	}{
+		{
+			name:     "single reference",
+			text:     "\\1 + 5 =",
+			values:   map[int]string{1: "100"},
+			expected: "100 + 5 =",
+		},
+		{
+			name:     "multiple references",
+			text:     "\\1 + \\2 =",
+			values:   map[int]string{1: "100", 2: "50"},
+			expected: "100 + 50 =",
+		},
+		{
+			name:     "currency values",
+			text:     "\\1 * 2 =",
+			values:   map[int]string{1: "$1,500.00"},
+			expected: "$1,500.00 * 2 =",
+		},
+		{
+			name:     "missing reference",
+			text:     "\\3 + 5 =",
+			values:   map[int]string{1: "100"},
+			expected: "\\3 + 5 =", // keeps original
+		},
+		{
+			name:     "no references",
+			text:     "100 + 50 =",
+			values:   map[int]string{1: "200"},
+			expected: "100 + 50 =",
+		},
+		{
+			name:     "multiline with references",
+			text:     "100 =\n\\1 * 2 =",
+			values:   map[int]string{1: "100"},
+			expected: "100 =\n100 * 2 =",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ReplaceReferencesWithValues(tt.text, tt.values)
+			if result != tt.expected {
+				t.Errorf("ReplaceReferencesWithValues() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
 func TestExprReferencesCurrency(t *testing.T) {
 	tests := []struct {
 		name           string

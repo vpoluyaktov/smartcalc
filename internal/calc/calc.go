@@ -76,3 +76,23 @@ func BuildLineNumbers(n int) string {
 	}
 	return strings.TrimRight(b.String(), "\n")
 }
+
+// GetLineValues returns a map of line number (1-based) to formatted result string.
+// This is used for replacing references with actual values when copying.
+func GetLineValues(lines []string) map[int]string {
+	results := EvalLines(lines)
+	values := make(map[int]string)
+	for i, r := range results {
+		if r.HasResult {
+			values[i+1] = utils.FormatResult(r.IsCurrency, r.Value)
+		}
+	}
+	return values
+}
+
+// ReplaceRefsWithValues takes text and replaces all \n references with actual values.
+func ReplaceRefsWithValues(text string) string {
+	lines := strings.Split(text, "\n")
+	values := GetLineValues(lines)
+	return eval.ReplaceReferencesWithValues(text, values)
+}

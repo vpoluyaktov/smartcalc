@@ -167,6 +167,21 @@ func main() {
 		mu.Unlock()
 	}
 
+	// Custom copy function that replaces references with values
+	customCopy := func() {
+		text := entry.Text
+		if entry.SelectedText() != "" {
+			text = entry.SelectedText()
+		}
+		resolved := calc.ReplaceRefsWithValues(text)
+		w.Clipboard().SetContent(resolved)
+	}
+
+	// Add custom shortcut handler for Ctrl+C
+	w.Canvas().AddShortcut(&fyne.ShortcutCopy{}, func(shortcut fyne.Shortcut) {
+		customCopy()
+	})
+
 	// Storage manager for file operations
 	storageMgr := storage.NewManager(a, w,
 		func(content string) { setContent(content) },
@@ -184,7 +199,7 @@ func main() {
 		GetRecent:  storageMgr.GetRecentFiles,
 
 		Cut:   func() { entry.TypedShortcut(&fyne.ShortcutCut{Clipboard: w.Clipboard()}) },
-		Copy:  func() { entry.TypedShortcut(&fyne.ShortcutCopy{Clipboard: w.Clipboard()}) },
+		Copy:  customCopy,
 		Paste: func() { entry.TypedShortcut(&fyne.ShortcutPaste{Clipboard: w.Clipboard()}) },
 
 		InsertSnippet: func(snippet string) {
