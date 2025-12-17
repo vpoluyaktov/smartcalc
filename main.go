@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +16,13 @@ import (
 	"supercalc/internal/menu"
 	"supercalc/internal/storage"
 	"supercalc/internal/ui"
+)
+
+// Version info set via ldflags
+var (
+	version   = "dev"
+	buildDate = "unknown"
+	gitCommit = "unknown"
 )
 
 func main() {
@@ -34,7 +42,14 @@ func main() {
 	entry.SetPlaceHolder("Type expressions like: ($95.88 x (167 + 175) - 20% =\nReference prior results as \\\\1, \\\\2, ...")
 
 	lineNumBox := container.New(&ui.FixedWidthLayout{Width: 50}, container.NewStack(lineNums))
-	content := container.NewBorder(nil, nil, lineNumBox, nil, entry)
+	editorArea := container.NewBorder(nil, nil, lineNumBox, nil, entry)
+
+	// Status bar at bottom
+	statusLabel := widget.NewLabel(fmt.Sprintf("SuperCalc %s (built %s, commit %s)", version, buildDate, gitCommit))
+	statusLabel.Alignment = fyne.TextAlignCenter
+	statusBar := container.NewCenter(statusLabel)
+
+	content := container.NewBorder(nil, statusBar, nil, nil, editorArea)
 
 	var (
 		mu            sync.Mutex
