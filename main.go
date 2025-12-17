@@ -19,11 +19,7 @@ import (
 )
 
 // Version info set via ldflags
-var (
-	version   = "dev"
-	buildDate = "unknown"
-	gitCommit = "unknown"
-)
+var version = "dev"
 
 func main() {
 	a := app.NewWithID("com.supercalc.app")
@@ -45,7 +41,7 @@ func main() {
 	editorArea := container.NewBorder(nil, nil, lineNumBox, nil, entry)
 
 	// Status bar at bottom
-	statusLabel := widget.NewLabel(fmt.Sprintf("SuperCalc %s (built %s, commit %s)", version, buildDate, gitCommit))
+	statusLabel := widget.NewLabel(fmt.Sprintf("SuperCalc %s", version))
 	statusLabel.Alignment = fyne.TextAlignCenter
 	statusBar := container.NewCenter(statusLabel)
 

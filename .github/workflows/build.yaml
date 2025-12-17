@@ -59,11 +59,9 @@ jobs:
         shell: bash
         run: |
           echo "VERSION is $VERSION"
-          BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S_UTC')
-          GIT_COMMIT=$(git rev-parse --short HEAD)
           OUTFILE=SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}
           echo "OUTFILE is $OUTFILE"
-          go build -ldflags="-s -w -X main.version=$VERSION -X main.buildDate=$BUILD_DATE -X main.gitCommit=$GIT_COMMIT" -o $OUTFILE .
+          go build -ldflags="-s -w -X main.version=$VERSION" -o $OUTFILE .
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
