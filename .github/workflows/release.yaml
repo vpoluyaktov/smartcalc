@@ -49,7 +49,6 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          # Install required system libraries for Fyne on macOS
           brew install pkg-config
 
       - name: Ensure CGO is enabled
@@ -58,23 +57,21 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.23'
 
       - name: Extract version
         id: extract_version
-        shell: bash
-        run: |
-          VERSION=$(echo "$GITHUB_REF" | sed 's|refs/tags/||')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Extracted version: $VERSION"
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build for ${{ matrix.goos }}-${{ matrix.goarch }}
         shell: bash
         run: |
           echo "VERSION is $VERSION"
+          BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S_UTC')
+          GIT_COMMIT=$(git rev-parse --short HEAD)
           OUTFILE=SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}
           echo "OUTFILE is $OUTFILE"
-          go build -ldflags="-s -w -X main.version=$VERSION" -o $OUTFILE .
+          go build -ldflags="-s -w -X main.version=$VERSION -X main.buildDate=$BUILD_DATE -X main.gitCommit=$GIT_COMMIT" -o $OUTFILE .
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
@@ -101,33 +98,36 @@ jobs:
           codesign --force --deep --sign - "SuperCalc.app"
           ZIP_NAME="SuperCalc-darwin-${VERSION}-${{ matrix.goarch }}.zip"
           zip -r "$ZIP_NAME" "SuperCalc.app"
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+        env:
+          VERSION: ${{ env.VERSION }}
 
-      - name: Create Linux ZIP archive
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            SuperCalc-${{ matrix.goos }}-${{ env.VERSION }}-${{ matrix.goarch }}${{ matrix.ext }}
+            SuperCalc-darwin-${{ env.VERSION }}-${{ matrix.goarch }}.zip
+
+  upload-to-release:
+    name: Upload Assets to Release
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Upload assets to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ZIP_NAME="SuperCalc-linux-${VERSION}-${{ matrix.goarch }}.zip"
-          zip "$ZIP_NAME" "SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}"
-          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
-
-      - name: Upload Windows binary to release
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./SuperCalc-${{ matrix.goos }}-${{ env.VERSION }}-${{ matrix.goarch }}${{ matrix.ext }}
-          asset_name: SuperCalc-${{ matrix.goos }}-${{ env.VERSION }}-${{ matrix.goarch }}${{ matrix.ext }}
-          asset_content_type: application/octet-stream
-
-      - name: Upload ZIP archive to release (Linux and macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ env.ZIP_NAME }}
-          asset_name: ${{ env.ZIP_NAME }}
-          asset_content_type: application/zip
+          for file in binaries-*/*; do
+            if [[ "$file" == *"SuperCalc-darwin-"*".zip" ]] || [[ "$file" == *"SuperCalc-linux-"* ]] || [[ "$file" == *"SuperCalc-windows-"* ]]; then
+              echo "Uploading $file to release..."
+              gh release upload ${{ github.event.release.tag_name }} "$file" || true
+            fi
+          done

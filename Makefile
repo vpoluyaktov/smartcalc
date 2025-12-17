@@ -1,0 +1,117 @@
+# SuperCalc - Makefile
+
+# Variables
+BINARY_NAME=supercalc
+BUILD_DIR=build
+VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILD_DATE=$(shell date -u '+%Y-%m-%d_%H:%M:%S_UTC')
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+# Go parameters
+GOCMD=go
+GOBUILD=$(GOCMD) build
+GOCLEAN=$(GOCMD) clean
+GOTEST=$(GOCMD) test
+GOMOD=$(GOCMD) mod
+
+# Build flags
+LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE) -X main.gitCommit=$(GIT_COMMIT)"
+
+.PHONY: all build clean test deps run help app-bundle release check
+
+# Default target
+all: deps build
+
+# Build the main application
+build:
+	@echo "Building $(BINARY_NAME) $(VERSION)..."
+	@mkdir -p $(BUILD_DIR)
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	@echo "✓ Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+
+# Build macOS .app bundle
+app-bundle: build
+	@echo "Building macOS .app bundle..."
+	@./scripts/build-app.sh
+	@echo "✓ macOS .app bundle created"
+
+# Install dependencies
+deps:
+	@echo "Installing dependencies..."
+	$(GOMOD) tidy
+	$(GOMOD) download
+	@echo "✓ Dependencies installed"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	$(GOCLEAN)
+	rm -rf $(BUILD_DIR)
+	rm -f $(BINARY_NAME)
+	rm -f SuperCalc-*
+	rm -rf "SuperCalc.app"
+	rm -f *.zip
+	@echo "✓ Clean complete"
+
+# Run tests
+test:
+	@echo "Running tests..."
+	$(GOTEST) -v ./...
+	@echo "✓ Tests complete"
+
+# Run the application in development mode
+run: build
+	@echo "Starting $(BINARY_NAME)..."
+	./$(BUILD_DIR)/$(BINARY_NAME)
+
+# Install the application system-wide (requires sudo)
+install: build
+	@echo "Installing $(BINARY_NAME) to /usr/local/bin..."
+	sudo cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
+	@echo "✓ Installation complete"
+
+# Uninstall the application
+uninstall:
+	@echo "Removing $(BINARY_NAME) from /usr/local/bin..."
+	sudo rm -f /usr/local/bin/$(BINARY_NAME)
+	@echo "✓ Uninstall complete"
+
+# Create release build with optimizations
+release: clean deps test app-bundle
+	@echo "Creating release build..."
+	@mkdir -p $(BUILD_DIR)/release
+	@if [ -d "SuperCalc.app" ]; then cp -r "SuperCalc.app" $(BUILD_DIR)/release/; fi
+	@echo "✓ Release build complete: $(BUILD_DIR)/release/"
+
+# Check for common issues
+check:
+	@echo "Running checks..."
+	$(GOCMD) fmt ./...
+	$(GOCMD) vet ./...
+	$(GOTEST) -race -short ./...
+	@echo "✓ Checks complete"
+
+# Display help
+help:
+	@echo "SuperCalc - Build Commands"
+	@echo "=========================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all        - Install dependencies and build application"
+	@echo "  build      - Build the main application"
+	@echo "  app-bundle - Build macOS .app bundle"
+	@echo "  deps       - Install Go dependencies"
+	@echo "  clean      - Remove build artifacts"
+	@echo "  test       - Run all tests"
+	@echo "  run        - Build and run the application"
+	@echo "  install    - Install application system-wide (requires sudo)"
+	@echo "  uninstall  - Remove application from system"
+	@echo "  release    - Create optimized release build"
+	@echo "  check      - Run code formatting, vetting, and tests"
+	@echo "  help       - Show this help message"
+	@echo ""
+	@echo "Quick start:"
+	@echo "  make deps   # Install dependencies"
+	@echo "  make run    # Build and run the application"
+	@echo ""
+	@echo "Version: $(VERSION)" 

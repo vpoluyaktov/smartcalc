@@ -40,7 +40,6 @@ jobs:
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
         run: |
-          # Install required system libraries for Fyne on macOS
           brew install pkg-config
 
       - name: Ensure CGO is enabled
@@ -49,7 +48,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.23'
 
       - name: Extract version
         id: extract_version
@@ -59,9 +58,11 @@ jobs:
         shell: bash
         run: |
           echo "VERSION is $VERSION"
+          BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S_UTC')
+          GIT_COMMIT=$(git rev-parse --short HEAD)
           OUTFILE=SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}
           echo "OUTFILE is $OUTFILE"
-          go build -ldflags="-s -w -X main.version=$VERSION" -o $OUTFILE .
+          go build -ldflags="-s -w -X main.version=$VERSION -X main.buildDate=$BUILD_DATE -X main.gitCommit=$GIT_COMMIT" -o $OUTFILE .
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
