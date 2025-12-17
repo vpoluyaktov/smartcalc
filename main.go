@@ -36,9 +36,8 @@ func main() {
 	lineNumScroll := container.NewVScroll(lineNums)
 	lineNumScroll.SetMinSize(fyne.NewSize(50, 0))
 
-	entry := widget.NewMultiLineEntry()
+	entry := ui.NewCustomMultiLineEntry()
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
-	entry.Wrapping = fyne.TextWrapOff
 	entry.SetPlaceHolder("Type expressions like: ($95.88 x (167 + 175) - 20% =\nReference prior results as \\\\1, \\\\2, ...")
 
 	// Wrap entry in a scroll container we can control
@@ -177,10 +176,8 @@ func main() {
 		w.Clipboard().SetContent(resolved)
 	}
 
-	// Add custom shortcut handler for Ctrl+C
-	w.Canvas().AddShortcut(&fyne.ShortcutCopy{}, func(shortcut fyne.Shortcut) {
-		customCopy()
-	})
+	// Set the custom copy handler on the entry widget
+	entry.OnCopy = customCopy
 
 	// Storage manager for file operations
 	storageMgr := storage.NewManager(a, w,
