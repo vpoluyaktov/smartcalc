@@ -60,6 +60,7 @@ CGO_ENABLED=1 GOARCH=$GOARCH go build \
 echo "Creating macOS .app bundle..."
 fyne package \
     --os darwin \
+    --icon assets/icon.png \
     --name "SuperCalc" \
     --app-id com.supercalc.app \
     --app-version "$APP_VERSION" \
