@@ -32,18 +32,36 @@ func main() {
 	lineNums.Wrapping = fyne.TextWrapOff
 	lineNums.Alignment = fyne.TextAlignTrailing
 
+	// Wrap line numbers in a scroll container for sync
+	lineNumScroll := container.NewVScroll(lineNums)
+	lineNumScroll.SetMinSize(fyne.NewSize(50, 0))
+
 	entry := widget.NewMultiLineEntry()
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
 	entry.Wrapping = fyne.TextWrapOff
 	entry.SetPlaceHolder("Type expressions like: ($95.88 x (167 + 175) - 20% =\nReference prior results as \\\\1, \\\\2, ...")
 
-	lineNumBox := container.New(&ui.FixedWidthLayout{Width: 50}, container.NewStack(lineNums))
-	editorArea := container.NewBorder(nil, nil, lineNumBox, nil, entry)
+	// Wrap entry in a scroll container we can control
+	entryScroll := container.NewVScroll(entry)
 
-	// Status bar at bottom
-	statusLabel := widget.NewLabel(fmt.Sprintf("SuperCalc %s", version))
-	statusLabel.Alignment = fyne.TextAlignCenter
-	statusBar := container.NewCenter(statusLabel)
+	lineNumBox := container.New(&ui.FixedWidthLayout{Width: 50}, lineNumScroll)
+	editorArea := container.NewBorder(nil, nil, lineNumBox, nil, entryScroll)
+
+	// Sync scroll positions periodically
+	go func() {
+		for {
+			time.Sleep(50 * time.Millisecond)
+			if lineNumScroll.Offset.Y != entryScroll.Offset.Y {
+				lineNumScroll.Offset.Y = entryScroll.Offset.Y
+				lineNumScroll.Refresh()
+			}
+		}
+	}()
+
+	// Status bar at bottom - version on the right
+	statusLabel := widget.NewLabel(fmt.Sprintf("Version %s", version))
+	statusLabel.Alignment = fyne.TextAlignTrailing
+	statusBar := container.NewBorder(nil, nil, nil, statusLabel, nil)
 
 	content := container.NewBorder(nil, statusBar, nil, nil, editorArea)
 
