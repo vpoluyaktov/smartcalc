@@ -38,7 +38,8 @@ func TestNormalize(t *testing.T) {
 		{"20 — 10", "20 - 10"},
 		{"  spaces  ", "spaces"},
 		{"2 x 3", "2 * 3"},
-		{"max(5)", "max(5)"}, // 'x' in identifier should not be replaced
+		{"max(5)", "max(5)"},   // 'x' in identifier should not be replaced
+		{"2 x \\1", "2 * \\1"}, // 'x' before reference should be replaced
 	}
 
 	for _, tt := range tests {

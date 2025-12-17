@@ -71,7 +71,7 @@ func isMulContext(s string, idx int) bool {
 	}
 
 	leftOk := unicode.IsDigit(left) || left == ')' || left == '%' || left == '$' || left == '.'
-	rightOk := unicode.IsDigit(right) || right == '(' || right == '$' || right == '.' || unicode.IsLetter(right)
+	rightOk := unicode.IsDigit(right) || right == '(' || right == '$' || right == '.' || right == '\\' || unicode.IsLetter(right)
 	return leftOk && rightOk
 }
 
