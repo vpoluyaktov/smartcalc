@@ -1,9 +1,7 @@
 # SmartCalc
 
 A powerful, multi-purpose calculator application with support for mathematical expressions, date/time calculations, network/IP operations, and more.
-
-![SmartCalc Screenshot](docs/screenshot.png)
-<!-- TODO: Add screenshot image to docs/screenshot.png -->
+<img width="945" height="1027" alt="Screenshot 2025-12-18 at 15 26 31" src="https://github.com/user-attachments/assets/3ab30b3c-336d-4413-917c-f0e0eaa6ade4" />
 
 ## Features
 
