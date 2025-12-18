@@ -10,9 +10,9 @@ func TestEvalSplitToSubnets(t *testing.T) {
 		expr     string
 		contains string
 	}{
-		{"10.100.0.0/16 / 6 subnets", "10.100.0.0/19"},
-		{"10.100.0.0/24 / 4 subnets", "10.100.0.0/26"},
-		{"192.168.0.0/24 / 2 subnets", "192.168.0.0/25"},
+		{"10.100.0.0/16 / 6 subnets", "10.100.0.0 mask19"},
+		{"10.100.0.0/24 / 4 subnets", "10.100.0.0 mask26"},
+		{"192.168.0.0/24 / 2 subnets", "192.168.0.0 mask25"},
 	}
 
 	for _, tt := range tests {
@@ -34,8 +34,8 @@ func TestEvalSplitByHosts(t *testing.T) {
 		expr     string
 		contains string
 	}{
-		{"10.200.0.0/16 / 1024 hosts", "/21"},
-		{"192.168.0.0/24 / 60 hosts", "/26"},
+		{"10.200.0.0/16 / 1024 hosts", "mask21"},
+		{"192.168.0.0/24 / 60 hosts", "mask26"},
 	}
 
 	for _, tt := range tests {
