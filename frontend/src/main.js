@@ -604,9 +604,20 @@ async function saveFileAs() {
     }
 }
 
+// Welcome message for new documents
+const WELCOME_MESSAGE = `# Welcome to SmartCalc!
+# Check out the Snippets menu to explore features.
+# Type an expression and press Enter to calculate.
+
+`;
+
 function newFile() {
     editor.dispatch({
-        changes: { from: 0, to: editor.state.doc.length, insert: '' },
+        changes: { from: 0, to: editor.state.doc.length, insert: WELCOME_MESSAGE },
+    });
+    // Move cursor to end
+    editor.dispatch({
+        selection: { anchor: WELCOME_MESSAGE.length },
     });
     currentFile = '';
     updateFileName();
@@ -753,15 +764,20 @@ function setupMenuEvents() {
     EventsOn('menu:about', showAbout);
 }
 
-// Load last file on startup
+// Load last file on startup, or show welcome message if no file
 async function loadLastFile() {
     try {
         const lastFile = await GetLastFile();
         if (lastFile) {
             await openFilePath(lastFile);
+        } else {
+            // No last file - show welcome message
+            newFile();
         }
     } catch (err) {
         console.error('Load last file error:', err);
+        // On error, show welcome message
+        newFile();
     }
 }
 
