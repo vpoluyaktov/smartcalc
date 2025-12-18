@@ -39,7 +39,7 @@ func main() {
 
 	entry := ui.NewCustomMultiLineEntry()
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
-	entry.SetPlaceHolder("Type expressions like: ($95.88 x (167 + 175) - 20% =\nReference prior results as \\\\1, \\\\2, ...")
+	entry.SetPlaceHolder("Type expressions like: $95.88 x (167 + 175) - 20% =\nDate/Time: now in Seattle =, today() + 30 days =\nNetwork: split 10.0.0.0/16 to 4 subnets =\nReference prior results as \\\\1, \\\\2, ...")
 
 	// Wrap entry in a scroll container we can control
 	entryScroll := container.NewVScroll(entry)

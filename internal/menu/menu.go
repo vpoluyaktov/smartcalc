@@ -36,6 +36,17 @@ var Snippets = []struct {
 	{"Line Reference", "100 =\n\\1 * 2 ="},
 	{"Scientific", "sin(45) + cos(30) ="},
 	{"Complex Expression", "$1,000 x 12 - 15% + $500 ="},
+	{"Current Time", "now ="},
+	{"Time in City", "now in Seattle =\nnow in New York =\nnow in Kiev ="},
+	{"Date Arithmetic", "today() =\n\\1 + 30 days =\n\\1 - 1 week ="},
+	{"Duration Conversion", "861.5 hours in days ="},
+	{"Time Zone Conversion", "6:00 am Seattle in Kiev ="},
+	{"Date Range", "Dec 6 till March 11 ="},
+	{"Subnet Info", "10.100.0.0/24 ="},
+	{"Split Subnet", "split 10.100.0.0/16 to 4 subnets ="},
+	{"Hosts in Subnet", "how many hosts in 10.100.0.0/28 ="},
+	{"Subnet Mask", "mask for /24 =\nwildcard for /24 ="},
+	{"IP in Range", "is 10.100.0.50 in 10.100.0.0/24 ="},
 }
 
 // CreateMainMenu creates the application main menu.
@@ -145,7 +156,27 @@ Type mathematical expressions followed by = to calculate results.
 - sin(), cos(), tan()
 - sqrt(), abs()
 - log(), ln()
-- floor(), ceil(), round()
+
+## Date/Time
+- **Current time**: now, now(), today, today()
+- **Time in city**: now in Seattle, now in New York
+- **Time conversion**: 6:00 am Seattle in Kiev
+- **Date arithmetic**: today() + 30 days, \1 - 1 week
+- **Duration conversion**: 861.5 hours in days
+- **Date range**: Dec 6 till March 11
+- **Supported cities**: Seattle, New York, Kiev, Moscow, London, Tokyo, etc.
+
+## Network/IP Calculations
+- **Subnet info**: 10.100.0.0/24
+- **Split by count**: split 10.100.0.0/16 to 4 subnets
+- **Split by hosts**: split 10.200.0.0/16 to subnets with 1024 hosts
+- **Host count**: how many hosts in 10.100.0.0/28, hosts in /24
+- **Subnet mask**: mask for /24, netmask /16
+- **Wildcard mask**: wildcard for /24
+- **Prefix from mask**: prefix for 255.255.255.0
+- **IP in range**: is 10.100.0.50 in 10.100.0.0/24
+- **Broadcast**: broadcast for 10.100.0.0/24
+- **Next subnet**: next subnet after 10.100.0.0/24
 `)
 	content.Wrapping = fyne.TextWrapWord
 
@@ -157,6 +188,6 @@ Type mathematical expressions followed by = to calculate results.
 // ShowAboutDialog displays the about dialog.
 func ShowAboutDialog(window fyne.Window) {
 	dialog.ShowInformation("About SuperCalc",
-		"SuperCalc v1.0\n\nA powerful calculator with support for:\n• Multi-line expressions\n• Line references\n• Currency formatting\n• Mathematical functions",
+		"SuperCalc v1.0\n\nA powerful calculator with support for:\n• Multi-line expressions\n• Line references\n• Currency formatting\n• Mathematical functions\n• Date/Time calculations\n• Network/IP subnet calculations",
 		window)
 }
