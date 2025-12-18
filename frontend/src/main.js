@@ -83,6 +83,11 @@ function initEditor() {
 
 // Handle text changes with debounce
 function onTextChanged() {
+    // Skip if we're programmatically updating the editor
+    if (isUpdatingEditor) {
+        return;
+    }
+    
     if (debounceTimer) {
         clearTimeout(debounceTimer);
     }
