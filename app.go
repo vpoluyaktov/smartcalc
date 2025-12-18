@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"supercalc/internal/calc"
@@ -10,19 +12,76 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+const maxRecentFiles = 10
+
 // App struct
 type App struct {
-	ctx context.Context
+	ctx         context.Context
+	recentFiles []string
 }
 
 // NewApp creates a new App application struct
 func NewApp() *App {
-	return &App{}
+	app := &App{}
+	app.loadRecentFiles()
+	return app
 }
 
 // startup is called when the app starts
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+// getConfigPath returns the path to the config directory
+func getConfigPath() string {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		configDir = os.TempDir()
+	}
+	return filepath.Join(configDir, "supercalc")
+}
+
+// loadRecentFiles loads recent files from config
+func (a *App) loadRecentFiles() {
+	configPath := filepath.Join(getConfigPath(), "recent.json")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		a.recentFiles = []string{}
+		return
+	}
+	json.Unmarshal(data, &a.recentFiles)
+}
+
+// saveRecentFiles saves recent files to config
+func (a *App) saveRecentFiles() {
+	configDir := getConfigPath()
+	os.MkdirAll(configDir, 0755)
+	configPath := filepath.Join(configDir, "recent.json")
+	data, _ := json.Marshal(a.recentFiles)
+	os.WriteFile(configPath, data, 0644)
+}
+
+// GetRecentFiles returns the list of recent files
+func (a *App) GetRecentFiles() []string {
+	return a.recentFiles
+}
+
+// AddRecentFile adds a file to the recent files list
+func (a *App) AddRecentFile(path string) {
+	// Remove if already exists
+	filtered := []string{}
+	for _, f := range a.recentFiles {
+		if f != path {
+			filtered = append(filtered, f)
+		}
+	}
+	// Add to front
+	a.recentFiles = append([]string{path}, filtered...)
+	// Limit size
+	if len(a.recentFiles) > maxRecentFiles {
+		a.recentFiles = a.recentFiles[:maxRecentFiles]
+	}
+	a.saveRecentFiles()
 }
 
 // EvalResult represents a single line evaluation result

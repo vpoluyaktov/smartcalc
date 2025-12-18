@@ -69,6 +69,21 @@ func createAppMenu(app *App) *menu.Menu {
 	fileMenu.AddText("Save As...", keys.CmdOrCtrl("S"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:saveAs")
 	})
+	fileMenu.AddSeparator()
+
+	// Recent files submenu
+	recentMenu := fileMenu.AddSubmenu("Recent")
+	recentFiles := app.GetRecentFiles()
+	if len(recentFiles) == 0 {
+		recentMenu.AddText("(No recent files)", nil, nil)
+	} else {
+		for _, path := range recentFiles {
+			p := path // capture for closure
+			recentMenu.AddText(path, nil, func(_ *menu.CallbackData) {
+				runtime.EventsEmit(app.ctx, "menu:openRecent", p)
+			})
+		}
+	}
 
 	// Edit menu
 	editMenu := appMenu.AddSubmenu("Edit")

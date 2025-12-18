@@ -4,7 +4,7 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -148,14 +148,23 @@ async function openFile() {
     try {
         const path = await OpenFileDialog();
         if (path) {
-            const content = await ReadFile(path);
-            editor.dispatch({
-                changes: { from: 0, to: editor.state.doc.length, insert: content },
-            });
-            currentFile = path;
-            updateFileName();
-            evaluateContent();
+            await openFilePath(path);
         }
+    } catch (err) {
+        console.error('Open error:', err);
+    }
+}
+
+async function openFilePath(path) {
+    try {
+        const content = await ReadFile(path);
+        editor.dispatch({
+            changes: { from: 0, to: editor.state.doc.length, insert: content },
+        });
+        currentFile = path;
+        updateFileName();
+        evaluateContent();
+        await AddRecentFile(path);
     } catch (err) {
         console.error('Open error:', err);
     }
@@ -165,6 +174,7 @@ async function saveFile() {
     if (currentFile) {
         try {
             await WriteFile(currentFile, editor.state.doc.toString());
+            await AddRecentFile(currentFile);
         } catch (err) {
             console.error('Save error:', err);
         }
@@ -180,6 +190,7 @@ async function saveFileAs() {
             await WriteFile(path, editor.state.doc.toString());
             currentFile = path;
             updateFileName();
+            await AddRecentFile(path);
         }
     } catch (err) {
         console.error('Save As error:', err);
@@ -280,6 +291,7 @@ function setupMenuEvents() {
     EventsOn('menu:open', openFile);
     EventsOn('menu:save', saveFile);
     EventsOn('menu:saveAs', saveFileAs);
+    EventsOn('menu:openRecent', openFilePath);
     EventsOn('menu:cut', () => document.execCommand('cut'));
     EventsOn('menu:copy', () => document.execCommand('copy'));
     EventsOn('menu:paste', () => document.execCommand('paste'));
