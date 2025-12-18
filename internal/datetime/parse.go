@@ -18,6 +18,8 @@ var dateFormats = []string{
 	"01/02/2006 15:04:05",
 	"01/02/2006 15:04",
 	"01/02/2006",
+	"02/01/2006", // dd/mm/yyyy
+	"02/01/06",   // dd/mm/yy
 	"Jan 2, 2006 15:04:05 MST",
 	"Jan 2, 2006 15:04:05",
 	"Jan 2, 2006 15:04",
@@ -250,4 +252,98 @@ func FormatDuration(d time.Duration) string {
 // DaysBetween calculates the number of days between two dates
 func DaysBetween(start, end time.Time) float64 {
 	return end.Sub(start).Hours() / 24
+}
+
+// FormatDetailedDuration formats a duration between two dates showing years, months, weeks, days, hours, minutes
+func FormatDetailedDuration(from, to time.Time) string {
+	if to.Before(from) {
+		from, to = to, from
+	}
+
+	// Calculate years
+	years := 0
+	for {
+		next := from.AddDate(1, 0, 0)
+		if next.After(to) {
+			break
+		}
+		years++
+		from = next
+	}
+
+	// Calculate months
+	months := 0
+	for {
+		next := from.AddDate(0, 1, 0)
+		if next.After(to) {
+			break
+		}
+		months++
+		from = next
+	}
+
+	// Calculate remaining duration
+	remaining := to.Sub(from)
+
+	weeks := int(remaining.Hours() / (24 * 7))
+	remaining -= time.Duration(weeks) * 7 * 24 * time.Hour
+
+	days := int(remaining.Hours() / 24)
+	remaining -= time.Duration(days) * 24 * time.Hour
+
+	hours := int(remaining.Hours())
+	remaining -= time.Duration(hours) * time.Hour
+
+	minutes := int(remaining.Minutes())
+
+	// Build result string
+	var parts []string
+	if years > 0 {
+		if years == 1 {
+			parts = append(parts, "1 year")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d years", years))
+		}
+	}
+	if months > 0 {
+		if months == 1 {
+			parts = append(parts, "1 month")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d months", months))
+		}
+	}
+	if weeks > 0 {
+		if weeks == 1 {
+			parts = append(parts, "1 week")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d weeks", weeks))
+		}
+	}
+	if days > 0 {
+		if days == 1 {
+			parts = append(parts, "1 day")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d days", days))
+		}
+	}
+	if hours > 0 {
+		if hours == 1 {
+			parts = append(parts, "1 hour")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d hours", hours))
+		}
+	}
+	if minutes > 0 {
+		if minutes == 1 {
+			parts = append(parts, "1 min")
+		} else {
+			parts = append(parts, fmt.Sprintf("%d min", minutes))
+		}
+	}
+
+	if len(parts) == 0 {
+		return "0 min"
+	}
+
+	return strings.Join(parts, " ")
 }

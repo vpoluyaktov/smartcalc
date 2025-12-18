@@ -95,6 +95,11 @@ func EvalDateTime(expr string) (string, error) {
 		return result, nil
 	}
 
+	// Check for date difference: "19/01/22 - now" or "date1 - date2"
+	if result, ok := tryDateDifference(expr); ok {
+		return result, nil
+	}
+
 	// Check for duration multiplication: "(8 hours x 5 x 2) x 2" or "13 x 3 min"
 	if result, ok := tryDurationMultiplication(expr); ok {
 		return result, nil
@@ -316,6 +321,58 @@ func tryDateRange(expr string) (string, bool) {
 		return fmt.Sprintf("%.0f days", days), true
 	}
 	return fmt.Sprintf("%.1f days", days), true
+}
+
+func tryDateDifference(expr string) (string, bool) {
+	// Pattern: "date1 - date2" or "date1 − date2" (with minus or en-dash)
+	// Examples: "19/01/22 - now", "2020-01-15 - today", "now - 2020-01-15"
+
+	// Split by minus sign (handle both regular minus and en-dash)
+	var date1Str, date2Str string
+	if idx := strings.Index(expr, " − "); idx > 0 {
+		date1Str = strings.TrimSpace(expr[:idx])
+		date2Str = strings.TrimSpace(expr[idx+len(" − "):])
+	} else if idx := strings.Index(expr, " - "); idx > 0 {
+		date1Str = strings.TrimSpace(expr[:idx])
+		date2Str = strings.TrimSpace(expr[idx+3:])
+	} else {
+		return "", false
+	}
+
+	// Parse date1
+	var date1 time.Time
+	date1Lower := strings.ToLower(date1Str)
+	if date1Lower == "now" || date1Lower == "now()" {
+		date1 = time.Now()
+	} else if date1Lower == "today" || date1Lower == "today()" {
+		now := time.Now()
+		date1 = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	} else {
+		var err error
+		date1, err = ParseDateTime(date1Str, time.Local)
+		if err != nil {
+			return "", false
+		}
+	}
+
+	// Parse date2
+	var date2 time.Time
+	date2Lower := strings.ToLower(date2Str)
+	if date2Lower == "now" || date2Lower == "now()" {
+		date2 = time.Now()
+	} else if date2Lower == "today" || date2Lower == "today()" {
+		now := time.Now()
+		date2 = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	} else {
+		var err error
+		date2, err = ParseDateTime(date2Str, time.Local)
+		if err != nil {
+			return "", false
+		}
+	}
+
+	// Calculate and format the difference
+	return FormatDetailedDuration(date1, date2), true
 }
 
 func tryNumberPlusDuration(expr string) (string, bool) {
