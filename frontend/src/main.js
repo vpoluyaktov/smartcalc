@@ -595,13 +595,29 @@ function updateFileName() {
     document.getElementById('file-name').textContent = name;
 }
 
+// Adjust line references in snippet based on insertion line
+function adjustSnippetReferences(snippet, insertionLine) {
+    // Replace \N references with adjusted line numbers
+    // \1 -> \(insertionLine), \2 -> \(insertionLine+1), etc.
+    return snippet.replace(/\\(\d+)/g, (match, num) => {
+        const originalRef = parseInt(num, 10);
+        const adjustedRef = originalRef + insertionLine - 1;
+        return '\\' + adjustedRef;
+    });
+}
+
 // Insert snippet at cursor
 async function insertSnippet(snippet) {
     const pos = editor.state.selection.main.head;
+    const line = editor.state.doc.lineAt(pos);
+    const insertionLine = line.number;
+    
+    // Adjust line references in the snippet
+    const adjustedSnippet = adjustSnippetReferences(snippet, insertionLine);
     
     // Insert the snippet
     editor.dispatch({
-        changes: { from: pos, insert: snippet },
+        changes: { from: pos, insert: adjustedSnippet },
     });
     
     // Evaluate the content
