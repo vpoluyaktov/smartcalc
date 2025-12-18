@@ -82,6 +82,39 @@ func (a *App) AddRecentFile(path string) {
 		a.recentFiles = a.recentFiles[:maxRecentFiles]
 	}
 	a.saveRecentFiles()
+	// Also save as last file
+	a.saveLastFile(path)
+}
+
+// GetLastFile returns the last opened file path
+func (a *App) GetLastFile() string {
+	configPath := filepath.Join(getConfigPath(), "lastfile.txt")
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return ""
+	}
+	path := strings.TrimSpace(string(data))
+	// Check if file still exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return ""
+	}
+	return path
+}
+
+// saveLastFile saves the last opened file path
+func (a *App) saveLastFile(path string) {
+	configDir := getConfigPath()
+	os.MkdirAll(configDir, 0755)
+	configPath := filepath.Join(configDir, "lastfile.txt")
+	os.WriteFile(configPath, []byte(path), 0644)
+}
+
+// AutoSave saves content to the current file (silent, no dialogs)
+func (a *App) AutoSave(path, content string) error {
+	if path == "" {
+		return nil
+	}
+	return os.WriteFile(path, []byte(content), 0644)
 }
 
 // EvalResult represents a single line evaluation result

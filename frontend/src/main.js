@@ -4,12 +4,14 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
 let currentFile = '';
 let debounceTimer = null;
+let autosaveTimer = null;
+const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme
 const darkTheme = EditorView.theme({
@@ -84,6 +86,30 @@ function onTextChanged() {
     debounceTimer = setTimeout(() => {
         evaluateContent();
     }, 150);
+    
+    // Schedule autosave
+    scheduleAutosave();
+}
+
+// Schedule autosave after delay
+function scheduleAutosave() {
+    if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+    }
+    autosaveTimer = setTimeout(() => {
+        performAutosave();
+    }, AUTOSAVE_DELAY);
+}
+
+// Perform autosave if we have a current file
+async function performAutosave() {
+    if (currentFile) {
+        try {
+            await AutoSave(currentFile, editor.state.doc.toString());
+        } catch (err) {
+            console.error('Autosave error:', err);
+        }
+    }
 }
 
 // Evaluate content and update display
@@ -300,8 +326,21 @@ function setupMenuEvents() {
     EventsOn('menu:about', showAbout);
 }
 
+// Load last file on startup
+async function loadLastFile() {
+    try {
+        const lastFile = await GetLastFile();
+        if (lastFile) {
+            await openFilePath(lastFile);
+        }
+    } catch (err) {
+        console.error('Load last file error:', err);
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     initEditor();
     setupMenuEvents();
+    loadLastFile();
 });

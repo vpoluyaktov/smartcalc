@@ -6,12 +6,20 @@ export function AddRecentFile(arg1) {
   return window['go']['main']['App']['AddRecentFile'](arg1);
 }
 
+export function AutoSave(arg1, arg2) {
+  return window['go']['main']['App']['AutoSave'](arg1, arg2);
+}
+
 export function CopyWithResolvedRefs(arg1) {
   return window['go']['main']['App']['CopyWithResolvedRefs'](arg1);
 }
 
 export function Evaluate(arg1) {
   return window['go']['main']['App']['Evaluate'](arg1);
+}
+
+export function GetLastFile() {
+  return window['go']['main']['App']['GetLastFile']();
 }
 
 export function GetRecentFiles() {
