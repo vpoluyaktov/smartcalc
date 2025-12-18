@@ -18,12 +18,13 @@ const (
 
 // Manager handles file operations and preferences.
 type Manager struct {
-	app         fyne.App
-	window      fyne.Window
-	currentFile string
-	onLoad      func(content string)
-	getContent  func() string
-	onNew       func()
+	app           fyne.App
+	window        fyne.Window
+	currentFile   string
+	lastSavedHash string // hash of content at last save
+	onLoad        func(content string)
+	getContent    func() string
+	onNew         func()
 }
 
 // NewManager creates a new storage manager.
@@ -96,7 +97,34 @@ func (m *Manager) Save() {
 		dialog.ShowError(err, m.window)
 		return
 	}
+	m.lastSavedHash = hashContent(content)
+	m.updateTitle() // remove modified indicator
 	m.saveLastFile()
+}
+
+// AutoSave saves the file if a file is set (silent, no dialogs).
+func (m *Manager) AutoSave() {
+	if m.currentFile == "" {
+		return
+	}
+	content := m.getContent()
+	if err := os.WriteFile(m.currentFile, []byte(content), 0644); err != nil {
+		// Silent fail for autosave
+		return
+	}
+	m.lastSavedHash = hashContent(content)
+	m.updateTitle()
+}
+
+// HasUnsavedChanges returns true if the content has changed since last save.
+func (m *Manager) HasUnsavedChanges() bool {
+	content := m.getContent()
+	return hashContent(content) != m.lastSavedHash
+}
+
+// MarkSaved updates the saved hash to current content.
+func (m *Manager) MarkSaved() {
+	m.lastSavedHash = hashContent(m.getContent())
 }
 
 // SaveAs shows a file dialog to save to a new file.
@@ -142,11 +170,43 @@ func (m *Manager) GetRecentFiles() []string {
 }
 
 func (m *Manager) updateTitle() {
-	if m.currentFile == "" {
-		m.window.SetTitle("SuperCalc - Untitled")
-	} else {
-		m.window.SetTitle("SuperCalc - " + filepath.Base(m.currentFile))
+	modified := ""
+	if m.HasUnsavedChanges() {
+		modified = " *"
 	}
+	if m.currentFile == "" {
+		m.window.SetTitle("SuperCalc - Untitled" + modified)
+	} else {
+		m.window.SetTitle("SuperCalc - " + filepath.Base(m.currentFile) + modified)
+	}
+}
+
+// UpdateTitle updates the window title (exported for external use).
+func (m *Manager) UpdateTitle() {
+	m.updateTitle()
+}
+
+// hashContent creates a simple hash of content for change detection.
+func hashContent(content string) string {
+	// Simple hash using length and first/last chars
+	if len(content) == 0 {
+		return "empty"
+	}
+	return string(rune(len(content))) + content[:min(10, len(content))] + content[max(0, len(content)-10):]
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (m *Manager) saveLastFile() {

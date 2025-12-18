@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
 	"supercalc/internal/calc"
@@ -180,10 +181,17 @@ func main() {
 	entry.OnCopy = customCopy
 
 	// Storage manager for file operations
-	storageMgr := storage.NewManager(a, w,
-		func(content string) { setContent(content) },
+	var storageMgr *storage.Manager
+	storageMgr = storage.NewManager(a, w,
+		func(content string) {
+			setContent(content)
+			storageMgr.MarkSaved()
+		},
 		func() string { return entry.Text },
-		func() { setContent("") },
+		func() {
+			setContent("")
+			storageMgr.MarkSaved()
+		},
 	)
 
 	// Create main menu
@@ -217,6 +225,31 @@ func main() {
 
 	// Load last opened file on startup
 	storageMgr.LoadLastFile()
+
+	// Autosave timer - save every 30 seconds if file is set
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			storageMgr.AutoSave()
+		}
+	}()
+
+	// Handle window close - warn about unsaved changes
+	w.SetCloseIntercept(func() {
+		if storageMgr.HasUnsavedChanges() {
+			dialog.ShowConfirm("Unsaved Changes",
+				"You have unsaved changes. Do you want to save before closing?",
+				func(save bool) {
+					if save {
+						storageMgr.Save()
+					}
+					w.Close()
+				}, w)
+		} else {
+			w.Close()
+		}
+	})
 
 	w.ShowAndRun()
 }
