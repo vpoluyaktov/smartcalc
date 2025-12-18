@@ -19,6 +19,8 @@ const maxRecentFiles = 10
 type App struct {
 	ctx         context.Context
 	recentFiles []string
+	hasUnsaved  bool
+	currentFile string
 }
 
 // NewApp creates a new App application struct
@@ -31,6 +33,53 @@ func NewApp() *App {
 // startup is called when the app starts
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+}
+
+// beforeClose is called when the app is about to close
+// Returns true to prevent closing (if user cancels), false to allow closing
+func (a *App) beforeClose(ctx context.Context) (prevent bool) {
+	if !a.hasUnsaved {
+		return false // No unsaved changes, allow close
+	}
+
+	// Show confirmation dialog
+	title := "Unsaved Changes"
+	message := "You have unsaved changes. Do you want to save before closing?"
+	if a.currentFile == "" {
+		message = "You have unsaved changes in an untitled document. Do you want to save before closing?"
+	}
+
+	result, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+		Type:          runtime.QuestionDialog,
+		Title:         title,
+		Message:       message,
+		Buttons:       []string{"Save", "Don't Save", "Cancel"},
+		DefaultButton: "Save",
+		CancelButton:  "Cancel",
+	})
+
+	if err != nil {
+		return false // On error, allow close
+	}
+
+	switch result {
+	case "Save":
+		// Emit save event and allow close
+		runtime.EventsEmit(a.ctx, "menu:save")
+		return false
+	case "Don't Save":
+		return false // Allow close without saving
+	case "Cancel":
+		return true // Prevent close
+	}
+
+	return false
+}
+
+// SetUnsavedState is called from frontend to update unsaved state
+func (a *App) SetUnsavedState(hasUnsaved bool, currentFile string) {
+	a.hasUnsaved = hasUnsaved
+	a.currentFile = currentFile
 }
 
 // getConfigPath returns the path to the config directory

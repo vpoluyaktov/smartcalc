@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -14,6 +14,7 @@ let autosaveTimer = null;
 let previousText = '';
 let previousLineCount = 0;
 let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
+let savedContent = ''; // Content at last save, to detect unsaved changes
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme (Tokyo Night inspired)
@@ -432,8 +433,18 @@ async function checkAndAdjustReferences() {
     previousText = currentText;
     previousLineCount = currentLineCount;
     
+    // Update unsaved state
+    updateUnsavedState();
+    
     // Evaluate normally
     evaluateContent();
+}
+
+// Update unsaved state and notify backend
+function updateUnsavedState() {
+    const currentContent = editor.state.doc.toString();
+    const hasUnsaved = currentContent !== savedContent;
+    SetUnsavedState(hasUnsaved, currentFile);
 }
 
 // Schedule autosave after delay
@@ -574,9 +585,11 @@ async function openFilePath(path) {
             changes: { from: 0, to: editor.state.doc.length, insert: content },
         });
         currentFile = path;
+        savedContent = content; // Mark as saved
         updateFileName();
         evaluateContent();
         await AddRecentFile(path);
+        SetUnsavedState(false, currentFile);
     } catch (err) {
         console.error('Open error:', err);
     }
@@ -585,8 +598,11 @@ async function openFilePath(path) {
 async function saveFile() {
     if (currentFile) {
         try {
-            await WriteFile(currentFile, editor.state.doc.toString());
+            const content = editor.state.doc.toString();
+            await WriteFile(currentFile, content);
+            savedContent = content; // Mark as saved
             await AddRecentFile(currentFile);
+            SetUnsavedState(false, currentFile);
         } catch (err) {
             console.error('Save error:', err);
         }
@@ -599,10 +615,13 @@ async function saveFileAs() {
     try {
         const path = await SaveFileDialog();
         if (path) {
-            await WriteFile(path, editor.state.doc.toString());
+            const content = editor.state.doc.toString();
+            await WriteFile(path, content);
             currentFile = path;
+            savedContent = content; // Mark as saved
             updateFileName();
             await AddRecentFile(path);
+            SetUnsavedState(false, currentFile);
         }
     } catch (err) {
         console.error('Save As error:', err);
@@ -625,7 +644,9 @@ function newFile() {
         selection: { anchor: WELCOME_MESSAGE.length },
     });
     currentFile = '';
+    savedContent = WELCOME_MESSAGE; // New file starts as "saved"
     updateFileName();
+    SetUnsavedState(false, '');
 }
 
 function updateFileName() {

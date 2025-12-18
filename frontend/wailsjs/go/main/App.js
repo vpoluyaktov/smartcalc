@@ -46,6 +46,10 @@ export function SaveFileDialog() {
   return window['go']['main']['App']['SaveFileDialog']();
 }
 
+export function SetUnsavedState(arg1, arg2) {
+  return window['go']['main']['App']['SetUnsavedState'](arg1, arg2);
+}
+
 export function WriteFile(arg1, arg2) {
   return window['go']['main']['App']['WriteFile'](arg1, arg2);
 }
