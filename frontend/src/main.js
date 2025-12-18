@@ -16,7 +16,7 @@ let previousLineCount = 0;
 let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
-// Tokyo Night inspired theme
+// Dark theme (Tokyo Night inspired)
 const darkTheme = EditorView.theme({
     '&': {
         backgroundColor: '#1a1b26',
@@ -44,6 +44,45 @@ const darkTheme = EditorView.theme({
         backgroundColor: 'rgba(41, 46, 66, 0.5)',
     },
 }, { dark: true });
+
+// Light theme
+const lightTheme = EditorView.theme({
+    '&': {
+        backgroundColor: '#f8f9fa',
+        color: '#343a40',
+    },
+    '.cm-content': {
+        caretColor: '#4285f4',
+    },
+    '.cm-cursor': {
+        borderLeftColor: '#4285f4',
+    },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+        backgroundColor: 'rgba(66, 133, 244, 0.25)',
+    },
+    '.cm-gutters': {
+        backgroundColor: '#f1f3f4',
+        color: '#868e96',
+        borderRight: '1px solid #dee2e6',
+    },
+    '.cm-activeLineGutter': {
+        backgroundColor: '#e9ecef',
+        color: '#495057',
+    },
+    '.cm-activeLine': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
+}, { dark: false });
+
+// Detect system theme preference
+function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+// Get the appropriate theme based on system preference
+function getCurrentTheme() {
+    return getSystemTheme() === 'dark' ? darkTheme : lightTheme;
+}
 
 // Syntax highlighting decorations
 const resultMark = Decoration.mark({ class: 'cm-result' });
@@ -215,7 +254,7 @@ function initEditor() {
             highlightActiveLine(),
             history(),
             keymap.of([...defaultKeymap, ...historyKeymap]),
-            darkTheme,
+            getCurrentTheme(),
             syntaxHighlighter,
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
@@ -238,6 +277,44 @@ function initEditor() {
 
     // Set up keyboard shortcuts
     document.addEventListener('keydown', handleKeyboard);
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        // Recreate editor with new theme
+        const content = editor.state.doc.toString();
+        const cursorPos = editor.state.selection.main.head;
+        
+        editor.destroy();
+        
+        const newState = EditorState.create({
+            doc: content,
+            extensions: [
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                highlightActiveLine(),
+                history(),
+                keymap.of([...defaultKeymap, ...historyKeymap]),
+                e.matches ? darkTheme : lightTheme,
+                syntaxHighlighter,
+                EditorView.updateListener.of((update) => {
+                    if (update.docChanged) {
+                        onTextChanged();
+                    }
+                }),
+                EditorView.lineWrapping,
+            ],
+        });
+        
+        editor = new EditorView({
+            state: newState,
+            parent: container,
+        });
+        
+        // Restore cursor position
+        editor.dispatch({
+            selection: { anchor: Math.min(cursorPos, content.length) },
+        });
+    });
 }
 
 // Handle text changes with debounce
