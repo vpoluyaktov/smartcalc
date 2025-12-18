@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -804,6 +804,24 @@ function setupMenuEvents() {
     EventsOn('menu:snippet', insertSnippet);
     EventsOn('menu:manual', showManual);
     EventsOn('menu:about', showAbout);
+    EventsOn('app:saveAndQuit', saveAndQuit);
+}
+
+// Save file and quit - called when user clicks Save on unsaved unnamed file close
+async function saveAndQuit() {
+    try {
+        const path = await SaveFileDialog();
+        if (path) {
+            const content = editor.state.doc.toString();
+            await WriteFile(path, content);
+            await AddRecentFile(path);
+            // Now quit the app
+            Quit();
+        }
+        // If user cancelled the save dialog, don't quit (they already cancelled the close)
+    } catch (err) {
+        console.error('Save and quit error:', err);
+    }
 }
 
 // Load last file on startup, or show welcome message if no file

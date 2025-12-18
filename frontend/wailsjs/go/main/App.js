@@ -38,6 +38,10 @@ export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
 }
 
+export function Quit() {
+  return window['go']['main']['App']['Quit']();
+}
+
 export function ReadFile(arg1) {
   return window['go']['main']['App']['ReadFile'](arg1);
 }

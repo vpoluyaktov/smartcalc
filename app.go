@@ -64,9 +64,9 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 
 	switch result {
 	case "Save":
-		// Emit save event (will trigger Save As dialog for unnamed file)
-		runtime.EventsEmit(a.ctx, "menu:save")
-		return false
+		// Emit saveAndQuit event - frontend will save and then quit
+		runtime.EventsEmit(a.ctx, "app:saveAndQuit")
+		return true // Prevent close - frontend will call Quit after saving
 	case "Don't Save":
 		return false // Allow close without saving
 	case "Cancel":
@@ -80,6 +80,11 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 func (a *App) SetUnsavedState(hasUnsaved bool, currentFile string) {
 	a.hasUnsaved = hasUnsaved
 	a.currentFile = currentFile
+}
+
+// Quit closes the application
+func (a *App) Quit() {
+	runtime.Quit(a.ctx)
 }
 
 // getConfigPath returns the path to the config directory

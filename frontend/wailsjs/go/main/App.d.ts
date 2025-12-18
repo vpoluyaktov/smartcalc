@@ -20,6 +20,8 @@ export function GetVersion():Promise<string>;
 
 export function OpenFileDialog():Promise<string>;
 
+export function Quit():Promise<void>;
+
 export function ReadFile(arg1:string):Promise<string>;
 
 export function SaveFileDialog():Promise<string>;
