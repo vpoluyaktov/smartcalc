@@ -1,10 +1,10 @@
 import './style.css';
 import { EditorView, basicSetup } from 'codemirror';
-import { EditorState } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
+import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -16,34 +16,270 @@ let previousLineCount = 0;
 let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
-// Dark theme
+// Dark theme (Tokyo Night inspired)
 const darkTheme = EditorView.theme({
     '&': {
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
+        backgroundColor: '#1a1b26',
+        color: '#c0caf5',
     },
     '.cm-content': {
-        caretColor: '#6366f1',
+        caretColor: '#7aa2f7',
     },
     '.cm-cursor': {
-        borderLeftColor: '#6366f1',
+        borderLeftColor: '#7aa2f7',
     },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-        backgroundColor: 'rgba(99, 102, 241, 0.3)',
+        backgroundColor: 'rgba(122, 162, 247, 0.3)',
     },
     '.cm-gutters': {
-        backgroundColor: '#1e293b',
-        color: '#64748b',
-        borderRight: '1px solid #334155',
+        backgroundColor: '#16161e',
+        color: '#565f89',
+        borderRight: '1px solid #3b4261',
     },
     '.cm-activeLineGutter': {
-        backgroundColor: '#334155',
-        color: '#f8fafc',
+        backgroundColor: '#292e42',
+        color: '#7aa2f7',
     },
     '.cm-activeLine': {
-        backgroundColor: 'rgba(51, 65, 85, 0.5)',
+        backgroundColor: 'rgba(41, 46, 66, 0.5)',
     },
 }, { dark: true });
+
+// Light theme
+const lightTheme = EditorView.theme({
+    '&': {
+        backgroundColor: '#f8f9fa',
+        color: '#343a40',
+    },
+    '.cm-content': {
+        caretColor: '#4285f4',
+    },
+    '.cm-cursor': {
+        borderLeftColor: '#4285f4',
+    },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+        backgroundColor: 'rgba(66, 133, 244, 0.25)',
+    },
+    '.cm-gutters': {
+        backgroundColor: '#f1f3f4',
+        color: '#868e96',
+        borderRight: '1px solid #dee2e6',
+    },
+    '.cm-activeLineGutter': {
+        backgroundColor: '#e9ecef',
+        color: '#495057',
+    },
+    '.cm-activeLine': {
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    },
+}, { dark: false });
+
+// Detect system theme preference
+function getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+// Get the appropriate theme based on system preference
+function getCurrentTheme() {
+    return getSystemTheme() === 'dark' ? darkTheme : lightTheme;
+}
+
+// Syntax highlighting decorations
+const resultMark = Decoration.mark({ class: 'cm-result' });
+const errorMark = Decoration.mark({ class: 'cm-error' });
+const referenceMark = Decoration.mark({ class: 'cm-reference' });
+const numberMark = Decoration.mark({ class: 'cm-number' });
+const operatorMark = Decoration.mark({ class: 'cm-operator' });
+const currencyMark = Decoration.mark({ class: 'cm-currency' });
+const percentMark = Decoration.mark({ class: 'cm-percent' });
+const functionMark = Decoration.mark({ class: 'cm-function' });
+const keywordMark = Decoration.mark({ class: 'cm-keyword' });
+const datetimeMark = Decoration.mark({ class: 'cm-datetime' });
+const networkMark = Decoration.mark({ class: 'cm-network' });
+const commentMark = Decoration.mark({ class: 'cm-comment' });
+const outputPrefixMark = Decoration.mark({ class: 'cm-output-prefix' });
+
+function buildDecorations(view) {
+    const builder = new RangeSetBuilder();
+    const doc = view.state.doc;
+    
+    for (let i = 1; i <= doc.lines; i++) {
+        const line = doc.line(i);
+        const text = line.text;
+        const from = line.from;
+        
+        // Output lines starting with "> "
+        if (text.startsWith('> ')) {
+            builder.add(from, from + 2, outputPrefixMark);
+            // Check for errors in output
+            if (text.includes('ERR:') || text.includes('error')) {
+                builder.add(from + 2, line.to, errorMark);
+            } else {
+                builder.add(from + 2, line.to, resultMark);
+            }
+            continue;
+        }
+        
+        // Comment lines starting with # or //
+        if (text.trim().startsWith('#') || text.trim().startsWith('//')) {
+            builder.add(from, line.to, commentMark);
+            continue;
+        }
+        
+        // Process tokens in the line
+        let pos = 0;
+        while (pos < text.length) {
+            const remaining = text.slice(pos);
+            let matched = false;
+            
+            // Line references \1, \2, etc.
+            const refMatch = remaining.match(/^\\[0-9]+/);
+            if (refMatch) {
+                builder.add(from + pos, from + pos + refMatch[0].length, referenceMark);
+                pos += refMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Currency with amount $1,234.56
+            const currencyMatch = remaining.match(/^\$[\d,]+\.?\d*/);
+            if (currencyMatch) {
+                builder.add(from + pos, from + pos + currencyMatch[0].length, currencyMark);
+                pos += currencyMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // IP addresses and CIDR notation
+            const ipMatch = remaining.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?/);
+            if (ipMatch) {
+                builder.add(from + pos, from + pos + ipMatch[0].length, networkMark);
+                pos += ipMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Time patterns like 14:30, 6:00 am
+            const timeMatch = remaining.match(/^\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm|AM|PM))?/);
+            if (timeMatch) {
+                builder.add(from + pos, from + pos + timeMatch[0].length, datetimeMark);
+                pos += timeMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Numbers (including decimals and negative)
+            const numMatch = remaining.match(/^-?\d+\.?\d*/);
+            if (numMatch) {
+                builder.add(from + pos, from + pos + numMatch[0].length, numberMark);
+                pos += numMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Percentage
+            if (remaining[0] === '%') {
+                builder.add(from + pos, from + pos + 1, percentMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            
+            // Operators
+            if (['+', '-', '*', '/', '^', '×', '÷', '='].includes(remaining[0])) {
+                builder.add(from + pos, from + pos + 1, operatorMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            
+            // Functions
+            const funcMatch = remaining.match(/^(sin|cos|tan|sqrt|abs|log|ln|exp|floor|ceil|round|min|max)\s*\(/i);
+            if (funcMatch) {
+                builder.add(from + pos, from + pos + funcMatch[1].length, functionMark);
+                pos += funcMatch[1].length;
+                matched = true;
+                continue;
+            }
+            
+            // Keywords
+            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|hosts?|mask|wildcard|how\s+many|is)\b/i);
+            if (kwMatch) {
+                builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
+                pos += kwMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Date keywords
+            const dateKwMatch = remaining.match(/^(days?|weeks?|months?|years?|hours?|minutes?|seconds?|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i);
+            if (dateKwMatch) {
+                builder.add(from + pos, from + pos + dateKwMatch[0].length, datetimeMark);
+                pos += dateKwMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            if (!matched) {
+                pos++;
+            }
+        }
+    }
+    
+    return builder.finish();
+}
+
+const syntaxHighlighter = ViewPlugin.fromClass(class {
+    constructor(view) {
+        this.decorations = buildDecorations(view);
+    }
+    update(update) {
+        if (update.docChanged || update.viewportChanged) {
+            this.decorations = buildDecorations(update.view);
+        }
+    }
+}, {
+    decorations: v => v.decorations
+});
+
+// Custom Enter key handler - auto-append '=' if needed
+function handleEnterKey(view) {
+    const state = view.state;
+    const pos = state.selection.main.head;
+    const line = state.doc.lineAt(pos);
+    const lineText = line.text;
+    const cursorAtEnd = pos === line.to;
+    
+    // Check conditions:
+    // 1. Cursor is at end of line
+    // 2. Line is not empty
+    // 3. Line is not a comment (starting with #)
+    // 4. Line doesn't already end with '='
+    if (cursorAtEnd && 
+        lineText.trim().length > 0 && 
+        !lineText.trim().startsWith('#') && 
+        !lineText.trim().startsWith('//') &&
+        !lineText.trimEnd().endsWith('=')) {
+        
+        // Insert ' =' at cursor, then newline
+        view.dispatch({
+            changes: { from: pos, insert: ' =\n' },
+            selection: { anchor: pos + 3 },
+        });
+        return true;
+    }
+    
+    // Default behavior: just insert newline
+    return false;
+}
+
+// Custom keymap for Enter key
+const customKeymap = keymap.of([
+    {
+        key: 'Enter',
+        run: handleEnterKey,
+    },
+]);
 
 // Initialize editor
 function initEditor() {
@@ -56,8 +292,10 @@ function initEditor() {
             highlightActiveLineGutter(),
             highlightActiveLine(),
             history(),
+            customKeymap,
             keymap.of([...defaultKeymap, ...historyKeymap]),
-            darkTheme,
+            getCurrentTheme(),
+            syntaxHighlighter,
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     onTextChanged();
@@ -79,6 +317,45 @@ function initEditor() {
 
     // Set up keyboard shortcuts
     document.addEventListener('keydown', handleKeyboard);
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        // Recreate editor with new theme
+        const content = editor.state.doc.toString();
+        const cursorPos = editor.state.selection.main.head;
+        
+        editor.destroy();
+        
+        const newState = EditorState.create({
+            doc: content,
+            extensions: [
+                lineNumbers(),
+                highlightActiveLineGutter(),
+                highlightActiveLine(),
+                history(),
+                customKeymap,
+                keymap.of([...defaultKeymap, ...historyKeymap]),
+                e.matches ? darkTheme : lightTheme,
+                syntaxHighlighter,
+                EditorView.updateListener.of((update) => {
+                    if (update.docChanged) {
+                        onTextChanged();
+                    }
+                }),
+                EditorView.lineWrapping,
+            ],
+        });
+        
+        editor = new EditorView({
+            state: newState,
+            parent: container,
+        });
+        
+        // Restore cursor position
+        editor.dispatch({
+            selection: { anchor: Math.min(cursorPos, content.length) },
+        });
+    });
 }
 
 // Handle text changes with debounce
@@ -202,15 +479,32 @@ async function evaluateContentInternal() {
         
         // Only update if different (to avoid cursor jump)
         if (newText !== text) {
-            // Save scroll position and cursor
+            // Save scroll position and cursor line/column
             const scrollTop = editor.scrollDOM.scrollTop;
             const scrollLeft = editor.scrollDOM.scrollLeft;
             const cursorPos = editor.state.selection.main.head;
+            const cursorLine = editor.state.doc.lineAt(cursorPos);
+            const lineNumber = cursorLine.number;
+            const columnOffset = cursorPos - cursorLine.from;
             
             editor.dispatch({
                 changes: { from: 0, to: editor.state.doc.length, insert: newText },
-                selection: { anchor: Math.min(cursorPos, newText.length) },
             });
+            
+            // Restore cursor position based on line number
+            const newDoc = editor.state.doc;
+            if (lineNumber <= newDoc.lines) {
+                const newLine = newDoc.line(lineNumber);
+                const newPos = newLine.from + Math.min(columnOffset, newLine.length);
+                editor.dispatch({
+                    selection: { anchor: newPos },
+                });
+            } else {
+                // If line doesn't exist, go to end
+                editor.dispatch({
+                    selection: { anchor: newText.length },
+                });
+            }
             
             // Restore scroll position after update
             requestAnimationFrame(() => {
@@ -248,6 +542,11 @@ function handleKeyboard(e) {
     if (e.ctrlKey && e.key === 'n') {
         e.preventDefault();
         newFile();
+    }
+    // Ctrl+C - Smart Copy (replace refs with values)
+    if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        smartCopy();
     }
 }
 
@@ -305,9 +604,20 @@ async function saveFileAs() {
     }
 }
 
+// Welcome message for new documents
+const WELCOME_MESSAGE = `# Welcome to SmartCalc!
+# Check out the Snippets menu to explore features.
+# Type an expression and press Enter to calculate.
+
+`;
+
 function newFile() {
     editor.dispatch({
-        changes: { from: 0, to: editor.state.doc.length, insert: '' },
+        changes: { from: 0, to: editor.state.doc.length, insert: WELCOME_MESSAGE },
+    });
+    // Move cursor to end
+    editor.dispatch({
+        selection: { anchor: WELCOME_MESSAGE.length },
     });
     currentFile = '';
     updateFileName();
@@ -318,14 +628,40 @@ function updateFileName() {
     document.getElementById('file-name').textContent = name;
 }
 
-// Insert snippet at cursor
-function insertSnippet(snippet) {
-    const pos = editor.state.selection.main.head;
-    editor.dispatch({
-        changes: { from: pos, insert: snippet },
-        selection: { anchor: pos + snippet.length },
+// Adjust line references in snippet based on insertion line
+function adjustSnippetReferences(snippet, insertionLine) {
+    // Replace \N references with adjusted line numbers
+    // \1 -> \(insertionLine), \2 -> \(insertionLine+1), etc.
+    return snippet.replace(/\\(\d+)/g, (match, num) => {
+        const originalRef = parseInt(num, 10);
+        const adjustedRef = originalRef + insertionLine - 1;
+        return '\\' + adjustedRef;
     });
-    evaluateContent();
+}
+
+// Insert snippet at cursor
+async function insertSnippet(snippet) {
+    const pos = editor.state.selection.main.head;
+    const line = editor.state.doc.lineAt(pos);
+    const insertionLine = line.number;
+    
+    // Adjust line references in the snippet
+    const adjustedSnippet = adjustSnippetReferences(snippet, insertionLine);
+    
+    // Insert the snippet
+    editor.dispatch({
+        changes: { from: pos, insert: adjustedSnippet },
+    });
+    
+    // Evaluate the content
+    await evaluateContent();
+    
+    // After evaluation, move cursor to end of document (next line after snippet results)
+    const docLength = editor.state.doc.length;
+    editor.dispatch({
+        selection: { anchor: docLength },
+    });
+    editor.focus();
 }
 
 // Show manual dialog
@@ -393,6 +729,26 @@ A powerful calculator with support for:
     });
 }
 
+// Smart copy - replace line references with actual values
+async function smartCopy() {
+    const selection = editor.state.selection.main;
+    let textToCopy;
+    
+    if (selection.empty) {
+        // No selection - copy entire document
+        textToCopy = editor.state.doc.toString();
+    } else {
+        // Copy selected text
+        textToCopy = editor.state.sliceDoc(selection.from, selection.to);
+    }
+    
+    // Replace line references with actual values
+    const resolvedText = await CopyWithResolvedRefs(textToCopy);
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(resolvedText);
+}
+
 // Set up menu event listeners
 function setupMenuEvents() {
     EventsOn('menu:new', newFile);
@@ -401,22 +757,27 @@ function setupMenuEvents() {
     EventsOn('menu:saveAs', saveFileAs);
     EventsOn('menu:openRecent', openFilePath);
     EventsOn('menu:cut', () => document.execCommand('cut'));
-    EventsOn('menu:copy', () => document.execCommand('copy'));
+    EventsOn('menu:copy', smartCopy);
     EventsOn('menu:paste', () => document.execCommand('paste'));
     EventsOn('menu:snippet', insertSnippet);
     EventsOn('menu:manual', showManual);
     EventsOn('menu:about', showAbout);
 }
 
-// Load last file on startup
+// Load last file on startup, or show welcome message if no file
 async function loadLastFile() {
     try {
         const lastFile = await GetLastFile();
         if (lastFile) {
             await openFilePath(lastFile);
+        } else {
+            // No last file - show welcome message
+            newFile();
         }
     } catch (err) {
         console.error('Load last file error:', err);
+        // On error, show welcome message
+        newFile();
     }
 }
 

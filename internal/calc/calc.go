@@ -2,6 +2,7 @@ package calc
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"smartcalc/internal/datetime"
@@ -9,6 +10,53 @@ import (
 	"smartcalc/internal/network"
 	"smartcalc/internal/utils"
 )
+
+// formatExpression adds proper spacing around operators in an expression.
+// Transforms "2+3" to "2 + 3", "$100-20%" to "$100 - 20%", etc.
+func formatExpression(expr string) string {
+	// Operators that should have spaces around them
+	// Handle multi-char operators first, then single-char
+	result := expr
+
+	// Add space around basic operators: +, -, *, /, x, ×, ÷, ^
+	// But be careful not to affect:
+	// - Negative numbers at start or after operator
+	// - Currency symbols like $
+	// - Decimal points
+	// - CIDR notation like /24
+	// - Time notation like 6:00
+
+	// First, normalize multiple spaces to single space
+	spaceRe := regexp.MustCompile(`\s+`)
+	result = spaceRe.ReplaceAllString(result, " ")
+
+	// Add spaces around operators (but not inside numbers or special notations)
+	// Match operator not preceded/followed by space
+	operators := []struct {
+		pattern string
+		replace string
+	}{
+		// Multiplication variants
+		{`(\S)\s*×\s*(\S)`, `$1 × $2`},
+		{`(\S)\s*÷\s*(\S)`, `$1 ÷ $2`},
+		{`(\d)\s*x\s*(\d)`, `$1 x $2`},  // x between digits (multiplication)
+		{`(\d)\s*\*\s*(\d)`, `$1 * $2`}, // * between digits
+		{`(\d)\s*\^\s*(\d)`, `$1 ^ $2`}, // ^ between digits
+		// Addition - digit/paren/percent followed by +
+		{`([\d\)%])\s*\+\s*(\S)`, `$1 + $2`},
+		// Subtraction - digit/paren/percent followed by -
+		{`([\d\)%])\s*-\s*(\S)`, `$1 - $2`},
+		// Division - but not CIDR notation (/24)
+		{`(\d)\s*/\s*(\d{3,})`, `$1 / $2`}, // Only if divisor is 3+ digits (not CIDR)
+	}
+
+	for _, op := range operators {
+		re := regexp.MustCompile(op.pattern)
+		result = re.ReplaceAllString(result, op.replace)
+	}
+
+	return result
+}
 
 // LineResult holds the result of evaluating a single line.
 type LineResult struct {
@@ -55,11 +103,22 @@ func EvalLines(lines []string) []LineResult {
 		if strings.HasPrefix(trim, "> ") {
 			continue
 		}
-		eq := strings.IndexRune(line, '=')
+		// Skip comment lines (starting with #)
+		if strings.HasPrefix(trim, "#") {
+			continue
+		}
+
+		// Handle inline comments - strip everything after #
+		workingLine := line
+		if hashIdx := strings.Index(line, "#"); hashIdx >= 0 {
+			workingLine = line[:hashIdx]
+		}
+
+		eq := strings.IndexRune(workingLine, '=')
 		if eq < 0 {
 			continue
 		}
-		expr := strings.TrimSpace(line[:eq])
+		expr := strings.TrimSpace(workingLine[:eq])
 		if expr == "" {
 			continue
 		}
@@ -68,7 +127,7 @@ func EvalLines(lines []string) []LineResult {
 		if network.IsNetworkExpression(expr) {
 			netResult, err := network.EvalNetwork(expr)
 			if err == nil {
-				results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + netResult
+				results[i].Output = formatExpression(expr) + " = " + netResult
 				results[i].HasResult = true
 				continue
 			}
@@ -91,7 +150,7 @@ func EvalLines(lines []string) []LineResult {
 
 			dtResult, err := datetime.EvalDateTimeWithRefs(expr, resolver)
 			if err == nil {
-				results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + dtResult
+				results[i].Output = formatExpression(expr) + " = " + dtResult
 				results[i].HasResult = true
 				results[i].IsDateTime = true
 				results[i].DateTimeStr = dtResult
@@ -113,7 +172,7 @@ func EvalLines(lines []string) []LineResult {
 			return values[idx], nil
 		})
 		if err != nil {
-			results[i].Output = strings.TrimRight(line[:eq+1], " ") + " ERR"
+			results[i].Output = formatExpression(expr) + " = ERR"
 			continue
 		}
 
@@ -121,7 +180,7 @@ func EvalLines(lines []string) []LineResult {
 		haveRes[i] = true
 		currencyByLine[i] = isCurrency
 
-		results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + utils.FormatResult(isCurrency, val)
+		results[i].Output = formatExpression(expr) + " = " + utils.FormatResult(isCurrency, val)
 		results[i].Value = val
 		results[i].HasResult = true
 		results[i].IsCurrency = isCurrency

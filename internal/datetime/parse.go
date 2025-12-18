@@ -8,14 +8,6 @@ import (
 	"time"
 )
 
-// DateTimeResult holds the result of a date/time evaluation
-type DateTimeResult struct {
-	Time     time.Time
-	Duration time.Duration
-	IsTime   bool // true if result is a time, false if duration
-	Format   string
-}
-
 // Common date/time formats to try when parsing
 var dateFormats = []string{
 	"2006-01-02 15:04:05 MST",

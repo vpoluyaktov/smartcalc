@@ -11,16 +11,15 @@ echo "🧮 Building SmartCalc..."
 export GOPATH=$(go env GOPATH)
 export PATH=$PATH:$GOPATH/bin
 
-# Get version information from git
-VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+# Get version information
+BASE_VERSION=$(cat VERSION 2>/dev/null || echo "0.1.0")
+COMMIT_COUNT=$(git rev-list --all --count HEAD 2>/dev/null || echo "0")
+# Extract MAJOR.MINOR from base version and use commit count as PATCH
+MAJOR_MINOR=$(echo $BASE_VERSION | cut -d. -f1,2)
+VERSION="$MAJOR_MINOR.$COMMIT_COUNT"
+APP_VERSION="$VERSION"
 BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S_UTC')
 GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-
-# Extract x.y.z for app version (strip leading 'v' and any suffix after '-')
-APP_VERSION=$(echo "$VERSION" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-if [ -z "$APP_VERSION" ] || [ "$APP_VERSION" = "$VERSION" ]; then
-    APP_VERSION="1.0.0"
-fi
 
 # Detect architecture
 ARCH=$(uname -m)

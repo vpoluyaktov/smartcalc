@@ -77,9 +77,16 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: echo "CGO_LDFLAGS=-framework UniformTypeIdentifiers" >> $GITHUB_ENV
 
-      - name: Extract version
-        id: extract_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - name: Get version
+        id: version
+        run: |
+          BASE_VERSION=$(cat VERSION)
+          COMMIT_COUNT=$(git rev-list --all --count HEAD)
+          # Extract MAJOR.MINOR from base version and use commit count as PATCH
+          MAJOR_MINOR=$(echo $BASE_VERSION | cut -d. -f1,2)
+          VERSION="$MAJOR_MINOR.$COMMIT_COUNT"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Building version: $VERSION"
 
       - name: Build for ${{ matrix.goos }}-${{ matrix.goarch }}
         shell: bash

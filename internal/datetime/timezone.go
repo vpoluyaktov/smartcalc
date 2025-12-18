@@ -157,8 +157,3 @@ func LookupTimezone(name string) (*time.Location, error) {
 	// Try as IANA timezone directly
 	return time.LoadLocation(name)
 }
-
-// GetLocalTimezone returns the system's local timezone
-func GetLocalTimezone() *time.Location {
-	return time.Local
-}
