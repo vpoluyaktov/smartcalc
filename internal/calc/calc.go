@@ -3,6 +3,7 @@ package calc
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"smartcalc/internal/datetime"
@@ -10,6 +11,74 @@ import (
 	"smartcalc/internal/network"
 	"smartcalc/internal/utils"
 )
+
+// tryBaseConversion handles expressions like "24 in dec", "25 in hex", "25 in oct", "25 in bin"
+// Also handles hex input like "0xFF in dec" or "0b1010 in dec"
+func tryBaseConversion(expr string) (string, bool) {
+	exprLower := strings.ToLower(strings.TrimSpace(expr))
+
+	// Pattern: "number in base"
+	re := regexp.MustCompile(`(?i)^(0x[0-9a-fA-F]+|0b[01]+|0o[0-7]+|\d+)\s+in\s+(dec|decimal|hex|hexadecimal|oct|octal|bin|binary)$`)
+	matches := re.FindStringSubmatch(exprLower)
+	if matches == nil {
+		return "", false
+	}
+
+	numStr := matches[1]
+	targetBase := matches[2]
+
+	// Parse the input number
+	var value int64
+	var err error
+
+	if strings.HasPrefix(numStr, "0x") {
+		// Hexadecimal input
+		value, err = strconv.ParseInt(numStr[2:], 16, 64)
+	} else if strings.HasPrefix(numStr, "0b") {
+		// Binary input
+		value, err = strconv.ParseInt(numStr[2:], 2, 64)
+	} else if strings.HasPrefix(numStr, "0o") {
+		// Octal input
+		value, err = strconv.ParseInt(numStr[2:], 8, 64)
+	} else {
+		// Decimal input
+		value, err = strconv.ParseInt(numStr, 10, 64)
+	}
+
+	if err != nil {
+		return "", false
+	}
+
+	// Convert to target base
+	var result string
+	switch {
+	case strings.HasPrefix(targetBase, "dec"):
+		result = strconv.FormatInt(value, 10)
+	case strings.HasPrefix(targetBase, "hex"):
+		result = "0x" + strings.ToUpper(strconv.FormatInt(value, 16))
+	case strings.HasPrefix(targetBase, "oct"):
+		result = "0o" + strconv.FormatInt(value, 8)
+	case strings.HasPrefix(targetBase, "bin"):
+		result = "0b" + strconv.FormatInt(value, 2)
+	default:
+		return "", false
+	}
+
+	return result, true
+}
+
+// isBaseConversionExpr checks if expression is a base conversion
+func isBaseConversionExpr(expr string) bool {
+	exprLower := strings.ToLower(expr)
+	return strings.Contains(exprLower, " in dec") ||
+		strings.Contains(exprLower, " in hex") ||
+		strings.Contains(exprLower, " in oct") ||
+		strings.Contains(exprLower, " in bin") ||
+		strings.Contains(exprLower, " in decimal") ||
+		strings.Contains(exprLower, " in hexadecimal") ||
+		strings.Contains(exprLower, " in octal") ||
+		strings.Contains(exprLower, " in binary")
+}
 
 // isComparisonExpr checks if an expression contains comparison operators
 func isComparisonExpr(expr string) bool {
@@ -143,7 +212,16 @@ func EvalLines(lines []string) []LineResult {
 			continue
 		}
 
-		// Try network/IP evaluation first
+		// Try base conversion first (24 in hex, 0xFF in dec, etc.)
+		if isBaseConversionExpr(expr) {
+			if baseResult, ok := tryBaseConversion(expr); ok {
+				results[i].Output = expr + " = " + baseResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try network/IP evaluation
 		if network.IsNetworkExpression(expr) {
 			netResult, err := network.EvalNetwork(expr)
 			if err == nil {
