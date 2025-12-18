@@ -13,7 +13,7 @@ let debounceTimer = null;
 let autosaveTimer = null;
 let previousText = '';
 let previousLineCount = 0;
-let isAdjustingRefs = false; // Flag to prevent re-entry during reference adjustment
+let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme
@@ -96,8 +96,8 @@ function onTextChanged() {
 
 // Check if line count changed and adjust references
 async function checkAndAdjustReferences() {
-    // Prevent re-entry when we dispatch adjusted text
-    if (isAdjustingRefs) {
+    // Prevent re-entry when we dispatch programmatically
+    if (isUpdatingEditor) {
         return;
     }
     
@@ -110,7 +110,7 @@ async function checkAndAdjustReferences() {
             const adjusted = await AdjustReferences(previousText, currentText);
             if (adjusted !== currentText) {
                 // Set flag to prevent re-entry
-                isAdjustingRefs = true;
+                isUpdatingEditor = true;
                 
                 // Save cursor and scroll position
                 const scrollTop = editor.scrollDOM.scrollTop;
@@ -133,17 +133,16 @@ async function checkAndAdjustReferences() {
                 previousText = adjusted;
                 previousLineCount = adjusted.split('\n').length;
                 
-                // Clear flag after a short delay to allow the dispatch to complete
-                setTimeout(() => {
-                    isAdjustingRefs = false;
-                }, 50);
+                // Evaluate the adjusted content (flag stays set)
+                await evaluateContentInternal();
                 
-                // Evaluate the adjusted content
-                evaluateContent();
+                // Clear flag after everything is done
+                isUpdatingEditor = false;
                 return;
             }
         } catch (err) {
             console.error('Adjust references error:', err);
+            isUpdatingEditor = false;
         }
     }
     
@@ -176,8 +175,18 @@ async function performAutosave() {
     }
 }
 
-// Evaluate content and update display
+// Evaluate content and update display (sets flag to prevent re-entry)
 async function evaluateContent() {
+    isUpdatingEditor = true;
+    try {
+        await evaluateContentInternal();
+    } finally {
+        isUpdatingEditor = false;
+    }
+}
+
+// Internal evaluate function (does not manage flag)
+async function evaluateContentInternal() {
     const text = editor.state.doc.toString();
     try {
         const results = await Evaluate(text);
@@ -203,6 +212,10 @@ async function evaluateContent() {
                 editor.scrollDOM.scrollTop = scrollTop;
                 editor.scrollDOM.scrollLeft = scrollLeft;
             });
+            
+            // Update previous text to the evaluated result
+            previousText = newText;
+            previousLineCount = newText.split('\n').length;
         }
     } catch (err) {
         console.error('Evaluation error:', err);
