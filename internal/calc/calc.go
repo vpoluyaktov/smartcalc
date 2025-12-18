@@ -11,10 +11,12 @@ import (
 
 // LineResult holds the result of evaluating a single line.
 type LineResult struct {
-	Output     string
-	Value      float64
-	HasResult  bool
-	IsCurrency bool
+	Output      string
+	Value       float64
+	HasResult   bool
+	IsCurrency  bool
+	IsDateTime  bool
+	DateTimeStr string // raw datetime result for reference
 }
 
 // EvalLines evaluates all lines and returns the processed output lines.
@@ -39,12 +41,26 @@ func EvalLines(lines []string) []LineResult {
 			continue
 		}
 
-		// Try date/time evaluation first
-		if datetime.IsDateTimeExpression(expr) {
-			dtResult, err := datetime.EvalDateTime(expr)
+		// Try date/time evaluation first (with reference support)
+		if datetime.IsDateTimeExpression(expr) || strings.Contains(expr, "\\") {
+			// Create resolver for line references
+			resolver := func(n int) (string, bool) {
+				idx := n - 1
+				if idx < 0 || idx >= len(results) {
+					return "", false
+				}
+				if results[idx].IsDateTime && results[idx].DateTimeStr != "" {
+					return results[idx].DateTimeStr, true
+				}
+				return "", false
+			}
+
+			dtResult, err := datetime.EvalDateTimeWithRefs(expr, resolver)
 			if err == nil {
 				results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + dtResult
 				results[i].HasResult = true
+				results[i].IsDateTime = true
+				results[i].DateTimeStr = dtResult
 				continue
 			}
 			// Fall through to numeric evaluation if datetime fails

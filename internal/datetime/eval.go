@@ -8,6 +8,42 @@ import (
 	"time"
 )
 
+// RefResolver is a function that resolves line references like \1 to their string values
+type RefResolver func(n int) (string, bool)
+
+// EvalDateTimeWithRefs evaluates a date/time expression with line reference support
+func EvalDateTimeWithRefs(expr string, resolver RefResolver) (string, error) {
+	// First, replace any line references with their values
+	if resolver != nil {
+		expr = resolveRefsInExpr(expr, resolver)
+	}
+	return EvalDateTime(expr)
+}
+
+// resolveRefsInExpr replaces \n references with their resolved values
+func resolveRefsInExpr(expr string, resolver RefResolver) string {
+	result := expr
+	for i := 0; i < len(result); i++ {
+		if result[i] != '\\' {
+			continue
+		}
+		j := i + 1
+		if j >= len(result) || result[j] < '0' || result[j] > '9' {
+			continue
+		}
+		n := 0
+		for j < len(result) && result[j] >= '0' && result[j] <= '9' {
+			n = n*10 + int(result[j]-'0')
+			j++
+		}
+		if val, ok := resolver(n); ok {
+			result = result[:i] + val + result[j:]
+			i += len(val) - 1
+		}
+	}
+	return result
+}
+
 // EvalDateTime evaluates a date/time expression and returns the result
 func EvalDateTime(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
