@@ -103,11 +103,22 @@ func EvalLines(lines []string) []LineResult {
 		if strings.HasPrefix(trim, "> ") {
 			continue
 		}
-		eq := strings.IndexRune(line, '=')
+		// Skip comment lines (starting with #)
+		if strings.HasPrefix(trim, "#") {
+			continue
+		}
+
+		// Handle inline comments - strip everything after #
+		workingLine := line
+		if hashIdx := strings.Index(line, "#"); hashIdx >= 0 {
+			workingLine = line[:hashIdx]
+		}
+
+		eq := strings.IndexRune(workingLine, '=')
 		if eq < 0 {
 			continue
 		}
-		expr := strings.TrimSpace(line[:eq])
+		expr := strings.TrimSpace(workingLine[:eq])
 		if expr == "" {
 			continue
 		}
