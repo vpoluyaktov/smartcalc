@@ -230,7 +230,7 @@ func tryDurationConversion(expr string) (string, bool) {
 }
 
 func tryDateArithmetic(expr string) (string, bool) {
-	// Pattern: "today() - 35.9 days" or "2025-09-25 19:00:00 + 10 hours"
+	// Pattern: "today() - 35.9 days" or "2025-09-25 19:00:00 + 10 hours" or "2025-12-17 16:00:00 PST + 3 days"
 	re := regexp.MustCompile(`(?i)^(.+?)\s*([+−-])\s*([\d.]+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)$`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {

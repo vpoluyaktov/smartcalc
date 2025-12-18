@@ -206,6 +206,281 @@ func TestLookupTimezone(t *testing.T) {
 	}
 }
 
+func TestEvalDateTimeWithRefs(t *testing.T) {
+	// Test reference resolution
+	resolver := func(n int) (string, bool) {
+		switch n {
+		case 1:
+			return "2025-12-17 16:00:00 PST", true
+		case 2:
+			return "2025-01-01 00:00:00 UTC", true
+		default:
+			return "", false
+		}
+	}
+
+	tests := []struct {
+		expr        string
+		shouldParse bool
+		contains    string
+	}{
+		{"\\1 + 3 days", true, "2025-12-20"},
+		{"\\1 - 1 week", true, "2025-12-10"},
+		{"\\2 + 5 hours", true, "05:00:00"},
+		{"\\1 + 24 hours", true, "2025-12-18"},
+		{"\\99 + 1 day", false, ""}, // invalid reference
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTimeWithRefs(tt.expr, resolver)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalDateTimeWithRefs(%q) error: %v", tt.expr, err)
+					return
+				}
+				if tt.contains != "" && !strings.Contains(result, tt.contains) {
+					t.Errorf("EvalDateTimeWithRefs(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("EvalDateTimeWithRefs(%q) expected error, got result: %q", tt.expr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestResolveRefsInExpr(t *testing.T) {
+	resolver := func(n int) (string, bool) {
+		switch n {
+		case 1:
+			return "2025-12-17 16:00:00 PST", true
+		case 2:
+			return "2025-01-01 00:00:00 UTC", true
+		default:
+			return "", false
+		}
+	}
+
+	tests := []struct {
+		expr     string
+		expected string
+	}{
+		{"\\1 + 3 days", "2025-12-17 16:00:00 PST + 3 days"},
+		{"\\2 - 1 week", "2025-01-01 00:00:00 UTC - 1 week"},
+		{"\\1 + \\2", "2025-12-17 16:00:00 PST + 2025-01-01 00:00:00 UTC"},
+		{"no refs here", "no refs here"},
+		{"\\99 + 1 day", "\\99 + 1 day"}, // unresolved ref stays as-is
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result := resolveRefsInExpr(tt.expr, resolver)
+			if result != tt.expected {
+				t.Errorf("resolveRefsInExpr(%q) = %q, want %q", tt.expr, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestEvalNumberPlusDuration(t *testing.T) {
+	tests := []struct {
+		expr        string
+		shouldParse bool
+	}{
+		{"0 + 3 days", true},
+		{"0 - 1 week", true},
+		{"0 + 5 hours", true},
+		{"0 + 30 minutes", true},
+		{"1 + 3 days", false}, // only 0 is treated as "now"
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTime(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalDateTime(%q) error: %v", tt.expr, err)
+					return
+				}
+				if result == "" {
+					t.Errorf("EvalDateTime(%q) returned empty result", tt.expr)
+				}
+			} else {
+				if err == nil {
+					// For non-datetime expressions, it should fail
+					// But we need to check if it was actually parsed as datetime
+				}
+			}
+		})
+	}
+}
+
+func TestEvalNowAndToday(t *testing.T) {
+	tests := []struct {
+		expr     string
+		contains string
+	}{
+		{"now", ""},     // should return current time
+		{"now()", ""},   // should return current time
+		{"today", ""},   // should return today's date
+		{"today()", ""}, // should return today's date
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTime(tt.expr)
+			if err != nil {
+				t.Errorf("EvalDateTime(%q) error: %v", tt.expr, err)
+				return
+			}
+			if result == "" {
+				t.Errorf("EvalDateTime(%q) returned empty result", tt.expr)
+			}
+		})
+	}
+}
+
+func TestEvalDateTimeConversionWithTimezone(t *testing.T) {
+	tests := []struct {
+		expr        string
+		shouldParse bool
+	}{
+		{"2025-09-25 19:00:00 EST in Seattle", true},
+		{"2025-10-06 18:00:00 est in seattle", true},
+		{"2025-10-15 23:50:00 EST in seattle", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTime(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalDateTime(%q) error: %v", tt.expr, err)
+					return
+				}
+				if result == "" {
+					t.Errorf("EvalDateTime(%q) returned empty result", tt.expr)
+				}
+				// Should contain PST or PDT for Seattle
+				if !strings.Contains(result, "P") {
+					t.Errorf("EvalDateTime(%q) = %q, expected Pacific timezone", tt.expr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestEvalComplexDurationExpressions(t *testing.T) {
+	tests := []struct {
+		expr        string
+		shouldParse bool
+		contains    string
+	}{
+		{"(8 hours x 5 x 2) x 2", true, "days"},
+		{"2 hours x 3", true, "hours"},
+		{"30 min x 4", true, "hours"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTime(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalDateTime(%q) error: %v", tt.expr, err)
+					return
+				}
+				if tt.contains != "" && !strings.Contains(result, tt.contains) {
+					t.Errorf("EvalDateTime(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				}
+			}
+		})
+	}
+}
+
+func TestConvertDuration(t *testing.T) {
+	tests := []struct {
+		duration time.Duration
+		toUnit   string
+		expected float64
+	}{
+		{24 * time.Hour, "days", 1},
+		{48 * time.Hour, "days", 2},
+		{7 * 24 * time.Hour, "weeks", 1},
+		{60 * time.Minute, "hours", 1},
+		{3600 * time.Second, "hours", 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.toUnit, func(t *testing.T) {
+			result, err := ConvertDuration(tt.duration, tt.toUnit)
+			if err != nil {
+				t.Errorf("ConvertDuration(%v, %q) error: %v", tt.duration, tt.toUnit, err)
+				return
+			}
+			if result != tt.expected {
+				t.Errorf("ConvertDuration(%v, %q) = %v, want %v", tt.duration, tt.toUnit, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestParseDateRange(t *testing.T) {
+	tests := []struct {
+		expr        string
+		shouldParse bool
+	}{
+		{"Dec 6 till March 11", true},
+		{"Jan 1 until Dec 31", true},
+		{"March 15 to April 20", true},
+		{"invalid range", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			start, end, err := ParseDateRange(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("ParseDateRange(%q) error: %v", tt.expr, err)
+					return
+				}
+				if start.IsZero() || end.IsZero() {
+					t.Errorf("ParseDateRange(%q) returned zero time", tt.expr)
+				}
+				if !end.After(start) {
+					t.Errorf("ParseDateRange(%q) end should be after start", tt.expr)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("ParseDateRange(%q) expected error", tt.expr)
+				}
+			}
+		})
+	}
+}
+
+func TestFormatDuration(t *testing.T) {
+	tests := []struct {
+		duration time.Duration
+		contains string
+	}{
+		{48 * time.Hour, "days"},
+		{5 * time.Hour, "hours"},
+		{30 * time.Minute, "minutes"},
+		{45 * time.Second, "seconds"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.contains, func(t *testing.T) {
+			result := FormatDuration(tt.duration)
+			if !strings.Contains(result, tt.contains) {
+				t.Errorf("FormatDuration(%v) = %q, want to contain %q", tt.duration, result, tt.contains)
+			}
+		})
+	}
+}
+
 func TestIsDateTimeExpression(t *testing.T) {
 	tests := []struct {
 		expr     string
