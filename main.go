@@ -44,6 +44,16 @@ func main() {
 func createAppMenu(app *App) *menu.Menu {
 	appMenu := menu.NewMenu()
 
+	// App menu (macOS) - this becomes the "SuperCalc" menu on macOS
+	appSubmenu := appMenu.AddSubmenu("SuperCalc")
+	appSubmenu.AddText("About SuperCalc", nil, func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:about")
+	})
+	appSubmenu.AddSeparator()
+	appSubmenu.AddText("Quit SuperCalc", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
+		runtime.Quit(app.ctx)
+	})
+
 	// File menu
 	fileMenu := appMenu.AddSubmenu("File")
 	fileMenu.AddText("New", keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
