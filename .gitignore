@@ -29,3 +29,6 @@ Thumbs.db
 fyne-cross/
 main_fyne.go.bak
 supercalc
+
+# Frontend
+frontend/node_modules/
