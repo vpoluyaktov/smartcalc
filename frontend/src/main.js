@@ -13,6 +13,7 @@ let debounceTimer = null;
 let autosaveTimer = null;
 let previousText = '';
 let previousLineCount = 0;
+let isAdjustingRefs = false; // Flag to prevent re-entry during reference adjustment
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme
@@ -95,6 +96,11 @@ function onTextChanged() {
 
 // Check if line count changed and adjust references
 async function checkAndAdjustReferences() {
+    // Prevent re-entry when we dispatch adjusted text
+    if (isAdjustingRefs) {
+        return;
+    }
+    
     const currentText = editor.state.doc.toString();
     const currentLineCount = currentText.split('\n').length;
     
@@ -103,6 +109,9 @@ async function checkAndAdjustReferences() {
         try {
             const adjusted = await AdjustReferences(previousText, currentText);
             if (adjusted !== currentText) {
+                // Set flag to prevent re-entry
+                isAdjustingRefs = true;
+                
                 // Save cursor and scroll position
                 const scrollTop = editor.scrollDOM.scrollTop;
                 const scrollLeft = editor.scrollDOM.scrollLeft;
@@ -123,6 +132,11 @@ async function checkAndAdjustReferences() {
                 // Update previous text to adjusted version
                 previousText = adjusted;
                 previousLineCount = adjusted.split('\n').length;
+                
+                // Clear flag after a short delay to allow the dispatch to complete
+                setTimeout(() => {
+                    isAdjustingRefs = false;
+                }, 50);
                 
                 // Evaluate the adjusted content
                 evaluateContent();
