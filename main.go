@@ -33,30 +33,14 @@ func main() {
 	lineNums.Wrapping = fyne.TextWrapOff
 	lineNums.Alignment = fyne.TextAlignTrailing
 
-	// Wrap line numbers in a scroll container for sync
-	lineNumScroll := container.NewVScroll(lineNums)
-	lineNumScroll.SetMinSize(fyne.NewSize(50, 0))
-
 	entry := ui.NewCustomMultiLineEntry()
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
 	entry.SetPlaceHolder("Type expressions like: $95.88 x (167 + 175) - 20% =\nDate/Time: now in Seattle =, today() + 30 days =\nNetwork: split 10.0.0.0/16 to 4 subnets =\nReference prior results as \\\\1, \\\\2, ...")
 
-	// Wrap entry in a scroll container we can control
-	entryScroll := container.NewVScroll(entry)
-
-	lineNumBox := container.New(&ui.FixedWidthLayout{Width: 50}, lineNumScroll)
-	editorArea := container.NewBorder(nil, nil, lineNumBox, nil, entryScroll)
-
-	// Sync scroll positions periodically
-	go func() {
-		for {
-			time.Sleep(50 * time.Millisecond)
-			if lineNumScroll.Offset.Y != entryScroll.Offset.Y {
-				lineNumScroll.Offset.Y = entryScroll.Offset.Y
-				lineNumScroll.Refresh()
-			}
-		}
-	}()
+	// Place line numbers and entry side by side in a single row, then scroll together
+	lineNumBox := container.New(&ui.FixedWidthLayout{Width: 50}, lineNums)
+	editorRow := container.NewBorder(nil, nil, lineNumBox, nil, entry)
+	editorArea := container.NewScroll(editorRow)
 
 	// Status bar at bottom - version on the right
 	statusLabel := widget.NewLabel(fmt.Sprintf("Version %s", version))
