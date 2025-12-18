@@ -313,3 +313,83 @@ func findSubstring(s, substr string) bool {
 	}
 	return false
 }
+
+func TestEvalLinesNetworkExpressions(t *testing.T) {
+	tests := []struct {
+		name     string
+		lines    []string
+		contains string
+	}{
+		{
+			name:     "subnet split with / notation",
+			lines:    []string{"10.100.0.0/24 / 2 subnets ="},
+			contains: "> 1:",
+		},
+		{
+			name:     "host split with / notation",
+			lines:    []string{"10.100.0.0/24 / 100 hosts ="},
+			contains: "> 1:",
+		},
+		{
+			name:     "simple CIDR info",
+			lines:    []string{"10.100.0.0/24 ="},
+			contains: "254",
+		},
+		{
+			name:     "hosts in prefix",
+			lines:    []string{"hosts in /24 ="},
+			contains: "254 hosts",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := EvalLines(tt.lines)
+			if len(results) == 0 {
+				t.Fatal("EvalLines returned no results")
+			}
+			if !containsSubstring(results[0].Output, tt.contains) {
+				t.Errorf("EvalLines(%v) output = %q, want to contain %q",
+					tt.lines, results[0].Output, tt.contains)
+			}
+		})
+	}
+}
+
+func TestEvalLinesMixedContent(t *testing.T) {
+	// Test that regular expressions still work alongside network expressions
+	lines := []string{
+		"100 + 50 =",
+		"10.100.0.0/24 / 2 subnets =",
+		"$100 - 20% =",
+	}
+
+	results := EvalLines(lines)
+
+	// First line: math
+	if results[0].Value != 150 {
+		t.Errorf("Line 1 value = %v, want 150", results[0].Value)
+	}
+
+	// Second line: network (after cleaning, this is line 2)
+	// Note: cleanOutputLines removes "> " lines, so we check the cleaned result
+	found := false
+	for _, r := range results {
+		if containsSubstring(r.Output, "> 1:") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Expected network output with '> 1:' prefix")
+	}
+
+	// Third line (or last): currency
+	lastResult := results[len(results)-1]
+	if !lastResult.IsCurrency {
+		t.Error("Last line should be currency")
+	}
+	if math.Abs(lastResult.Value-80) > 0.01 {
+		t.Errorf("Last line value = %v, want 80", lastResult.Value)
+	}
+}

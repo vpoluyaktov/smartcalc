@@ -504,3 +504,51 @@ func TestIsDateTimeExpression(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatTime(t *testing.T) {
+	// Test that FormatTime truncates to minutes (no seconds)
+	testTime := time.Date(2025, 12, 18, 14, 30, 45, 0, time.UTC)
+	result := FormatTime(testTime)
+
+	// Should contain date and hour:minute
+	if !strings.Contains(result, "2025-12-18") {
+		t.Errorf("FormatTime() = %q, should contain date '2025-12-18'", result)
+	}
+	if !strings.Contains(result, "14:30") {
+		t.Errorf("FormatTime() = %q, should contain time '14:30'", result)
+	}
+	// Should NOT contain seconds
+	if strings.Contains(result, "14:30:45") {
+		t.Errorf("FormatTime() = %q, should NOT contain seconds", result)
+	}
+	// Should contain timezone
+	if !strings.Contains(result, "UTC") {
+		t.Errorf("FormatTime() = %q, should contain timezone 'UTC'", result)
+	}
+}
+
+func TestFormatTimeNoSeconds(t *testing.T) {
+	// Verify the format is exactly "2006-01-02 15:04 MST" (no seconds)
+	testTime := time.Date(2025, 1, 1, 0, 0, 59, 0, time.UTC)
+	result := FormatTime(testTime)
+
+	expected := "2025-01-01 00:00 UTC"
+	if result != expected {
+		t.Errorf("FormatTime() = %q, want %q", result, expected)
+	}
+}
+
+func TestEvalNowNoSeconds(t *testing.T) {
+	// Verify that "now" output doesn't include seconds
+	result, err := EvalDateTime("now")
+	if err != nil {
+		t.Fatalf("EvalDateTime('now') error: %v", err)
+	}
+
+	// Result should be in format "YYYY-MM-DD HH:MM TZ" (no seconds)
+	// Count colons - should be exactly 1 (in HH:MM)
+	colonCount := strings.Count(result, ":")
+	if colonCount != 1 {
+		t.Errorf("EvalDateTime('now') = %q, expected exactly 1 colon (no seconds)", result)
+	}
+}
