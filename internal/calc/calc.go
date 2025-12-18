@@ -33,6 +33,10 @@ func EvalLines(lines []string) []LineResult {
 		if trim == "" {
 			continue
 		}
+		// Skip output lines (prefixed with "> ")
+		if strings.HasPrefix(trim, "> ") {
+			continue
+		}
 		eq := strings.IndexRune(line, '=')
 		if eq < 0 {
 			continue
