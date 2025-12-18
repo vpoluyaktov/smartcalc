@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"supercalc/internal/datetime"
-	"supercalc/internal/eval"
-	"supercalc/internal/network"
-	"supercalc/internal/utils"
+	"smartcalc/internal/datetime"
+	"smartcalc/internal/eval"
+	"smartcalc/internal/network"
+	"smartcalc/internal/utils"
 )
 
 // LineResult holds the result of evaluating a single line.

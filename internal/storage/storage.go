@@ -47,7 +47,7 @@ func (m *Manager) CurrentFile() string {
 func (m *Manager) New() {
 	m.currentFile = ""
 	m.onNew()
-	m.window.SetTitle("SuperCalc - Untitled")
+	m.window.SetTitle("SmartCalc - Untitled")
 }
 
 // Open shows a file dialog and loads the selected file.
@@ -175,9 +175,9 @@ func (m *Manager) updateTitle() {
 		modified = " *"
 	}
 	if m.currentFile == "" {
-		m.window.SetTitle("SuperCalc - Untitled" + modified)
+		m.window.SetTitle("SmartCalc - Untitled" + modified)
 	} else {
-		m.window.SetTitle("SuperCalc - " + filepath.Base(m.currentFile) + modified)
+		m.window.SetTitle("SmartCalc - " + filepath.Base(m.currentFile) + modified)
 	}
 }
 

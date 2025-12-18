@@ -331,7 +331,7 @@ function insertSnippet(snippet) {
 // Show manual dialog
 function showManual() {
     const manual = `
-# SuperCalc Manual
+# SmartCalc Manual
 
 ## Basic Usage
 Type mathematical expressions followed by = to calculate results.
@@ -381,7 +381,7 @@ Type mathematical expressions followed by = to calculate results.
 // Show about dialog
 function showAbout() {
     GetVersion().then(version => {
-        alert(`SuperCalc ${version}
+        alert(`SmartCalc ${version}
 
 A powerful calculator with support for:
 • Multi-line expressions

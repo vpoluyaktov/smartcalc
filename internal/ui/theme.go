@@ -7,14 +7,14 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-// SuperCalcTheme is a modern, visually appealing theme for SuperCalc.
-type SuperCalcTheme struct {
+// SmartCalcTheme is a modern, visually appealing theme for SmartCalc.
+type SmartCalcTheme struct {
 	fyne.Theme
 }
 
 // NewLargerTextTheme creates a theme with larger text size and custom colors.
-func NewLargerTextTheme() *SuperCalcTheme {
-	return &SuperCalcTheme{Theme: theme.DefaultTheme()}
+func NewLargerTextTheme() *SmartCalcTheme {
+	return &SmartCalcTheme{Theme: theme.DefaultTheme()}
 }
 
 // Color palette - Modern dark theme with vibrant accents
@@ -49,7 +49,7 @@ var (
 	textLightSecondary = color.NRGBA{R: 71, G: 85, B: 105, A: 255}   // Slate-600
 )
 
-func (t *SuperCalcTheme) Size(name fyne.ThemeSizeName) float32 {
+func (t *SmartCalcTheme) Size(name fyne.ThemeSizeName) float32 {
 	switch name {
 	case theme.SizeNameText:
 		return 15
@@ -77,14 +77,14 @@ func (t *SuperCalcTheme) Size(name fyne.ThemeSizeName) float32 {
 	return t.Theme.Size(name)
 }
 
-func (t *SuperCalcTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (t *SmartCalcTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	if variant == theme.VariantLight {
 		return t.lightColor(name)
 	}
 	return t.darkColor(name)
 }
 
-func (t *SuperCalcTheme) darkColor(name fyne.ThemeColorName) color.Color {
+func (t *SmartCalcTheme) darkColor(name fyne.ThemeColorName) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
 		return bgDark
@@ -144,7 +144,7 @@ func (t *SuperCalcTheme) darkColor(name fyne.ThemeColorName) color.Color {
 	return t.Theme.Color(name, theme.VariantDark)
 }
 
-func (t *SuperCalcTheme) lightColor(name fyne.ThemeColorName) color.Color {
+func (t *SmartCalcTheme) lightColor(name fyne.ThemeColorName) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
 		return bgLightTheme
@@ -204,10 +204,10 @@ func (t *SuperCalcTheme) lightColor(name fyne.ThemeColorName) color.Color {
 	return t.Theme.Color(name, theme.VariantLight)
 }
 
-func (t *SuperCalcTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (t *SmartCalcTheme) Font(style fyne.TextStyle) fyne.Resource {
 	return t.Theme.Font(style)
 }
 
-func (t *SuperCalcTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (t *SmartCalcTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return t.Theme.Icon(name)
 }

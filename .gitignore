@@ -1,5 +1,5 @@
 # Binaries
-supercalc
+smartcalc
 *.exe
 *.exe~
 *.dll
@@ -28,7 +28,7 @@ Thumbs.db
 # Fyne
 fyne-cross/
 main_fyne.go.bak
-supercalc
+smartcalc
 
 # Frontend
 frontend/node_modules/

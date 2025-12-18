@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Build script for SuperCalc (Wails)
+# Build script for SmartCalc (Wails)
 # This script builds the application and creates a macOS .app bundle
 
 set -e
 
-echo "🧮 Building SuperCalc..."
+echo "🧮 Building SmartCalc..."
 
 # Get GOPATH and add bin to PATH
 export GOPATH=$(go env GOPATH)
@@ -56,11 +56,11 @@ fi
 
 # Set output filename based on OS
 if [ "$OS" = "Darwin" ]; then
-    OUTFILE="SuperCalc-darwin-${VERSION}-${GOARCH}"
+    OUTFILE="SmartCalc-darwin-${VERSION}-${GOARCH}"
 elif [ "$OS" = "Linux" ]; then
-    OUTFILE="SuperCalc-linux-${VERSION}-${GOARCH}"
+    OUTFILE="SmartCalc-linux-${VERSION}-${GOARCH}"
 else
-    OUTFILE="SuperCalc-${VERSION}-${GOARCH}"
+    OUTFILE="SmartCalc-${VERSION}-${GOARCH}"
 fi
 
 # Build the binary with Wails
@@ -74,7 +74,7 @@ CGO_ENABLED=1 GOARCH=$GOARCH go build \
 if [ "$OS" = "Darwin" ]; then
     echo "Creating macOS .app bundle..."
     
-    APP_NAME="SuperCalc.app"
+    APP_NAME="SmartCalc.app"
     rm -rf "$APP_NAME"
     
     # Create app bundle structure
@@ -82,7 +82,7 @@ if [ "$OS" = "Darwin" ]; then
     mkdir -p "$APP_NAME/Contents/Resources"
     
     # Copy binary
-    cp "$OUTFILE" "$APP_NAME/Contents/MacOS/SuperCalc"
+    cp "$OUTFILE" "$APP_NAME/Contents/MacOS/SmartCalc"
     
     # Generate icns from PNG if needed (macOS only)
     if [ -f "assets/icon.png" ] && [ ! -f "build/appicon.icns" ]; then
@@ -122,15 +122,15 @@ if [ "$OS" = "Darwin" ]; then
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>SuperCalc</string>
+    <string>SmartCalc</string>
     <key>CFBundleIconFile</key>
     <string>icon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.supercalc.app</string>
+    <string>com.smartcalc.app</string>
     <key>CFBundleName</key>
-    <string>SuperCalc</string>
+    <string>SmartCalc</string>
     <key>CFBundleDisplayName</key>
-    <string>SuperCalc</string>
+    <string>SmartCalc</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -153,12 +153,12 @@ EOF
     
     # Zip the .app bundle
     echo "Zipping macOS .app bundle..."
-    ZIP_NAME="SuperCalc-darwin-${VERSION}-${GOARCH}.zip"
+    ZIP_NAME="SmartCalc-darwin-${VERSION}-${GOARCH}.zip"
     zip -r "$ZIP_NAME" "$APP_NAME"
     
     echo "✅ Build complete!"
     echo "📦 macOS .app bundle created: $ZIP_NAME"
-    echo "🚀 You can now drag SuperCalc.app to your Applications folder"
+    echo "🚀 You can now drag SmartCalc.app to your Applications folder"
 else
     echo "✅ Build complete!"
     echo "📦 Binary created: $OUTFILE"

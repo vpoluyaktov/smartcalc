@@ -125,7 +125,7 @@ func buildRecentMenu(getRecent func() []string, openRecent func(string)) *fyne.M
 
 // ShowManualDialog displays the manual/help dialog.
 func ShowManualDialog(window fyne.Window) {
-	content := widget.NewRichTextFromMarkdown(`# SuperCalc Manual
+	content := widget.NewRichTextFromMarkdown(`# SmartCalc Manual
 
 ## Basic Usage
 Type mathematical expressions followed by = to calculate results.
@@ -180,14 +180,14 @@ Type mathematical expressions followed by = to calculate results.
 `)
 	content.Wrapping = fyne.TextWrapWord
 
-	d := dialog.NewCustom("SuperCalc Manual", "Close", content, window)
+	d := dialog.NewCustom("SmartCalc Manual", "Close", content, window)
 	d.Resize(fyne.NewSize(500, 400))
 	d.Show()
 }
 
 // ShowAboutDialog displays the about dialog.
 func ShowAboutDialog(window fyne.Window) {
-	dialog.ShowInformation("About SuperCalc",
-		"SuperCalc v1.0\n\nA powerful calculator with support for:\n• Multi-line expressions\n• Line references\n• Currency formatting\n• Mathematical functions\n• Date/Time calculations\n• Network/IP subnet calculations",
+	dialog.ShowInformation("About SmartCalc",
+		"SmartCalc v1.0\n\nA powerful calculator with support for:\n• Multi-line expressions\n• Line references\n• Currency formatting\n• Mathematical functions\n• Date/Time calculations\n• Network/IP subnet calculations",
 		window)
 }

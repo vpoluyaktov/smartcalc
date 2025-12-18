@@ -1,4 +1,4 @@
-name: Release SuperCalc
+name: Release SmartCalc
 
 on:
   release:
@@ -87,7 +87,7 @@ jobs:
           echo "VERSION is $VERSION"
           BUILD_DATE=$(date -u '+%Y-%m-%d_%H:%M:%S_UTC')
           GIT_COMMIT=$(git rev-parse --short HEAD)
-          OUTFILE=SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}
+          OUTFILE=SmartCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}${{ matrix.ext }}
           echo "OUTFILE is $OUTFILE"
           go build -tags "${{ matrix.wails_tags }}" -ldflags="-s -w -X main.version=$VERSION -X main.buildDate=$BUILD_DATE -X main.gitCommit=$GIT_COMMIT" -o $OUTFILE .
         env:
@@ -102,13 +102,13 @@ jobs:
           APP_VERSION=$(echo "$VERSION" | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
           if [ -z "$APP_VERSION" ]; then APP_VERSION="1.0.0"; fi
           
-          APP_NAME="SuperCalc.app"
+          APP_NAME="SmartCalc.app"
           rm -rf "$APP_NAME"
           
           mkdir -p "$APP_NAME/Contents/MacOS"
           mkdir -p "$APP_NAME/Contents/Resources"
           
-          cp "SuperCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}" "$APP_NAME/Contents/MacOS/SuperCalc"
+          cp "SmartCalc-${{ matrix.goos }}-${VERSION}-${{ matrix.goarch }}" "$APP_NAME/Contents/MacOS/SmartCalc"
           
           # Generate icns from PNG
           if [ -f "assets/icon.png" ]; then
@@ -136,15 +136,15 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>CFBundleExecutable</key>
-              <string>SuperCalc</string>
+              <string>SmartCalc</string>
               <key>CFBundleIconFile</key>
               <string>icon.icns</string>
               <key>CFBundleIdentifier</key>
-              <string>com.supercalc.app</string>
+              <string>com.smartcalc.app</string>
               <key>CFBundleName</key>
-              <string>SuperCalc</string>
+              <string>SmartCalc</string>
               <key>CFBundleDisplayName</key>
-              <string>SuperCalc</string>
+              <string>SmartCalc</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
               <key>CFBundleShortVersionString</key>
@@ -164,7 +164,7 @@ jobs:
           xattr -cr "$APP_NAME" || true
           codesign --force --deep --sign - "$APP_NAME" || true
           
-          ZIP_NAME="SuperCalc-darwin-${VERSION}-${{ matrix.goarch }}.zip"
+          ZIP_NAME="SmartCalc-darwin-${VERSION}-${{ matrix.goarch }}.zip"
           zip -r "$ZIP_NAME" "$APP_NAME"
         env:
           VERSION: ${{ env.VERSION }}
@@ -174,8 +174,8 @@ jobs:
         with:
           name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
-            SuperCalc-${{ matrix.goos }}-${{ env.VERSION }}-${{ matrix.goarch }}${{ matrix.ext }}
-            SuperCalc-darwin-${{ env.VERSION }}-${{ matrix.goarch }}.zip
+            SmartCalc-${{ matrix.goos }}-${{ env.VERSION }}-${{ matrix.goarch }}${{ matrix.ext }}
+            SmartCalc-darwin-${{ env.VERSION }}-${{ matrix.goarch }}.zip
 
   upload-to-release:
     name: Upload Assets to Release
@@ -194,7 +194,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for file in binaries-*/*; do
-            if [[ "$file" == *"SuperCalc-darwin-"*".zip" ]] || [[ "$file" == *"SuperCalc-linux-"* ]] || [[ "$file" == *"SuperCalc-windows-"* ]]; then
+            if [[ "$file" == *"SmartCalc-darwin-"*".zip" ]] || [[ "$file" == *"SmartCalc-linux-"* ]] || [[ "$file" == *"SmartCalc-windows-"* ]]; then
               echo "Uploading $file to release..."
               gh release upload ${{ github.event.release.tag_name }} "$file" || true
             fi

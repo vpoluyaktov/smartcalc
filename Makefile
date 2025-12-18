@@ -1,7 +1,7 @@
-# SuperCalc - Makefile
+# SmartCalc - Makefile
 
 # Variables
-BINARY_NAME=supercalc
+BINARY_NAME=smartcalc
 BUILD_DIR=build
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DATE=$(shell date -u '+%Y-%m-%d_%H:%M:%S_UTC')
@@ -79,8 +79,8 @@ clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_DIR)
 	rm -f $(BINARY_NAME)
-	rm -f SuperCalc-*
-	rm -rf "SuperCalc.app"
+	rm -f SmartCalc-*
+	rm -rf "SmartCalc.app"
 	rm -f *.zip
 	@echo "✓ Clean complete"
 
@@ -111,7 +111,7 @@ uninstall:
 release: clean deps test app-bundle
 	@echo "Creating release build..."
 	@mkdir -p $(BUILD_DIR)/release
-	@if [ -d "SuperCalc.app" ]; then cp -r "SuperCalc.app" $(BUILD_DIR)/release/; fi
+	@if [ -d "SmartCalc.app" ]; then cp -r "SmartCalc.app" $(BUILD_DIR)/release/; fi
 	@echo "✓ Release build complete: $(BUILD_DIR)/release/"
 
 # Check for common issues
@@ -124,7 +124,7 @@ check:
 
 # Display help
 help:
-	@echo "SuperCalc - Build Commands"
+	@echo "SmartCalc - Build Commands"
 	@echo "=========================="
 	@echo ""
 	@echo "Available targets:"

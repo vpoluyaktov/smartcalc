@@ -12,7 +12,7 @@
 `).length,await ea(),ut=!1;return}}catch(t){console.error("Adjust references error:",t),ut=!1}qt=s,$t=e,Hs()}function $u(){Ln&&clearTimeout(Ln),Ln=setTimeout(()=>{Uu()},Hu)}async function Uu(){if(Ne)try{await Eu(Ne,H.state.doc.toString())}catch(s){console.error("Autosave error:",s)}}async function Hs(){ut=!0;try{await ea()}finally{ut=!1}}async function ea(){const s=H.state.doc.toString();try{const i=(await Ru(s)).map(n=>n.output).join(`
 `);if(i!==s){const n=H.scrollDOM.scrollTop,r=H.scrollDOM.scrollLeft,o=H.state.selection.main.head;H.dispatch({changes:{from:0,to:H.state.doc.length,insert:i},selection:{anchor:Math.min(o,i.length)}}),requestAnimationFrame(()=>{H.scrollDOM.scrollTop=n,H.scrollDOM.scrollLeft=r}),qt=i,$t=i.split(`
 `).length}}catch(e){console.error("Evaluation error:",e)}}function ju(s){s.ctrlKey&&s.key==="o"&&(s.preventDefault(),ta()),s.ctrlKey&&s.key==="s"&&(s.preventDefault(),ia()),s.ctrlKey&&s.shiftKey&&s.key==="S"&&(s.preventDefault(),zs()),s.ctrlKey&&s.key==="n"&&(s.preventDefault(),na())}async function ta(){try{const s=await Iu();s&&await Vs(s)}catch(s){console.error("Open error:",s)}}async function Vs(s){try{const e=await Nu(s);H.dispatch({changes:{from:0,to:H.state.doc.length,insert:e}}),Ne=s,Ks(),Hs(),await Fs(s)}catch(e){console.error("Open error:",e)}}async function ia(){if(Ne)try{await Zl(Ne,H.state.doc.toString()),await Fs(Ne)}catch(s){console.error("Save error:",s)}else zs()}async function zs(){try{const s=await Wu();s&&(await Zl(s,H.state.doc.toString()),Ne=s,Ks(),await Fs(s))}catch(s){console.error("Save As error:",s)}}function na(){H.dispatch({changes:{from:0,to:H.state.doc.length,insert:""}}),Ne="",Ks()}function Ks(){const s=Ne?Ne.split("/").pop():"Untitled";document.getElementById("file-name").textContent=s}function Gu(s){const e=H.state.selection.main.head;H.dispatch({changes:{from:e,insert:s},selection:{anchor:e+s.length}}),Hs()}function Ju(){alert(`
-# SuperCalc Manual
+# SmartCalc Manual
 
 ## Basic Usage
 Type mathematical expressions followed by = to calculate results.
@@ -55,7 +55,7 @@ Type mathematical expressions followed by = to calculate results.
 - **Host count**: how many hosts in 10.100.0.0/28
 - **Subnet mask**: mask for /24, wildcard for /24
 - **IP in range**: is 10.100.0.50 in 10.100.0.0/24
-`)}function _u(){Ql().then(s=>{alert(`SuperCalc ${s}
+`)}function _u(){Ql().then(s=>{alert(`SmartCalc ${s}
 
 A powerful calculator with support for:
 • Multi-line expressions

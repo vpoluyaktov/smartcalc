@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"supercalc/internal/calc"
-	"supercalc/internal/eval"
+	"smartcalc/internal/calc"
+	"smartcalc/internal/eval"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -39,7 +39,7 @@ func getConfigPath() string {
 	if err != nil {
 		configDir = os.TempDir()
 	}
-	return filepath.Join(configDir, "supercalc")
+	return filepath.Join(configDir, "smartcalc")
 }
 
 // loadRecentFiles loads recent files from config
@@ -156,7 +156,7 @@ func (a *App) OpenFileDialog() (string, error) {
 	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Open File",
 		Filters: []runtime.FileFilter{
-			{DisplayName: "SuperCalc Files", Pattern: "*.txt;*.sc"},
+			{DisplayName: "SmartCalc Files", Pattern: "*.txt;*.sc"},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
 	})
@@ -169,7 +169,7 @@ func (a *App) SaveFileDialog() (string, error) {
 		DefaultFilename: "untitled.txt",
 		Filters: []runtime.FileFilter{
 			{DisplayName: "Text Files", Pattern: "*.txt"},
-			{DisplayName: "SuperCalc Files", Pattern: "*.sc"},
+			{DisplayName: "SmartCalc Files", Pattern: "*.sc"},
 			{DisplayName: "All Files", Pattern: "*"},
 		},
 	})

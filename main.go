@@ -22,7 +22,7 @@ func main() {
 	appMenu := createAppMenu(app)
 
 	err := wails.Run(&options.App{
-		Title:  "SuperCalc",
+		Title:  "SmartCalc",
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
@@ -44,13 +44,13 @@ func main() {
 func createAppMenu(app *App) *menu.Menu {
 	appMenu := menu.NewMenu()
 
-	// App menu (macOS) - this becomes the "SuperCalc" menu on macOS
-	appSubmenu := appMenu.AddSubmenu("SuperCalc")
-	appSubmenu.AddText("About SuperCalc", nil, func(_ *menu.CallbackData) {
+	// App menu (macOS) - this becomes the "SmartCalc" menu on macOS
+	appSubmenu := appMenu.AddSubmenu("SmartCalc")
+	appSubmenu.AddText("About SmartCalc", nil, func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:about")
 	})
 	appSubmenu.AddSeparator()
-	appSubmenu.AddText("Quit SuperCalc", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
+	appSubmenu.AddText("Quit SmartCalc", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		runtime.Quit(app.ctx)
 	})
 
@@ -134,7 +134,7 @@ func createAppMenu(app *App) *menu.Menu {
 		runtime.EventsEmit(app.ctx, "menu:manual")
 	})
 	helpMenu.AddSeparator()
-	helpMenu.AddText("About SuperCalc", nil, func(_ *menu.CallbackData) {
+	helpMenu.AddText("About SmartCalc", nil, func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:about")
 	})
 
