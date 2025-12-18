@@ -257,10 +257,15 @@ func tryDateArithmetic(expr string) (string, bool) {
 	} else if dateLower == "now" || dateLower == "now()" {
 		baseTime = time.Now()
 	} else {
-		var err error
-		baseTime, err = ParseDateTime(dateExpr, time.Local)
-		if err != nil {
-			return "", false
+		// Try to parse time with timezone like "12 am PST" or "3:00 pm EST"
+		if t, ok := parseTimeWithTimezone(dateExpr); ok {
+			baseTime = t
+		} else {
+			var err error
+			baseTime, err = ParseDateTime(dateExpr, time.Local)
+			if err != nil {
+				return "", false
+			}
 		}
 	}
 
@@ -278,6 +283,41 @@ func tryDateArithmetic(expr string) (string, bool) {
 	}
 
 	return FormatTime(baseTime), true
+}
+
+// parseTimeWithTimezone parses time expressions like "12 am PST", "3:00 pm EST", "14:00 UTC"
+func parseTimeWithTimezone(expr string) (time.Time, bool) {
+	// Pattern: time followed by timezone
+	re := regexp.MustCompile(`(?i)^(\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)$`)
+	matches := re.FindStringSubmatch(expr)
+	if matches == nil {
+		return time.Time{}, false
+	}
+
+	timeStr := strings.TrimSpace(matches[1])
+	tzStr := strings.TrimSpace(matches[2])
+
+	// Look up timezone
+	loc, err := LookupTimezone(tzStr)
+	if err != nil {
+		return time.Time{}, false
+	}
+
+	// Parse the time part
+	timeFormats := []string{
+		"3:04pm", "3:04 pm", "3pm", "3 pm",
+		"15:04", "15:04:05",
+		"3:04:05pm", "3:04:05 pm",
+	}
+
+	for _, format := range timeFormats {
+		if t, err := time.ParseInLocation(format, strings.ToLower(timeStr), loc); err == nil {
+			now := time.Now().In(loc)
+			return time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), t.Second(), 0, loc), true
+		}
+	}
+
+	return time.Time{}, false
 }
 
 func tryDateTimeConversion(expr string) (string, bool) {
