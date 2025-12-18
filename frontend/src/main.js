@@ -242,6 +242,45 @@ const syntaxHighlighter = ViewPlugin.fromClass(class {
     decorations: v => v.decorations
 });
 
+// Custom Enter key handler - auto-append '=' if needed
+function handleEnterKey(view) {
+    const state = view.state;
+    const pos = state.selection.main.head;
+    const line = state.doc.lineAt(pos);
+    const lineText = line.text;
+    const cursorAtEnd = pos === line.to;
+    
+    // Check conditions:
+    // 1. Cursor is at end of line
+    // 2. Line is not empty
+    // 3. Line is not a comment (starting with #)
+    // 4. Line doesn't already end with '='
+    if (cursorAtEnd && 
+        lineText.trim().length > 0 && 
+        !lineText.trim().startsWith('#') && 
+        !lineText.trim().startsWith('//') &&
+        !lineText.trimEnd().endsWith('=')) {
+        
+        // Insert ' =' at cursor, then newline
+        view.dispatch({
+            changes: { from: pos, insert: ' =\n' },
+            selection: { anchor: pos + 3 },
+        });
+        return true;
+    }
+    
+    // Default behavior: just insert newline
+    return false;
+}
+
+// Custom keymap for Enter key
+const customKeymap = keymap.of([
+    {
+        key: 'Enter',
+        run: handleEnterKey,
+    },
+]);
+
 // Initialize editor
 function initEditor() {
     const container = document.getElementById('editor-container');
@@ -253,6 +292,7 @@ function initEditor() {
             highlightActiveLineGutter(),
             highlightActiveLine(),
             history(),
+            customKeymap,
             keymap.of([...defaultKeymap, ...historyKeymap]),
             getCurrentTheme(),
             syntaxHighlighter,
@@ -293,6 +333,7 @@ function initEditor() {
                 highlightActiveLineGutter(),
                 highlightActiveLine(),
                 history(),
+                customKeymap,
                 keymap.of([...defaultKeymap, ...historyKeymap]),
                 e.matches ? darkTheme : lightTheme,
                 syntaxHighlighter,
