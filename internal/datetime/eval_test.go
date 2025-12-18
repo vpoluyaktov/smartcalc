@@ -226,7 +226,7 @@ func TestEvalDateTimeWithRefs(t *testing.T) {
 	}{
 		{"\\1 + 3 days", true, "2025-12-20"},
 		{"\\1 - 1 week", true, "2025-12-10"},
-		{"\\2 + 5 hours", true, "05:00:00"},
+		{"\\2 + 5 hours", true, "05:00"},
 		{"\\1 + 24 hours", true, "2025-12-18"},
 		{"\\99 + 1 day", false, ""}, // invalid reference
 	}
