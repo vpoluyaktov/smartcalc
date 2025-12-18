@@ -18,7 +18,7 @@ func EvalDateTime(expr string) (string, error) {
 		return evalNowIn(expr)
 	}
 
-	// Check for "now" or "now()"
+	// Check for "Now" (capitalized - display format)
 	if exprLower == "now" || exprLower == "now()" {
 		return FormatTime(time.Now()), nil
 	}
@@ -27,6 +27,11 @@ func EvalDateTime(expr string) (string, error) {
 	if exprLower == "today" || exprLower == "today()" {
 		now := time.Now()
 		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local).Format("2006-01-02"), nil
+	}
+
+	// Check for number + duration: "0 + 3 days" means "now + 3 days"
+	if result, ok := tryNumberPlusDuration(expr); ok {
+		return result, nil
 	}
 
 	// Check for time conversion: "6:00 am Seattle in Kiev"
@@ -275,6 +280,44 @@ func tryDateRange(expr string) (string, bool) {
 		return fmt.Sprintf("%.0f days", days), true
 	}
 	return fmt.Sprintf("%.1f days", days), true
+}
+
+func tryNumberPlusDuration(expr string) (string, bool) {
+	// Pattern: "0 + 3 days" or "0 - 5 hours" - treat 0 as "now"
+	re := regexp.MustCompile(`(?i)^(\d+)\s*([+−-])\s*([\d.]+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)$`)
+	matches := re.FindStringSubmatch(expr)
+	if matches == nil {
+		return "", false
+	}
+
+	baseNum, _ := strconv.ParseFloat(matches[1], 64)
+	op := matches[2]
+	value, _ := strconv.ParseFloat(matches[3], 64)
+	unit := matches[4]
+
+	// If base is 0, treat as "now"
+	var baseTime time.Time
+	if baseNum == 0 {
+		baseTime = time.Now()
+	} else {
+		// Otherwise, this isn't a datetime expression
+		return "", false
+	}
+
+	// Parse duration
+	d, err := ParseDuration(fmt.Sprintf("%f %s", value, unit))
+	if err != nil {
+		return "", false
+	}
+
+	// Apply operation
+	if op == "-" || op == "−" {
+		baseTime = baseTime.Add(-d)
+	} else {
+		baseTime = baseTime.Add(d)
+	}
+
+	return FormatTime(baseTime), true
 }
 
 func tryDurationMultiplication(expr string) (string, bool) {
