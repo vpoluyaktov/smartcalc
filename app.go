@@ -42,17 +42,17 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 		return false // No unsaved changes, allow close
 	}
 
-	// Show confirmation dialog
-	title := "Unsaved Changes"
-	message := "You have unsaved changes. Do you want to save before closing?"
-	if a.currentFile == "" {
-		message = "You have unsaved changes in an untitled document. Do you want to save before closing?"
+	// If file has a name, silently save and close
+	if a.currentFile != "" {
+		runtime.EventsEmit(a.ctx, "menu:save")
+		return false
 	}
 
+	// Only show dialog for unnamed/untitled documents
 	result, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:          runtime.QuestionDialog,
-		Title:         title,
-		Message:       message,
+		Title:         "Unsaved Changes",
+		Message:       "You have unsaved changes in an untitled document. Do you want to save before closing?",
 		Buttons:       []string{"Save", "Don't Save", "Cancel"},
 		DefaultButton: "Save",
 		CancelButton:  "Cancel",
@@ -64,7 +64,7 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 
 	switch result {
 	case "Save":
-		// Emit save event and allow close
+		// Emit save event (will trigger Save As dialog for unnamed file)
 		runtime.EventsEmit(a.ctx, "menu:save")
 		return false
 	case "Don't Save":
