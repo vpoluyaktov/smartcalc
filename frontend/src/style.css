@@ -6,8 +6,8 @@
 
 html, body {
     height: 100%;
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: #1a1b26;
+    color: #c0caf5;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", sans-serif;
 }
 
@@ -27,10 +27,10 @@ html, body {
     justify-content: space-between;
     align-items: center;
     padding: 4px 12px;
-    background-color: #1e293b;
-    border-top: 1px solid #334155;
+    background-color: #16161e;
+    border-top: 1px solid #3b4261;
     font-size: 12px;
-    color: #94a3b8;
+    color: #7aa2f7;
 }
 
 #file-name {
@@ -57,43 +57,102 @@ html, body {
 }
 
 .cm-editor .cm-gutters {
-    background-color: #1e293b;
-    border-right: 1px solid #334155;
-    color: #64748b;
+    background-color: #16161e;
+    border-right: 1px solid #3b4261;
+    color: #565f89;
 }
 
 .cm-editor .cm-activeLineGutter {
-    background-color: #334155;
-    color: #f8fafc;
+    background-color: #292e42;
+    color: #7aa2f7;
 }
 
 .cm-editor .cm-activeLine {
-    background-color: rgba(51, 65, 85, 0.5);
+    background-color: rgba(41, 46, 66, 0.5);
 }
 
 .cm-editor .cm-selectionBackground {
-    background-color: rgba(99, 102, 241, 0.3) !important;
+    background-color: rgba(122, 162, 247, 0.25) !important;
 }
 
 .cm-editor.cm-focused .cm-selectionBackground {
-    background-color: rgba(99, 102, 241, 0.4) !important;
+    background-color: rgba(122, 162, 247, 0.35) !important;
 }
 
 .cm-editor .cm-cursor {
-    border-left-color: #6366f1;
+    border-left-color: #7aa2f7;
     border-left-width: 2px;
 }
 
-/* Result styling */
+/* Syntax highlighting - vibrant Tokyo Night inspired */
+
+/* Results - bright green */
 .cm-result {
-    color: #22d3ee;
+    color: #9ece6a;
+    font-weight: 600;
+}
+
+/* Errors - soft red */
+.cm-error {
+    color: #f7768e;
+}
+
+/* Line references \1, \2 - magenta/pink */
+.cm-reference {
+    color: #bb9af7;
     font-weight: 500;
 }
 
-.cm-error {
-    color: #ef4444;
+/* Numbers - orange */
+.cm-number {
+    color: #ff9e64;
 }
 
-.cm-reference {
-    color: #a78bfa;
+/* Operators +, -, *, / - cyan */
+.cm-operator {
+    color: #7dcfff;
+    font-weight: 600;
+}
+
+/* Currency $ - gold */
+.cm-currency {
+    color: #e0af68;
+    font-weight: 500;
+}
+
+/* Percentages % - teal */
+.cm-percent {
+    color: #73daca;
+}
+
+/* Functions sin, cos, sqrt - blue */
+.cm-function {
+    color: #7aa2f7;
+    font-style: italic;
+}
+
+/* Keywords (now, today, in, to) - purple */
+.cm-keyword {
+    color: #bb9af7;
+}
+
+/* Date/time values - cyan */
+.cm-datetime {
+    color: #2ac3de;
+}
+
+/* Network/IP - teal */
+.cm-network {
+    color: #73daca;
+}
+
+/* Comments - gray */
+.cm-comment {
+    color: #565f89;
+    font-style: italic;
+}
+
+/* Output prefix "> " - dimmed */
+.cm-output-prefix {
+    color: #565f89;
 }

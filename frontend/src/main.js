@@ -1,7 +1,7 @@
 import './style.css';
 import { EditorView, basicSetup } from 'codemirror';
-import { EditorState } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
+import { EditorState, RangeSetBuilder } from '@codemirror/state';
+import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences } from '../wailsjs/go/main/App';
@@ -16,34 +16,192 @@ let previousLineCount = 0;
 let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
-// Dark theme
+// Tokyo Night inspired theme
 const darkTheme = EditorView.theme({
     '&': {
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
+        backgroundColor: '#1a1b26',
+        color: '#c0caf5',
     },
     '.cm-content': {
-        caretColor: '#6366f1',
+        caretColor: '#7aa2f7',
     },
     '.cm-cursor': {
-        borderLeftColor: '#6366f1',
+        borderLeftColor: '#7aa2f7',
     },
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-        backgroundColor: 'rgba(99, 102, 241, 0.3)',
+        backgroundColor: 'rgba(122, 162, 247, 0.3)',
     },
     '.cm-gutters': {
-        backgroundColor: '#1e293b',
-        color: '#64748b',
-        borderRight: '1px solid #334155',
+        backgroundColor: '#16161e',
+        color: '#565f89',
+        borderRight: '1px solid #3b4261',
     },
     '.cm-activeLineGutter': {
-        backgroundColor: '#334155',
-        color: '#f8fafc',
+        backgroundColor: '#292e42',
+        color: '#7aa2f7',
     },
     '.cm-activeLine': {
-        backgroundColor: 'rgba(51, 65, 85, 0.5)',
+        backgroundColor: 'rgba(41, 46, 66, 0.5)',
     },
 }, { dark: true });
+
+// Syntax highlighting decorations
+const resultMark = Decoration.mark({ class: 'cm-result' });
+const errorMark = Decoration.mark({ class: 'cm-error' });
+const referenceMark = Decoration.mark({ class: 'cm-reference' });
+const numberMark = Decoration.mark({ class: 'cm-number' });
+const operatorMark = Decoration.mark({ class: 'cm-operator' });
+const currencyMark = Decoration.mark({ class: 'cm-currency' });
+const percentMark = Decoration.mark({ class: 'cm-percent' });
+const functionMark = Decoration.mark({ class: 'cm-function' });
+const keywordMark = Decoration.mark({ class: 'cm-keyword' });
+const datetimeMark = Decoration.mark({ class: 'cm-datetime' });
+const networkMark = Decoration.mark({ class: 'cm-network' });
+const commentMark = Decoration.mark({ class: 'cm-comment' });
+const outputPrefixMark = Decoration.mark({ class: 'cm-output-prefix' });
+
+function buildDecorations(view) {
+    const builder = new RangeSetBuilder();
+    const doc = view.state.doc;
+    
+    for (let i = 1; i <= doc.lines; i++) {
+        const line = doc.line(i);
+        const text = line.text;
+        const from = line.from;
+        
+        // Output lines starting with "> "
+        if (text.startsWith('> ')) {
+            builder.add(from, from + 2, outputPrefixMark);
+            // Check for errors in output
+            if (text.includes('ERR:') || text.includes('error')) {
+                builder.add(from + 2, line.to, errorMark);
+            } else {
+                builder.add(from + 2, line.to, resultMark);
+            }
+            continue;
+        }
+        
+        // Comment lines starting with # or //
+        if (text.trim().startsWith('#') || text.trim().startsWith('//')) {
+            builder.add(from, line.to, commentMark);
+            continue;
+        }
+        
+        // Process tokens in the line
+        let pos = 0;
+        while (pos < text.length) {
+            const remaining = text.slice(pos);
+            let matched = false;
+            
+            // Line references \1, \2, etc.
+            const refMatch = remaining.match(/^\\[0-9]+/);
+            if (refMatch) {
+                builder.add(from + pos, from + pos + refMatch[0].length, referenceMark);
+                pos += refMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Currency with amount $1,234.56
+            const currencyMatch = remaining.match(/^\$[\d,]+\.?\d*/);
+            if (currencyMatch) {
+                builder.add(from + pos, from + pos + currencyMatch[0].length, currencyMark);
+                pos += currencyMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // IP addresses and CIDR notation
+            const ipMatch = remaining.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?/);
+            if (ipMatch) {
+                builder.add(from + pos, from + pos + ipMatch[0].length, networkMark);
+                pos += ipMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Time patterns like 14:30, 6:00 am
+            const timeMatch = remaining.match(/^\d{1,2}:\d{2}(:\d{2})?(\s*(am|pm|AM|PM))?/);
+            if (timeMatch) {
+                builder.add(from + pos, from + pos + timeMatch[0].length, datetimeMark);
+                pos += timeMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Numbers (including decimals and negative)
+            const numMatch = remaining.match(/^-?\d+\.?\d*/);
+            if (numMatch) {
+                builder.add(from + pos, from + pos + numMatch[0].length, numberMark);
+                pos += numMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Percentage
+            if (remaining[0] === '%') {
+                builder.add(from + pos, from + pos + 1, percentMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            
+            // Operators
+            if (['+', '-', '*', '/', '^', '×', '÷', '='].includes(remaining[0])) {
+                builder.add(from + pos, from + pos + 1, operatorMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            
+            // Functions
+            const funcMatch = remaining.match(/^(sin|cos|tan|sqrt|abs|log|ln|exp|floor|ceil|round|min|max)\s*\(/i);
+            if (funcMatch) {
+                builder.add(from + pos, from + pos + funcMatch[1].length, functionMark);
+                pos += funcMatch[1].length;
+                matched = true;
+                continue;
+            }
+            
+            // Keywords
+            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|hosts?|mask|wildcard|how\s+many|is)\b/i);
+            if (kwMatch) {
+                builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
+                pos += kwMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            // Date keywords
+            const dateKwMatch = remaining.match(/^(days?|weeks?|months?|years?|hours?|minutes?|seconds?|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i);
+            if (dateKwMatch) {
+                builder.add(from + pos, from + pos + dateKwMatch[0].length, datetimeMark);
+                pos += dateKwMatch[0].length;
+                matched = true;
+                continue;
+            }
+            
+            if (!matched) {
+                pos++;
+            }
+        }
+    }
+    
+    return builder.finish();
+}
+
+const syntaxHighlighter = ViewPlugin.fromClass(class {
+    constructor(view) {
+        this.decorations = buildDecorations(view);
+    }
+    update(update) {
+        if (update.docChanged || update.viewportChanged) {
+            this.decorations = buildDecorations(update.view);
+        }
+    }
+}, {
+    decorations: v => v.decorations
+});
 
 // Initialize editor
 function initEditor() {
@@ -58,6 +216,7 @@ function initEditor() {
             history(),
             keymap.of([...defaultKeymap, ...historyKeymap]),
             darkTheme,
+            syntaxHighlighter,
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     onTextChanged();
