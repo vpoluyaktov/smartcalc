@@ -596,13 +596,23 @@ function updateFileName() {
 }
 
 // Insert snippet at cursor
-function insertSnippet(snippet) {
+async function insertSnippet(snippet) {
     const pos = editor.state.selection.main.head;
+    
+    // Insert the snippet
     editor.dispatch({
         changes: { from: pos, insert: snippet },
-        selection: { anchor: pos + snippet.length },
     });
-    evaluateContent();
+    
+    // Evaluate the content
+    await evaluateContent();
+    
+    // After evaluation, move cursor to end of document (next line after snippet results)
+    const docLength = editor.state.doc.length;
+    editor.dispatch({
+        selection: { anchor: docLength },
+    });
+    editor.focus();
 }
 
 // Show manual dialog
