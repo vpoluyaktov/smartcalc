@@ -814,7 +814,11 @@ async function saveAndQuit() {
         if (path) {
             const content = editor.state.doc.toString();
             await WriteFile(path, content);
+            currentFile = path;
+            savedContent = content;
             await AddRecentFile(path);
+            // Clear unsaved state BEFORE quitting to prevent loop
+            await SetUnsavedState(false, path);
             // Now quit the app
             Quit();
         }
