@@ -235,16 +235,22 @@ func main() {
 		}
 	}()
 
-	// Handle window close - warn about unsaved changes
+	// Handle window close - autosave if file exists, warn only if no file specified
 	w.SetCloseIntercept(func() {
-		if storageMgr.HasUnsavedChanges() {
+		if storageMgr.CurrentFile() != "" {
+			// File exists - autosave and close
+			storageMgr.AutoSave()
+			w.Close()
+		} else if storageMgr.HasUnsavedChanges() {
+			// No file specified but has unsaved changes - warn user
 			dialog.ShowConfirm("Unsaved Changes",
-				"You have unsaved changes. Do you want to save before closing?",
+				"You have unsaved changes that will be lost. Do you want to save before closing?",
 				func(save bool) {
 					if save {
-						storageMgr.Save()
+						storageMgr.SaveAs()
+					} else {
+						w.Close()
 					}
-					w.Close()
 				}, w)
 		} else {
 			w.Close()
