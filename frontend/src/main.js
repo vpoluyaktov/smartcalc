@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -543,6 +543,11 @@ function handleKeyboard(e) {
         e.preventDefault();
         newFile();
     }
+    // Ctrl+C - Smart Copy (replace refs with values)
+    if (e.ctrlKey && e.key === 'c') {
+        e.preventDefault();
+        smartCopy();
+    }
 }
 
 // File operations
@@ -713,6 +718,26 @@ A powerful calculator with support for:
     });
 }
 
+// Smart copy - replace line references with actual values
+async function smartCopy() {
+    const selection = editor.state.selection.main;
+    let textToCopy;
+    
+    if (selection.empty) {
+        // No selection - copy entire document
+        textToCopy = editor.state.doc.toString();
+    } else {
+        // Copy selected text
+        textToCopy = editor.state.sliceDoc(selection.from, selection.to);
+    }
+    
+    // Replace line references with actual values
+    const resolvedText = await CopyWithResolvedRefs(textToCopy);
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(resolvedText);
+}
+
 // Set up menu event listeners
 function setupMenuEvents() {
     EventsOn('menu:new', newFile);
@@ -721,7 +746,7 @@ function setupMenuEvents() {
     EventsOn('menu:saveAs', saveFileAs);
     EventsOn('menu:openRecent', openFilePath);
     EventsOn('menu:cut', () => document.execCommand('cut'));
-    EventsOn('menu:copy', () => document.execCommand('copy'));
+    EventsOn('menu:copy', smartCopy);
     EventsOn('menu:paste', () => document.execCommand('paste'));
     EventsOn('menu:snippet', insertSnippet);
     EventsOn('menu:manual', showManual);
