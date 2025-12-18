@@ -17,7 +17,7 @@ GOMOD=$(GOCMD) mod
 # Build flags
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE) -X main.gitCommit=$(GIT_COMMIT)"
 
-# Detect OS for Wails build tags
+# Detect OS for Wails build tags and CGO flags
 # For dev: use -tags dev
 # For production: use -tags "desktop,production" (or webkit2_41,production on Ubuntu 24.04+)
 UNAME_S := $(shell uname -s)
@@ -25,12 +25,16 @@ ifeq ($(UNAME_S),Linux)
     # Ubuntu 24.04+ needs webkit2_41 instead of desktop
     WAILS_TAGS_DEV=-tags "dev,webkit2_41"
     WAILS_TAGS_PROD=-tags "desktop,production,webkit2_41"
+    CGO_LDFLAGS_EXTRA=
 else ifeq ($(UNAME_S),Darwin)
     WAILS_TAGS_DEV=-tags dev
     WAILS_TAGS_PROD=-tags "desktop,production"
+    # macOS needs UniformTypeIdentifiers framework for newer SDKs
+    CGO_LDFLAGS_EXTRA=-framework UniformTypeIdentifiers
 else
     WAILS_TAGS_DEV=-tags dev
     WAILS_TAGS_PROD=-tags "desktop,production"
+    CGO_LDFLAGS_EXTRA=
 endif
 
 .PHONY: all build clean test deps run help app-bundle release check frontend
@@ -48,13 +52,13 @@ frontend:
 build:
 	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=1 $(GOBUILD) $(WAILS_TAGS_PROD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	CGO_ENABLED=1 CGO_LDFLAGS="$(CGO_LDFLAGS_EXTRA)" $(GOBUILD) $(WAILS_TAGS_PROD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
 	@echo "✓ Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Run in development mode
 dev: frontend
 	@echo "Running $(BINARY_NAME) in dev mode..."
-	CGO_ENABLED=1 $(GOCMD) run $(WAILS_TAGS_DEV) .
+	CGO_ENABLED=1 CGO_LDFLAGS="$(CGO_LDFLAGS_EXTRA)" $(GOCMD) run $(WAILS_TAGS_DEV) .
 
 # Build macOS .app bundle
 app-bundle: build
