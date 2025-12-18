@@ -4,13 +4,15 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences } from '../wailsjs/go/main/App';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
 let currentFile = '';
 let debounceTimer = null;
 let autosaveTimer = null;
+let previousText = '';
+let previousLineCount = 0;
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme
@@ -84,11 +86,59 @@ function onTextChanged() {
         clearTimeout(debounceTimer);
     }
     debounceTimer = setTimeout(() => {
-        evaluateContent();
+        checkAndAdjustReferences();
     }, 150);
     
     // Schedule autosave
     scheduleAutosave();
+}
+
+// Check if line count changed and adjust references
+async function checkAndAdjustReferences() {
+    const currentText = editor.state.doc.toString();
+    const currentLineCount = currentText.split('\n').length;
+    
+    // If line count changed, adjust references
+    if (previousLineCount > 0 && currentLineCount !== previousLineCount && previousText !== '') {
+        try {
+            const adjusted = await AdjustReferences(previousText, currentText);
+            if (adjusted !== currentText) {
+                // Save cursor and scroll position
+                const scrollTop = editor.scrollDOM.scrollTop;
+                const scrollLeft = editor.scrollDOM.scrollLeft;
+                const cursorPos = editor.state.selection.main.head;
+                
+                // Update with adjusted text
+                editor.dispatch({
+                    changes: { from: 0, to: editor.state.doc.length, insert: adjusted },
+                    selection: { anchor: Math.min(cursorPos, adjusted.length) },
+                });
+                
+                // Restore scroll
+                requestAnimationFrame(() => {
+                    editor.scrollDOM.scrollTop = scrollTop;
+                    editor.scrollDOM.scrollLeft = scrollLeft;
+                });
+                
+                // Update previous text to adjusted version
+                previousText = adjusted;
+                previousLineCount = adjusted.split('\n').length;
+                
+                // Evaluate the adjusted content
+                evaluateContent();
+                return;
+            }
+        } catch (err) {
+            console.error('Adjust references error:', err);
+        }
+    }
+    
+    // Update previous text tracking
+    previousText = currentText;
+    previousLineCount = currentLineCount;
+    
+    // Evaluate normally
+    evaluateContent();
 }
 
 // Schedule autosave after delay

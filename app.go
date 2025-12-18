@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"supercalc/internal/calc"
+	"supercalc/internal/eval"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -115,6 +116,11 @@ func (a *App) AutoSave(path, content string) error {
 		return nil
 	}
 	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// AdjustReferences adjusts line references when lines are added or removed
+func (a *App) AdjustReferences(oldText, newText string) string {
+	return eval.AdjustReferences(oldText, newText)
 }
 
 // EvalResult represents a single line evaluation result

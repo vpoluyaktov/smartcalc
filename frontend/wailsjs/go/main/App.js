@@ -6,6 +6,10 @@ export function AddRecentFile(arg1) {
   return window['go']['main']['App']['AddRecentFile'](arg1);
 }
 
+export function AdjustReferences(arg1, arg2) {
+  return window['go']['main']['App']['AdjustReferences'](arg1, arg2);
+}
+
 export function AutoSave(arg1, arg2) {
   return window['go']['main']['App']['AutoSave'](arg1, arg2);
 }
