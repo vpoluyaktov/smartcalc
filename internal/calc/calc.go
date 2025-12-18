@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"supercalc/internal/datetime"
 	"supercalc/internal/eval"
 	"supercalc/internal/utils"
 )
@@ -36,6 +37,17 @@ func EvalLines(lines []string) []LineResult {
 		expr := strings.TrimSpace(line[:eq])
 		if expr == "" {
 			continue
+		}
+
+		// Try date/time evaluation first
+		if datetime.IsDateTimeExpression(expr) {
+			dtResult, err := datetime.EvalDateTime(expr)
+			if err == nil {
+				results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + dtResult
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through to numeric evaluation if datetime fails
 		}
 
 		isCurrency := strings.Contains(expr, "$") || eval.ExprReferencesCurrency(expr, currencyByLine)
