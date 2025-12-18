@@ -27,3 +27,5 @@ Thumbs.db
 
 # Fyne
 fyne-cross/
+main_fyne.go.bak
+supercalc
