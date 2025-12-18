@@ -97,10 +97,20 @@ async function evaluateContent() {
         
         // Only update if different (to avoid cursor jump)
         if (newText !== text) {
+            // Save scroll position and cursor
+            const scrollTop = editor.scrollDOM.scrollTop;
+            const scrollLeft = editor.scrollDOM.scrollLeft;
             const cursorPos = editor.state.selection.main.head;
+            
             editor.dispatch({
                 changes: { from: 0, to: editor.state.doc.length, insert: newText },
                 selection: { anchor: Math.min(cursorPos, newText.length) },
+            });
+            
+            // Restore scroll position after update
+            requestAnimationFrame(() => {
+                editor.scrollDOM.scrollTop = scrollTop;
+                editor.scrollDOM.scrollLeft = scrollLeft;
             });
         }
     } catch (err) {
