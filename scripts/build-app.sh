@@ -54,9 +54,13 @@ else
     WAILS_TAGS="desktop,production"
 fi
 
-OUTFILE="SuperCalc-${OS,,}-${VERSION}-${GOARCH}"
+# Set output filename based on OS
 if [ "$OS" = "Darwin" ]; then
     OUTFILE="SuperCalc-darwin-${VERSION}-${GOARCH}"
+elif [ "$OS" = "Linux" ]; then
+    OUTFILE="SuperCalc-linux-${VERSION}-${GOARCH}"
+else
+    OUTFILE="SuperCalc-${VERSION}-${GOARCH}"
 fi
 
 # Build the binary with Wails
