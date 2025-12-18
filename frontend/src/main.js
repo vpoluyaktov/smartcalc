@@ -548,6 +548,11 @@ function handleKeyboard(e) {
         e.preventDefault();
         smartCopy();
     }
+    // Ctrl+V - Paste
+    if (e.ctrlKey && e.key === 'v') {
+        e.preventDefault();
+        smartPaste();
+    }
 }
 
 // File operations
@@ -749,6 +754,22 @@ async function smartCopy() {
     await navigator.clipboard.writeText(resolvedText);
 }
 
+// Paste from clipboard
+async function smartPaste() {
+    try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+            const pos = editor.state.selection.main.head;
+            editor.dispatch({
+                changes: { from: pos, insert: text },
+                selection: { anchor: pos + text.length },
+            });
+        }
+    } catch (err) {
+        console.error('Paste error:', err);
+    }
+}
+
 // Set up menu event listeners
 function setupMenuEvents() {
     EventsOn('menu:new', newFile);
@@ -758,7 +779,7 @@ function setupMenuEvents() {
     EventsOn('menu:openRecent', openFilePath);
     EventsOn('menu:cut', () => document.execCommand('cut'));
     EventsOn('menu:copy', smartCopy);
-    EventsOn('menu:paste', () => document.execCommand('paste'));
+    EventsOn('menu:paste', smartPaste);
     EventsOn('menu:snippet', insertSnippet);
     EventsOn('menu:manual', showManual);
     EventsOn('menu:about', showAbout);
