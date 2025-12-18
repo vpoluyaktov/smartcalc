@@ -479,15 +479,32 @@ async function evaluateContentInternal() {
         
         // Only update if different (to avoid cursor jump)
         if (newText !== text) {
-            // Save scroll position and cursor
+            // Save scroll position and cursor line/column
             const scrollTop = editor.scrollDOM.scrollTop;
             const scrollLeft = editor.scrollDOM.scrollLeft;
             const cursorPos = editor.state.selection.main.head;
+            const cursorLine = editor.state.doc.lineAt(cursorPos);
+            const lineNumber = cursorLine.number;
+            const columnOffset = cursorPos - cursorLine.from;
             
             editor.dispatch({
                 changes: { from: 0, to: editor.state.doc.length, insert: newText },
-                selection: { anchor: Math.min(cursorPos, newText.length) },
             });
+            
+            // Restore cursor position based on line number
+            const newDoc = editor.state.doc;
+            if (lineNumber <= newDoc.lines) {
+                const newLine = newDoc.line(lineNumber);
+                const newPos = newLine.from + Math.min(columnOffset, newLine.length);
+                editor.dispatch({
+                    selection: { anchor: newPos },
+                });
+            } else {
+                // If line doesn't exist, go to end
+                editor.dispatch({
+                    selection: { anchor: newText.length },
+                });
+            }
             
             // Restore scroll position after update
             requestAnimationFrame(() => {
