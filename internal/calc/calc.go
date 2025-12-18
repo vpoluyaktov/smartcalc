@@ -6,6 +6,7 @@ import (
 
 	"supercalc/internal/datetime"
 	"supercalc/internal/eval"
+	"supercalc/internal/network"
 	"supercalc/internal/utils"
 )
 
@@ -41,7 +42,18 @@ func EvalLines(lines []string) []LineResult {
 			continue
 		}
 
-		// Try date/time evaluation first (with reference support)
+		// Try network/IP evaluation first
+		if network.IsNetworkExpression(expr) {
+			netResult, err := network.EvalNetwork(expr)
+			if err == nil {
+				results[i].Output = strings.TrimRight(line[:eq+1], " ") + " " + netResult
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through if network eval fails
+		}
+
+		// Try date/time evaluation (with reference support)
 		if datetime.IsDateTimeExpression(expr) || strings.Contains(expr, "\\") {
 			// Create resolver for line references
 			resolver := func(n int) (string, bool) {
