@@ -650,7 +650,7 @@ function newFile() {
 }
 
 function updateFileName() {
-    const name = currentFile ? currentFile.split('/').pop() : 'Untitled';
+    const name = currentFile ? currentFile : 'Untitled';
     document.getElementById('file-name').textContent = name;
 }
 

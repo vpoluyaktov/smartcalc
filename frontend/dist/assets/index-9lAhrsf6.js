@@ -16,7 +16,7 @@
 # Check out the Snippets menu to explore features.
 # Type an expression and press Enter to calculate.
 
-`;function tn(){A.dispatch({changes:{from:0,to:A.state.doc.length,insert:Wn}}),A.dispatch({selection:{anchor:Wn.length}}),oe="",It=Wn,Js(),Pt(!1,"")}function Js(){const s=oe?oe.split("/").pop():"Untitled";document.getElementById("file-name").textContent=s}function vd(s,e){return s.replace(/\\(\d+)/g,(t,i)=>"\\"+(parseInt(i,10)+e-1))}async function Ad(s){const e=A.state.selection.main.head,i=A.state.doc.lineAt(e).number,n=vd(s,i);A.dispatch({changes:{from:e,insert:n}}),await js();const r=A.state.doc.length;A.dispatch({selection:{anchor:r}}),A.focus()}function Cd(){alert(`
+`;function tn(){A.dispatch({changes:{from:0,to:A.state.doc.length,insert:Wn}}),A.dispatch({selection:{anchor:Wn.length}}),oe="",It=Wn,Js(),Pt(!1,"")}function Js(){const s=oe||"Untitled";document.getElementById("file-name").textContent=s}function vd(s,e){return s.replace(/\\(\d+)/g,(t,i)=>"\\"+(parseInt(i,10)+e-1))}async function Ad(s){const e=A.state.selection.main.head,i=A.state.doc.lineAt(e).number,n=vd(s,i);A.dispatch({changes:{from:e,insert:n}}),await js();const r=A.state.doc.length;A.dispatch({selection:{anchor:r}}),A.focus()}function Cd(){alert(`
 # SmartCalc Manual
 
 ## Basic Usage
