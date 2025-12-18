@@ -5,6 +5,7 @@ import { keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile } from '../wailsjs/go/main/App';
+import { EventsOn } from '../wailsjs/runtime/runtime';
 
 let editor;
 let currentFile = '';
@@ -198,5 +199,97 @@ function updateFileName() {
     document.getElementById('file-name').textContent = name;
 }
 
+// Insert snippet at cursor
+function insertSnippet(snippet) {
+    const pos = editor.state.selection.main.head;
+    editor.dispatch({
+        changes: { from: pos, insert: snippet },
+        selection: { anchor: pos + snippet.length },
+    });
+    evaluateContent();
+}
+
+// Show manual dialog
+function showManual() {
+    const manual = `
+# SuperCalc Manual
+
+## Basic Usage
+Type mathematical expressions followed by = to calculate results.
+
+## Supported Operations
+- **Addition**: +
+- **Subtraction**: -
+- **Multiplication**: * or x
+- **Division**: /
+- **Power**: ^
+- **Parentheses**: ( )
+
+## Percentages
+- 100 + 20% = 120 (adds 20% of 100)
+- 100 - 20% = 80 (subtracts 20% of 100)
+
+## Currency
+- Prefix numbers with $ for currency formatting
+- Supports thousands separators: $1,500.00
+
+## Line References
+- Use \\1, \\2, etc. to reference results from previous lines
+
+## Functions
+- sin(), cos(), tan()
+- sqrt(), abs()
+- log(), ln()
+
+## Date/Time
+- **Current time**: now, now(), today, today()
+- **Time in city**: now in Seattle, now in New York
+- **Time conversion**: 6:00 am Seattle in Kiev
+- **Date arithmetic**: today() + 30 days, \\1 - 1 week
+- **Duration conversion**: 861.5 hours in days
+- **Date range**: Dec 6 till March 11
+
+## Network/IP Calculations
+- **Subnet info**: 10.100.0.0/24
+- **Split by count**: split 10.100.0.0/16 to 4 subnets
+- **Host count**: how many hosts in 10.100.0.0/28
+- **Subnet mask**: mask for /24, wildcard for /24
+- **IP in range**: is 10.100.0.50 in 10.100.0.0/24
+`;
+    alert(manual);
+}
+
+// Show about dialog
+function showAbout() {
+    GetVersion().then(version => {
+        alert(`SuperCalc ${version}
+
+A powerful calculator with support for:
+• Multi-line expressions
+• Line references
+• Currency formatting
+• Mathematical functions
+• Date/Time calculations
+• Network/IP subnet calculations`);
+    });
+}
+
+// Set up menu event listeners
+function setupMenuEvents() {
+    EventsOn('menu:new', newFile);
+    EventsOn('menu:open', openFile);
+    EventsOn('menu:save', saveFile);
+    EventsOn('menu:saveAs', saveFileAs);
+    EventsOn('menu:cut', () => document.execCommand('cut'));
+    EventsOn('menu:copy', () => document.execCommand('copy'));
+    EventsOn('menu:paste', () => document.execCommand('paste'));
+    EventsOn('menu:snippet', insertSnippet);
+    EventsOn('menu:manual', showManual);
+    EventsOn('menu:about', showAbout);
+}
+
 // Initialize on load
-document.addEventListener('DOMContentLoaded', initEditor);
+document.addEventListener('DOMContentLoaded', () => {
+    initEditor();
+    setupMenuEvents();
+});

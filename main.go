@@ -4,8 +4,11 @@ import (
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
+	"github.com/wailsapp/wails/v2/pkg/menu"
+	"github.com/wailsapp/wails/v2/pkg/menu/keys"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -16,6 +19,8 @@ var version = "dev"
 func main() {
 	app := NewApp()
 
+	appMenu := createAppMenu(app)
+
 	err := wails.Run(&options.App{
 		Title:  "SuperCalc",
 		Width:  1024,
@@ -25,6 +30,7 @@ func main() {
 		},
 		BackgroundColour: &options.RGBA{R: 15, G: 23, B: 42, A: 1},
 		OnStartup:        app.startup,
+		Menu:             appMenu,
 		Bind: []interface{}{
 			app,
 		},
@@ -33,4 +39,79 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
+}
+
+func createAppMenu(app *App) *menu.Menu {
+	appMenu := menu.NewMenu()
+
+	// File menu
+	fileMenu := appMenu.AddSubmenu("File")
+	fileMenu.AddText("New", keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:new")
+	})
+	fileMenu.AddSeparator()
+	fileMenu.AddText("Open...", keys.CmdOrCtrl("o"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:open")
+	})
+	fileMenu.AddText("Save", keys.CmdOrCtrl("s"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:save")
+	})
+	fileMenu.AddText("Save As...", keys.CmdOrCtrl("S"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:saveAs")
+	})
+
+	// Edit menu
+	editMenu := appMenu.AddSubmenu("Edit")
+	editMenu.AddText("Cut", keys.CmdOrCtrl("x"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:cut")
+	})
+	editMenu.AddText("Copy", keys.CmdOrCtrl("c"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:copy")
+	})
+	editMenu.AddText("Paste", keys.CmdOrCtrl("v"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:paste")
+	})
+
+	// Snippets menu
+	snippetsMenu := appMenu.AddSubmenu("Snippets")
+	snippets := []struct {
+		Name    string
+		Content string
+	}{
+		{"Basic Math", "10 + 20 * 3 ="},
+		{"Percentage", "$100 - 20% ="},
+		{"Currency Calculation", "$1,500.00 + $250.50 ="},
+		{"Line Reference", "100 =\n\\1 * 2 ="},
+		{"Scientific", "sin(45) + cos(30) ="},
+		{"Complex Expression", "$1,000 x 12 - 15% + $500 ="},
+		{"Current Time", "now ="},
+		{"Time in City", "now in Seattle =\nnow in New York =\nnow in Kiev ="},
+		{"Date Arithmetic", "today() =\n\\1 + 30 days =\n\\1 - 1 week ="},
+		{"Duration Conversion", "861.5 hours in days ="},
+		{"Time Zone Conversion", "6:00 am Seattle in Kiev ="},
+		{"Date Range", "Dec 6 till March 11 ="},
+		{"Subnet Info", "10.100.0.0/24 ="},
+		{"Split Subnet", "split 10.100.0.0/16 to 4 subnets ="},
+		{"Hosts in Subnet", "how many hosts in 10.100.0.0/28 ="},
+		{"Subnet Mask", "mask for /24 =\nwildcard for /24 ="},
+		{"IP in Range", "is 10.100.0.50 in 10.100.0.0/24 ="},
+	}
+	for _, s := range snippets {
+		snippet := s.Content
+		snippetsMenu.AddText(s.Name, nil, func(_ *menu.CallbackData) {
+			runtime.EventsEmit(app.ctx, "menu:snippet", snippet)
+		})
+	}
+
+	// Help menu
+	helpMenu := appMenu.AddSubmenu("Help")
+	helpMenu.AddText("Manual", keys.Key("F1"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:manual")
+	})
+	helpMenu.AddSeparator()
+	helpMenu.AddText("About SuperCalc", nil, func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:about")
+	})
+
+	return appMenu
 }
