@@ -65,20 +65,24 @@ jobs:
           node-version: '20'
 
       - name: Build frontend
+        shell: bash
         run: |
           cd frontend
           npm install
           npm run build
 
       - name: Ensure CGO is enabled
+        shell: bash
         run: echo "CGO_ENABLED=1" >> $GITHUB_ENV
 
       - name: Set CGO_LDFLAGS for macOS
         if: matrix.os == 'macos-latest'
+        shell: bash
         run: echo "CGO_LDFLAGS=-framework UniformTypeIdentifiers" >> $GITHUB_ENV
 
       - name: Get version
         id: version
+        shell: bash
         run: |
           BASE_VERSION=$(cat VERSION)
           COMMIT_COUNT=$(git rev-list --all --count HEAD)
