@@ -12,13 +12,13 @@ func EvalNetwork(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
 	exprLower := strings.ToLower(expr)
 
-	// "split 10.100.0.0/16 to 6 subnets"
-	if result, ok := trySplitToSubnets(exprLower); ok {
+	// "10.100.0.0/16 / 4 subnets" - new notation
+	if result, ok := tryDivideToSubnets(exprLower); ok {
 		return result, nil
 	}
 
-	// "split 10.200.0.0/16 to subnets with 1024 hosts" or "split ... with 1024 hosts each"
-	if result, ok := trySplitByHosts(exprLower); ok {
+	// "10.100.0.0/16 / 1024 hosts" - new notation
+	if result, ok := tryDivideByHosts(exprLower); ok {
 		return result, nil
 	}
 
@@ -88,7 +88,7 @@ func IsNetworkExpression(expr string) bool {
 	// Keywords that indicate network expressions (must have IP-like context)
 	networkKeywords := []string{
 		"subnet", "subnets", "cidr", "netmask",
-		"wildcard", "broadcast", "split",
+		"wildcard", "broadcast",
 	}
 
 	for _, kw := range networkKeywords {
@@ -123,9 +123,9 @@ func IsNetworkExpression(expr string) bool {
 	return false
 }
 
-func trySplitToSubnets(expr string) (string, bool) {
-	// Pattern: "split 10.100.0.0/16 to 6 subnets" or "divide 10.100.0.0/16 into 6 subnets"
-	re := regexp.MustCompile(`(?:split|divide)\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s+(?:to|into)\s+(\d+)\s+subnets?`)
+func tryDivideToSubnets(expr string) (string, bool) {
+	// Pattern: "10.100.0.0/16 / 4 subnets"
+	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+subnets?`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false
@@ -142,9 +142,9 @@ func trySplitToSubnets(expr string) (string, bool) {
 	return FormatSubnetList(subnets), true
 }
 
-func trySplitByHosts(expr string) (string, bool) {
-	// Pattern: "split 10.200.0.0/16 to subnets with 1024 hosts" or "... with 1024 hosts each"
-	re := regexp.MustCompile(`(?:split|divide)\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s+(?:to|into)\s+subnets?\s+(?:with|of)\s+(\d+)\s+hosts?`)
+func tryDivideByHosts(expr string) (string, bool) {
+	// Pattern: "10.100.0.0/16 / 1024 hosts"
+	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+hosts?`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false

@@ -20,17 +20,39 @@ type LineResult struct {
 	DateTimeStr string // raw datetime result for reference
 }
 
+// cleanOutputLines removes stale output lines ("> " prefixed) that follow expression lines.
+// This ensures old multi-line output is cleared before new evaluation.
+func cleanOutputLines(lines []string) []string {
+	var result []string
+	for _, line := range lines {
+		trim := strings.TrimSpace(line)
+		// Skip output lines - they will be regenerated
+		if strings.HasPrefix(trim, "> ") {
+			continue
+		}
+		result = append(result, line)
+	}
+	return result
+}
+
 // EvalLines evaluates all lines and returns the processed output lines.
 func EvalLines(lines []string) []LineResult {
-	results := make([]LineResult, len(lines))
-	values := make([]float64, len(lines))
-	haveRes := make([]bool, len(lines))
-	currencyByLine := make([]bool, len(lines))
+	// First pass: remove stale output lines ("> " lines that follow an expression)
+	cleanedLines := cleanOutputLines(lines)
 
-	for i, line := range lines {
+	results := make([]LineResult, len(cleanedLines))
+	values := make([]float64, len(cleanedLines))
+	haveRes := make([]bool, len(cleanedLines))
+	currencyByLine := make([]bool, len(cleanedLines))
+
+	for i, line := range cleanedLines {
 		results[i].Output = line
 		trim := strings.TrimSpace(line)
 		if trim == "" {
+			continue
+		}
+		// Skip output lines (prefixed with "> ")
+		if strings.HasPrefix(trim, "> ") {
 			continue
 		}
 		eq := strings.IndexRune(line, '=')

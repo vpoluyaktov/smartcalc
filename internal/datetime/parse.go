@@ -221,9 +221,9 @@ func parsePartialDate(s string) (time.Time, error) {
 	return ParseDateTime(s, time.Local)
 }
 
-// FormatTime formats a time for display
+// FormatTime formats a time for display (truncated to minutes to avoid constant updates)
 func FormatTime(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05 MST")
+	return t.Format("2006-01-02 15:04 MST")
 }
 
 // FormatDuration formats a duration for display

@@ -10,9 +10,9 @@ func TestEvalSplitToSubnets(t *testing.T) {
 		expr     string
 		contains string
 	}{
-		{"split 10.100.0.0/16 to 6 subnets", "10.100.0.0/19"},
-		{"split 10.100.0.0/24 to 4 subnets", "10.100.0.0/26"},
-		{"divide 192.168.0.0/24 into 2 subnets", "192.168.0.0/25"},
+		{"10.100.0.0/16 / 6 subnets", "\n> 1: 10.100.0.0/19"},
+		{"10.100.0.0/24 / 4 subnets", "\n> 1: 10.100.0.0/26"},
+		{"192.168.0.0/24 / 2 subnets", "\n> 1: 192.168.0.0/25"},
 	}
 
 	for _, tt := range tests {
@@ -34,8 +34,8 @@ func TestEvalSplitByHosts(t *testing.T) {
 		expr     string
 		contains string
 	}{
-		{"split 10.200.0.0/16 to subnets with 1024 hosts", "/21"},
-		{"split 192.168.0.0/24 to subnets with 60 hosts", "/26"},
+		{"10.200.0.0/16 / 1024 hosts", "\n> 1:"},
+		{"192.168.0.0/24 / 60 hosts", "\n> 1:"},
 	}
 
 	for _, tt := range tests {
@@ -521,5 +521,97 @@ func TestNextSubnet(t *testing.T) {
 				t.Errorf("NextSubnet(%q) = %q, want %q", tt.cidr, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestFormatSubnetList(t *testing.T) {
+	tests := []struct {
+		name     string
+		subnets  []SubnetInfo
+		contains []string
+	}{
+		{
+			name:     "empty list",
+			subnets:  []SubnetInfo{},
+			contains: []string{"no subnets"},
+		},
+		{
+			name: "single subnet",
+			subnets: []SubnetInfo{
+				{NetworkAddr: "10.100.0.0", CIDR: 25, HostCount: 126},
+			},
+			contains: []string{"\n> 1:", "10.100.0.0/25", "126 hosts"},
+		},
+		{
+			name: "multiple subnets",
+			subnets: []SubnetInfo{
+				{NetworkAddr: "10.100.0.0", CIDR: 25, HostCount: 126},
+				{NetworkAddr: "10.100.0.128", CIDR: 25, HostCount: 126},
+			},
+			contains: []string{"\n> 1:", "\n> 2:", "10.100.0.0/25", "10.100.0.128/25"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FormatSubnetList(tt.subnets)
+			for _, c := range tt.contains {
+				if !strings.Contains(result, c) {
+					t.Errorf("FormatSubnetList() = %q, want to contain %q", result, c)
+				}
+			}
+		})
+	}
+}
+
+func TestDivideNotationVariations(t *testing.T) {
+	// Test various spacing and singular/plural forms
+	tests := []struct {
+		expr        string
+		shouldParse bool
+	}{
+		{"10.100.0.0/24 / 4 subnets", true},
+		{"10.100.0.0/24 / 1 subnet", true},
+		{"10.100.0.0/24/4 subnets", false}, // no space before /
+		{"10.100.0.0/24 /4 subnets", true}, // space only before
+		{"10.100.0.0/24/ 4 subnets", true}, // space only after
+		{"10.100.0.0/24 / 100 hosts", true},
+		{"10.100.0.0/24 / 1 host", true},
+		{"192.168.1.0/28 / 2 subnets", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalNetwork(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalNetwork(%q) error: %v", tt.expr, err)
+				}
+				if !strings.Contains(result, "> 1:") && !strings.Contains(result, "Error") {
+					t.Errorf("EvalNetwork(%q) = %q, expected subnet output or error", tt.expr, result)
+				}
+			}
+		})
+	}
+}
+
+func TestSubnetOutputPrefixFormat(t *testing.T) {
+	// Verify output lines are properly prefixed with "> "
+	result, err := EvalNetwork("10.100.0.0/24 / 2 subnets")
+	if err != nil {
+		t.Fatalf("EvalNetwork error: %v", err)
+	}
+
+	lines := strings.Split(result, "\n")
+	// First line should be empty (starts with newline)
+	if lines[0] != "" {
+		t.Errorf("Expected first line to be empty, got %q", lines[0])
+	}
+
+	// Subsequent lines should start with "> "
+	for i := 1; i < len(lines); i++ {
+		if !strings.HasPrefix(lines[i], "> ") {
+			t.Errorf("Line %d should start with '> ', got %q", i, lines[i])
+		}
 	}
 }

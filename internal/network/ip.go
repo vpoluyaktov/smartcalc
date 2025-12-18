@@ -256,10 +256,10 @@ func FormatSubnetList(subnets []SubnetInfo) string {
 
 	var sb strings.Builder
 	for i, s := range subnets {
-		if i > 0 {
-			sb.WriteString("\n")
-		}
-		sb.WriteString(fmt.Sprintf("%d: %s/%d (%d hosts)", i+1, s.NetworkAddr, s.CIDR, s.HostCount))
+		// Each line starts with newline (first line too, so it appears on its own line)
+		sb.WriteString("\n")
+		// Prefix with "> " so output lines are not re-parsed
+		sb.WriteString(fmt.Sprintf("> %d: %s/%d (%d hosts)", i+1, s.NetworkAddr, s.CIDR, s.HostCount))
 	}
 	return sb.String()
 }
