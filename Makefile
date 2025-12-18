@@ -17,16 +17,33 @@ GOMOD=$(GOCMD) mod
 # Build flags
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION) -X main.buildDate=$(BUILD_DATE) -X main.gitCommit=$(GIT_COMMIT)"
 
-.PHONY: all build clean test deps run help app-bundle release check
+# Detect OS for Wails build tags
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    # Check for Ubuntu 24.04+ which needs webkit2_41
+    WAILS_TAGS=-tags webkit2_41
+else ifeq ($(UNAME_S),Darwin)
+    WAILS_TAGS=-tags desktop
+else
+    WAILS_TAGS=-tags desktop
+endif
+
+.PHONY: all build clean test deps run help app-bundle release check frontend
 
 # Default target
-all: deps build
+all: deps frontend build
+
+# Build frontend
+frontend:
+	@echo "Building frontend..."
+	@cd frontend && npm install && npm run build
+	@echo "✓ Frontend build complete"
 
 # Build the main application
 build:
 	@echo "Building $(BINARY_NAME) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
+	CGO_ENABLED=1 $(GOBUILD) $(WAILS_TAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) .
 	@echo "✓ Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Build macOS .app bundle
