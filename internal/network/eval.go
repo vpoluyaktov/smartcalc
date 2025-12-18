@@ -87,7 +87,7 @@ func IsNetworkExpression(expr string) bool {
 
 	// Keywords that indicate network expressions (must have IP-like context)
 	networkKeywords := []string{
-		"subnet", "subnets", "cidr", "netmask",
+		"subnet", "subnets", "network", "networks", "cidr", "netmask",
 		"wildcard", "broadcast",
 	}
 
@@ -124,8 +124,8 @@ func IsNetworkExpression(expr string) bool {
 }
 
 func tryDivideToSubnets(expr string) (string, bool) {
-	// Pattern: "10.100.0.0/16 / 4 subnets"
-	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+subnets?`)
+	// Pattern: "10.100.0.0/16 / 4 subnets" or "10.100.0.0/16 / 4 networks"
+	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+(?:subnets?|networks?)`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false
