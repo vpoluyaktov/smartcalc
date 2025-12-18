@@ -5,7 +5,7 @@ import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
 import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs } from '../wailsjs/go/main/App';
-import { EventsOn } from '../wailsjs/runtime/runtime';
+import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
 let currentFile = '';
@@ -750,19 +750,19 @@ async function smartCopy() {
     // Replace line references with actual values
     const resolvedText = await CopyWithResolvedRefs(textToCopy);
     
-    // Copy to clipboard
-    await navigator.clipboard.writeText(resolvedText);
+    // Copy to clipboard using Wails runtime
+    ClipboardSetText(resolvedText);
 }
 
-// Paste from clipboard
+// Paste from clipboard using Wails runtime
 async function smartPaste() {
     try {
-        const text = await navigator.clipboard.readText();
+        const text = await ClipboardGetText();
         if (text) {
-            const pos = editor.state.selection.main.head;
+            const selection = editor.state.selection.main;
             editor.dispatch({
-                changes: { from: pos, insert: text },
-                selection: { anchor: pos + text.length },
+                changes: { from: selection.from, to: selection.to, insert: text },
+                selection: { anchor: selection.from + text.length },
             });
         }
     } catch (err) {
