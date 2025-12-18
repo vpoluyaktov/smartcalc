@@ -140,6 +140,39 @@ func (l *lexer) next() (Token, error) {
 	case '^':
 		l.advance(size)
 		return Token{Kind: tokPow, Text: "^"}, nil
+	case '>':
+		l.advance(size)
+		// Check for >=
+		if l.i < len(l.s) && l.s[l.i] == '=' {
+			l.advance(1)
+			return Token{Kind: tokGTE, Text: ">="}, nil
+		}
+		return Token{Kind: tokGT, Text: ">"}, nil
+	case '<':
+		l.advance(size)
+		// Check for <=
+		if l.i < len(l.s) && l.s[l.i] == '=' {
+			l.advance(1)
+			return Token{Kind: tokLTE, Text: "<="}, nil
+		}
+		return Token{Kind: tokLT, Text: "<"}, nil
+	case '=':
+		l.advance(size)
+		// Check for ==
+		if l.i < len(l.s) && l.s[l.i] == '=' {
+			l.advance(1)
+			return Token{Kind: tokEQ, Text: "=="}, nil
+		}
+		// Single = is not a valid operator in expressions, skip it
+		return l.next()
+	case '!':
+		l.advance(size)
+		// Check for !=
+		if l.i < len(l.s) && l.s[l.i] == '=' {
+			l.advance(1)
+			return Token{Kind: tokNE, Text: "!="}, nil
+		}
+		return Token{}, fmt.Errorf("unexpected '!'")
 	case '(':
 		l.advance(size)
 		return Token{Kind: tokLParen, Text: "("}, nil

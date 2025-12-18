@@ -61,6 +61,18 @@ func (p *parser) parseExpr(minPrec int) (val, error) {
 			left = val{v: left.v / right.v}
 		case tokPow:
 			left = val{v: math.Pow(left.v, right.v)}
+		case tokGT:
+			left = val{v: boolToFloat(left.v > right.v)}
+		case tokLT:
+			left = val{v: boolToFloat(left.v < right.v)}
+		case tokGTE:
+			left = val{v: boolToFloat(left.v >= right.v)}
+		case tokLTE:
+			left = val{v: boolToFloat(left.v <= right.v)}
+		case tokEQ:
+			left = val{v: boolToFloat(left.v == right.v)}
+		case tokNE:
+			left = val{v: boolToFloat(left.v != right.v)}
 		default:
 			return val{}, fmt.Errorf("unexpected operator: %s", t.Text)
 		}
@@ -69,8 +81,17 @@ func (p *parser) parseExpr(minPrec int) (val, error) {
 	return left, nil
 }
 
+func boolToFloat(b bool) float64 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 func infixPrec(k TokenKind) (prec int, rightAssoc bool) {
 	switch k {
+	case tokGT, tokLT, tokGTE, tokLTE, tokEQ, tokNE:
+		return precCmp, false
 	case tokPlus, tokMinus:
 		return precAdd, false
 	case tokMul, tokDiv:

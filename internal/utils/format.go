@@ -69,3 +69,11 @@ func FormatResult(isCurrency bool, v float64) string {
 	}
 	return formatNumberWithThousands(v)
 }
+
+// FormatBoolResult formats a comparison result as true/false
+func FormatBoolResult(v float64) string {
+	if v == 1 {
+		return "true"
+	}
+	return "false"
+}

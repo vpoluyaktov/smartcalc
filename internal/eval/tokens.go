@@ -14,6 +14,12 @@ const (
 	tokPow
 	tokLParen
 	tokRParen
+	tokGT  // >
+	tokLT  // <
+	tokGTE // >=
+	tokLTE // <=
+	tokEQ  // ==
+	tokNE  // !=
 )
 
 type Token struct {
@@ -42,6 +48,7 @@ type val struct {
 
 // Pratt parser precedence
 const (
+	precCmp = 5 // comparison operators (lowest precedence)
 	precAdd = 10
 	precMul = 20
 	precPow = 30

@@ -11,6 +11,26 @@ import (
 	"smartcalc/internal/utils"
 )
 
+// isComparisonExpr checks if an expression contains comparison operators
+func isComparisonExpr(expr string) bool {
+	// Check for comparison operators: >, <, >=, <=, ==, !=
+	if strings.Contains(expr, ">=") || strings.Contains(expr, "<=") ||
+		strings.Contains(expr, "==") || strings.Contains(expr, "!=") {
+		return true
+	}
+	// Check for single > or < (but not part of >= or <=)
+	for i, r := range expr {
+		if r == '>' || r == '<' {
+			// Make sure it's not followed by =
+			if i+1 < len(expr) && expr[i+1] == '=' {
+				continue
+			}
+			return true
+		}
+	}
+	return false
+}
+
 // formatExpression adds proper spacing around operators in an expression.
 // Transforms "2+3" to "2 + 3", "$100-20%" to "$100 - 20%", etc.
 func formatExpression(expr string) string {
@@ -160,6 +180,7 @@ func EvalLines(lines []string) []LineResult {
 		}
 
 		isCurrency := strings.Contains(expr, "$") || eval.ExprReferencesCurrency(expr, currencyByLine)
+		isComparison := isComparisonExpr(expr)
 
 		val, err := eval.EvalExpr(expr, func(n int) (float64, error) {
 			idx := n - 1
@@ -180,7 +201,13 @@ func EvalLines(lines []string) []LineResult {
 		haveRes[i] = true
 		currencyByLine[i] = isCurrency
 
-		results[i].Output = formatExpression(expr) + " = " + utils.FormatResult(isCurrency, val)
+		var resultStr string
+		if isComparison {
+			resultStr = utils.FormatBoolResult(val)
+		} else {
+			resultStr = utils.FormatResult(isCurrency, val)
+		}
+		results[i].Output = formatExpression(expr) + " = " + resultStr
 		results[i].Value = val
 		results[i].HasResult = true
 		results[i].IsCurrency = isCurrency
