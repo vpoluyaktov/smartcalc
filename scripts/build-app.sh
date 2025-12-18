@@ -84,11 +84,35 @@ if [ "$OS" = "Darwin" ]; then
     # Copy binary
     cp "$OUTFILE" "$APP_NAME/Contents/MacOS/SuperCalc"
     
+    # Generate icns from PNG if needed (macOS only)
+    if [ -f "assets/icon.png" ] && [ ! -f "build/appicon.icns" ]; then
+        echo "Generating app icon..."
+        mkdir -p build
+        ICONSET="build/icon.iconset"
+        mkdir -p "$ICONSET"
+        
+        # Generate all required sizes using sips (macOS built-in)
+        sips -z 16 16     "assets/icon.png" --out "$ICONSET/icon_16x16.png" 2>/dev/null
+        sips -z 32 32     "assets/icon.png" --out "$ICONSET/icon_16x16@2x.png" 2>/dev/null
+        sips -z 32 32     "assets/icon.png" --out "$ICONSET/icon_32x32.png" 2>/dev/null
+        sips -z 64 64     "assets/icon.png" --out "$ICONSET/icon_32x32@2x.png" 2>/dev/null
+        sips -z 128 128   "assets/icon.png" --out "$ICONSET/icon_128x128.png" 2>/dev/null
+        sips -z 256 256   "assets/icon.png" --out "$ICONSET/icon_128x128@2x.png" 2>/dev/null
+        sips -z 256 256   "assets/icon.png" --out "$ICONSET/icon_256x256.png" 2>/dev/null
+        sips -z 512 512   "assets/icon.png" --out "$ICONSET/icon_256x256@2x.png" 2>/dev/null
+        sips -z 512 512   "assets/icon.png" --out "$ICONSET/icon_512x512.png" 2>/dev/null
+        cp "assets/icon.png" "$ICONSET/icon_512x512@2x.png"
+        
+        # Convert to icns
+        iconutil -c icns "$ICONSET" -o "build/appicon.icns" 2>/dev/null
+        rm -rf "$ICONSET"
+    fi
+    
     # Copy icon if exists
-    if [ -f "assets/icon.icns" ]; then
-        cp "assets/icon.icns" "$APP_NAME/Contents/Resources/icon.icns"
-    elif [ -f "build/appicon.icns" ]; then
+    if [ -f "build/appicon.icns" ]; then
         cp "build/appicon.icns" "$APP_NAME/Contents/Resources/icon.icns"
+    elif [ -f "assets/icon.icns" ]; then
+        cp "assets/icon.icns" "$APP_NAME/Contents/Resources/icon.icns"
     fi
     
     # Create Info.plist
