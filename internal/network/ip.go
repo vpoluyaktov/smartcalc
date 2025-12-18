@@ -259,7 +259,8 @@ func FormatSubnetList(subnets []SubnetInfo) string {
 		if i > 0 {
 			sb.WriteString("\n")
 		}
-		sb.WriteString(fmt.Sprintf("%d: %s/%d (%d hosts)", i+1, s.NetworkAddr, s.CIDR, s.HostCount))
+		// Use "h" instead of "hosts" to avoid re-parsing as network expression
+		sb.WriteString(fmt.Sprintf("%d: %s/%d [%dh]", i+1, s.NetworkAddr, s.CIDR, s.HostCount))
 	}
 	return sb.String()
 }
