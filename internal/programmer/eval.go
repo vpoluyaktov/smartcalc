@@ -80,8 +80,8 @@ func IsProgrammerExpression(expr string) bool {
 		`^sha1\s+`,
 		`^sha256\s+`,
 		`^random\s+`,
-		`^base64\s+encode\s+`,
-		`^base64\s+decode\s+`,
+		`^base64\s+(?:encode|-e)\s+`,
+		`^base64\s+(?:decode|-d)\s+`,
 	}
 
 	for _, pattern := range patterns {
@@ -362,8 +362,8 @@ func handleSHA256(expr, exprLower string) (string, bool) {
 }
 
 func handleBase64Encode(expr, exprLower string) (string, bool) {
-	// Pattern: "base64 encode hello" or "base64 encode 'hello world'"
-	re := regexp.MustCompile(`(?i)^base64\s+encode\s+['"]?(.+?)['"]?$`)
+	// Pattern: "base64 encode hello", "base64 -e hello", or "base64 encode 'hello world'"
+	re := regexp.MustCompile(`(?i)^base64\s+(?:encode|-e)\s+['"]?(.+?)['"]?$`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false
@@ -375,8 +375,8 @@ func handleBase64Encode(expr, exprLower string) (string, bool) {
 }
 
 func handleBase64Decode(expr, exprLower string) (string, bool) {
-	// Pattern: "base64 decode SGVsbG8gV29ybGQ="
-	re := regexp.MustCompile(`(?i)^base64\s+decode\s+['"]?(.+?)['"]?$`)
+	// Pattern: "base64 decode SGVsbG8gV29ybGQ=" or "base64 -d SGVsbG8gV29ybGQ="
+	re := regexp.MustCompile(`(?i)^base64\s+(?:decode|-d)\s+['"]?(.+?)['"]?$`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false
