@@ -114,6 +114,7 @@ func GetSnippetCategories() []SnippetCategory {
 				{"ASCII Table", "ascii table =\n"},
 				{"UUID Generation", "uuid =\n"},
 				{"Hash Functions", "md5 hello =\nsha256 hello =\nsha1 test =\n"},
+				{"Base64 Encode/Decode", "base64 encode hello world =\nbase64 decode SGVsbG8gd29ybGQ= =\n"},
 				{"Random Number", "random 1 to 100 =\nrandom 1-1000 =\n"},
 			},
 		},

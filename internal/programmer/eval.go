@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"regexp"
@@ -41,6 +42,8 @@ var handlerChain = []Handler{
 	HandlerFunc(handleMD5),
 	HandlerFunc(handleSHA1),
 	HandlerFunc(handleSHA256),
+	HandlerFunc(handleBase64Encode),
+	HandlerFunc(handleBase64Decode),
 	HandlerFunc(handleRandomNumber),
 }
 
@@ -77,6 +80,8 @@ func IsProgrammerExpression(expr string) bool {
 		`^sha1\s+`,
 		`^sha256\s+`,
 		`^random\s+`,
+		`^base64\s+encode\s+`,
+		`^base64\s+decode\s+`,
 	}
 
 	for _, pattern := range patterns {
@@ -354,6 +359,35 @@ func handleSHA256(expr, exprLower string) (string, bool) {
 	input := matches[1]
 	hash := sha256.Sum256([]byte(input))
 	return hex.EncodeToString(hash[:]), true
+}
+
+func handleBase64Encode(expr, exprLower string) (string, bool) {
+	// Pattern: "base64 encode hello" or "base64 encode 'hello world'"
+	re := regexp.MustCompile(`(?i)^base64\s+encode\s+['"]?(.+?)['"]?$`)
+	matches := re.FindStringSubmatch(expr)
+	if matches == nil {
+		return "", false
+	}
+
+	input := matches[1]
+	encoded := base64.StdEncoding.EncodeToString([]byte(input))
+	return encoded, true
+}
+
+func handleBase64Decode(expr, exprLower string) (string, bool) {
+	// Pattern: "base64 decode SGVsbG8gV29ybGQ="
+	re := regexp.MustCompile(`(?i)^base64\s+decode\s+['"]?(.+?)['"]?$`)
+	matches := re.FindStringSubmatch(expr)
+	if matches == nil {
+		return "", false
+	}
+
+	input := matches[1]
+	decoded, err := base64.StdEncoding.DecodeString(input)
+	if err != nil {
+		return "ERR: invalid base64", true
+	}
+	return string(decoded), true
 }
 
 func handleRandomNumber(expr, exprLower string) (string, bool) {
