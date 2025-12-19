@@ -11,6 +11,37 @@ import (
 // RefResolver is a function that resolves line references like \1 to their string values
 type RefResolver func(n int) (string, bool)
 
+// Handler defines the interface for datetime expression handlers.
+// Each handler attempts to process an expression and returns the result
+// along with a boolean indicating whether it handled the expression.
+type Handler interface {
+	Handle(expr, exprLower string) (string, bool)
+}
+
+// HandlerFunc is an adapter to allow ordinary functions to be used as Handlers.
+type HandlerFunc func(expr, exprLower string) (string, bool)
+
+// Handle calls the underlying function.
+func (f HandlerFunc) Handle(expr, exprLower string) (string, bool) {
+	return f(expr, exprLower)
+}
+
+// handlerChain is the ordered list of handlers for datetime expressions.
+// Handlers are tried in order; the first one that returns ok=true wins.
+var handlerChain = []Handler{
+	HandlerFunc(handleNowIn),
+	HandlerFunc(handleNow),
+	HandlerFunc(handleToday),
+	HandlerFunc(handleNumberPlusDuration),
+	HandlerFunc(handleTimeConversion),
+	HandlerFunc(handleDurationConversion),
+	HandlerFunc(handleDateArithmetic),
+	HandlerFunc(handleDateTimeConversion),
+	HandlerFunc(handleDateRange),
+	HandlerFunc(handleDateDifference),
+	HandlerFunc(handleDurationMultiplication),
+}
+
 // EvalDateTimeWithRefs evaluates a date/time expression with line reference support
 func EvalDateTimeWithRefs(expr string, resolver RefResolver) (string, error) {
 	// First, replace any line references with their values
@@ -44,65 +75,16 @@ func resolveRefsInExpr(expr string, resolver RefResolver) string {
 	return result
 }
 
-// EvalDateTime evaluates a date/time expression and returns the result
+// EvalDateTime evaluates a date/time expression and returns the result.
+// It uses the Chain of Responsibility pattern to delegate to handlers.
 func EvalDateTime(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
 	exprLower := strings.ToLower(expr)
 
-	// Check for "now in <city>" pattern
-	if strings.HasPrefix(exprLower, "now in ") || strings.HasPrefix(exprLower, "now() in ") {
-		return evalNowIn(expr)
-	}
-
-	// Check for "Now" (capitalized - display format)
-	if exprLower == "now" || exprLower == "now()" {
-		return FormatTime(time.Now()), nil
-	}
-
-	// Check for "today" or "today()"
-	if exprLower == "today" || exprLower == "today()" {
-		now := time.Now()
-		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local).Format("2006-01-02"), nil
-	}
-
-	// Check for number + duration: "0 + 3 days" means "now + 3 days"
-	if result, ok := tryNumberPlusDuration(expr); ok {
-		return result, nil
-	}
-
-	// Check for time conversion: "6:00 am Seattle in Kiev"
-	if result, ok := tryTimeConversion(expr); ok {
-		return result, nil
-	}
-
-	// Check for duration conversion: "861.5 hours in days"
-	if result, ok := tryDurationConversion(expr); ok {
-		return result, nil
-	}
-
-	// Check for date arithmetic: "today() - 35.9 days" or "2025-09-25 19:00:00 + 10 hours"
-	if result, ok := tryDateArithmetic(expr); ok {
-		return result, nil
-	}
-
-	// Check for datetime with timezone conversion: "2025-09-25 19:00:00 EST in Seattle"
-	if result, ok := tryDateTimeConversion(expr); ok {
-		return result, nil
-	}
-
-	// Check for date range: "Dec 6 till March 11"
-	if result, ok := tryDateRange(expr); ok {
-		return result, nil
-	}
-
-	// Check for date difference: "19/01/22 - now" or "date1 - date2"
-	if result, ok := tryDateDifference(expr); ok {
-		return result, nil
-	}
-
-	// Check for duration multiplication: "(8 hours x 5 x 2) x 2" or "13 x 3 min"
-	if result, ok := tryDurationMultiplication(expr); ok {
-		return result, nil
+	for _, h := range handlerChain {
+		if result, ok := h.Handle(expr, exprLower); ok {
+			return result, nil
+		}
 	}
 
 	return "", fmt.Errorf("unable to evaluate date/time expression: %s", expr)
@@ -148,24 +130,44 @@ func IsDateTimeExpression(expr string) bool {
 	return false
 }
 
-func evalNowIn(expr string) (string, error) {
+func handleNowIn(expr, exprLower string) (string, bool) {
+	// Check for "now in <city>" pattern
+	if !strings.HasPrefix(exprLower, "now in ") && !strings.HasPrefix(exprLower, "now() in ") {
+		return "", false
+	}
+
 	// Extract city name
 	re := regexp.MustCompile(`(?i)now(?:\(\))?\s+in\s+(.+)`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
-		return "", fmt.Errorf("invalid 'now in' expression")
+		return "", false
 	}
 
 	city := strings.TrimSpace(matches[1])
 	loc, err := LookupTimezone(city)
 	if err != nil {
-		return "", fmt.Errorf("unknown timezone/city: %s", city)
+		return "", false
 	}
 
-	return FormatTime(time.Now().In(loc)), nil
+	return FormatTime(time.Now().In(loc)), true
 }
 
-func tryTimeConversion(expr string) (string, bool) {
+func handleNow(expr, exprLower string) (string, bool) {
+	if exprLower == "now" || exprLower == "now()" {
+		return FormatTime(time.Now()), true
+	}
+	return "", false
+}
+
+func handleToday(expr, exprLower string) (string, bool) {
+	if exprLower == "today" || exprLower == "today()" {
+		now := time.Now()
+		return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local).Format("2006-01-02"), true
+	}
+	return "", false
+}
+
+func handleTimeConversion(expr, exprLower string) (string, bool) {
 	// Pattern: "6:00 am Seattle in Kiev" or "11am kiev in seattle"
 	// More flexible pattern to handle various time formats
 	re := regexp.MustCompile(`(?i)^(\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?)\s+(.+?)\s+in\s+(.+)$`)
@@ -199,7 +201,7 @@ func tryTimeConversion(expr string) (string, bool) {
 	return FormatTime(result), true
 }
 
-func tryDurationConversion(expr string) (string, bool) {
+func handleDurationConversion(expr, exprLower string) (string, bool) {
 	// Pattern: "861.5 hours in days"
 	re := regexp.MustCompile(`(?i)^([\d.]+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)\s+in\s+(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)$`)
 	matches := re.FindStringSubmatch(expr)
@@ -234,7 +236,7 @@ func tryDurationConversion(expr string) (string, bool) {
 	return fmt.Sprintf("%.2f %s", result, toUnit), true
 }
 
-func tryDateArithmetic(expr string) (string, bool) {
+func handleDateArithmetic(expr, exprLower string) (string, bool) {
 	// Pattern: "today() - 35.9 days" or "2025-09-25 19:00:00 + 10 hours" or "2025-12-17 16:00:00 PST + 3 days"
 	re := regexp.MustCompile(`(?i)^(.+?)\s*([+−-])\s*([\d.]+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)$`)
 	matches := re.FindStringSubmatch(expr)
@@ -320,7 +322,7 @@ func parseTimeWithTimezone(expr string) (time.Time, bool) {
 	return time.Time{}, false
 }
 
-func tryDateTimeConversion(expr string) (string, bool) {
+func handleDateTimeConversion(expr, exprLower string) (string, bool) {
 	// Pattern: "2025-09-25 19:00:00 EST in Seattle"
 	re := regexp.MustCompile(`(?i)^(.+?)\s+([A-Z]{2,4})\s+in\s+(\w+(?:\s+\w+)?)$`)
 	matches := re.FindStringSubmatch(expr)
@@ -350,7 +352,7 @@ func tryDateTimeConversion(expr string) (string, bool) {
 	return FormatTime(t.In(toLoc)), true
 }
 
-func tryDateRange(expr string) (string, bool) {
+func handleDateRange(expr, exprLower string) (string, bool) {
 	start, end, err := ParseDateRange(expr)
 	if err != nil {
 		return "", false
@@ -363,7 +365,7 @@ func tryDateRange(expr string) (string, bool) {
 	return fmt.Sprintf("%.1f days", days), true
 }
 
-func tryDateDifference(expr string) (string, bool) {
+func handleDateDifference(expr, exprLower string) (string, bool) {
 	// Pattern: "date1 - date2" or "date1 − date2" (with minus or en-dash)
 	// Examples: "19/01/22 - now", "2020-01-15 - today", "now - 2020-01-15"
 
@@ -415,7 +417,7 @@ func tryDateDifference(expr string) (string, bool) {
 	return FormatDetailedDuration(date1, date2), true
 }
 
-func tryNumberPlusDuration(expr string) (string, bool) {
+func handleNumberPlusDuration(expr, exprLower string) (string, bool) {
 	// Pattern: "0 + 3 days" or "0 - 5 hours" - treat 0 as "now"
 	re := regexp.MustCompile(`(?i)^(\d+)\s*([+−-])\s*([\d.]+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|weeks?|months?|years?|yrs?)$`)
 	matches := re.FindStringSubmatch(expr)
@@ -453,9 +455,8 @@ func tryNumberPlusDuration(expr string) (string, bool) {
 	return FormatTime(baseTime), true
 }
 
-func tryDurationMultiplication(expr string) (string, bool) {
+func handleDurationMultiplication(expr, exprLower string) (string, bool) {
 	// Handle expressions like "(8 hours x 5 x 2) x 2" or "13 x 3 min"
-	exprLower := strings.ToLower(expr)
 
 	// Check if it contains duration units
 	hasUnit := false

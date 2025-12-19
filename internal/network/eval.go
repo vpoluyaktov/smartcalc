@@ -7,69 +7,48 @@ import (
 	"strings"
 )
 
-// EvalNetwork evaluates a network/IP expression and returns the result
+// Handler defines the interface for network expression handlers.
+// Each handler attempts to process an expression and returns the result
+// along with a boolean indicating whether it handled the expression.
+type Handler interface {
+	Handle(expr, exprLower string) (string, bool)
+}
+
+// HandlerFunc is an adapter to allow ordinary functions to be used as Handlers.
+type HandlerFunc func(expr, exprLower string) (string, bool)
+
+// Handle calls the underlying function.
+func (f HandlerFunc) Handle(expr, exprLower string) (string, bool) {
+	return f(expr, exprLower)
+}
+
+// handlerChain is the ordered list of handlers for network expressions.
+// Handlers are tried in order; the first one that returns ok=true wins.
+var handlerChain = []Handler{
+	HandlerFunc(handleDivideToSubnets),
+	HandlerFunc(handleDivideByHosts),
+	HandlerFunc(handleHostCount),
+	HandlerFunc(handleSubnetInfo),
+	HandlerFunc(handleWildcardMask), // must be before handleMaskForPrefix
+	HandlerFunc(handleMaskForPrefix),
+	HandlerFunc(handlePrefixFromMask),
+	HandlerFunc(handleIPInRange),
+	HandlerFunc(handleNextSubnet),
+	HandlerFunc(handleBroadcast),
+	HandlerFunc(handleNetworkAddress),
+	HandlerFunc(handleJustCIDR),
+}
+
+// EvalNetwork evaluates a network/IP expression and returns the result.
+// It uses the Chain of Responsibility pattern to delegate to handlers.
 func EvalNetwork(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
 	exprLower := strings.ToLower(expr)
 
-	// "10.100.0.0/16 / 4 subnets" - new notation
-	if result, ok := tryDivideToSubnets(exprLower); ok {
-		return result, nil
-	}
-
-	// "10.100.0.0/16 / 1024 hosts" - new notation
-	if result, ok := tryDivideByHosts(exprLower); ok {
-		return result, nil
-	}
-
-	// "how many hosts in 10.100.0.0/28" or "hosts in 10.100.0.0/28"
-	if result, ok := tryHostCount(exprLower); ok {
-		return result, nil
-	}
-
-	// "subnet info 10.100.0.0/24" or "info 10.100.0.0/24"
-	if result, ok := trySubnetInfo(exprLower); ok {
-		return result, nil
-	}
-
-	// "wildcard for /24" or "wildcard mask /24" - check before regular mask
-	if result, ok := tryWildcardMask(exprLower); ok {
-		return result, nil
-	}
-
-	// "mask for /24" or "netmask /24" or "subnet mask for /24"
-	if result, ok := tryMaskForPrefix(exprLower); ok {
-		return result, nil
-	}
-
-	// "prefix for 255.255.255.0" or "cidr for 255.255.255.0"
-	if result, ok := tryPrefixFromMask(exprLower); ok {
-		return result, nil
-	}
-
-	// "is 10.100.0.50 in 10.100.0.0/24"
-	if result, ok := tryIPInRange(exprLower); ok {
-		return result, nil
-	}
-
-	// "next subnet after 10.100.0.0/24"
-	if result, ok := tryNextSubnet(exprLower); ok {
-		return result, nil
-	}
-
-	// "broadcast for 10.100.0.0/24" or "broadcast of 10.100.0.0/24"
-	if result, ok := tryBroadcast(exprLower); ok {
-		return result, nil
-	}
-
-	// "network for 10.100.0.50/24" or "network address 10.100.0.50/24"
-	if result, ok := tryNetworkAddress(exprLower); ok {
-		return result, nil
-	}
-
-	// Just a CIDR - return info
-	if result, ok := tryJustCIDR(expr); ok {
-		return result, nil
+	for _, h := range handlerChain {
+		if result, ok := h.Handle(expr, exprLower); ok {
+			return result, nil
+		}
 	}
 
 	return "", fmt.Errorf("unable to evaluate network expression: %s", expr)
@@ -123,10 +102,10 @@ func IsNetworkExpression(expr string) bool {
 	return false
 }
 
-func tryDivideToSubnets(expr string) (string, bool) {
+func handleDivideToSubnets(expr, exprLower string) (string, bool) {
 	// Pattern: "10.100.0.0/16 / 4 subnets" or "10.100.0.0/16 / 4 networks"
 	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+(?:subnets?|networks?)`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -142,10 +121,10 @@ func tryDivideToSubnets(expr string) (string, bool) {
 	return FormatSubnetList(subnets), true
 }
 
-func tryDivideByHosts(expr string) (string, bool) {
+func handleDivideByHosts(expr, exprLower string) (string, bool) {
 	// Pattern: "10.100.0.0/16 / 1024 hosts"
 	re := regexp.MustCompile(`(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})\s*/\s*(\d+)\s+hosts?`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -161,14 +140,14 @@ func tryDivideByHosts(expr string) (string, bool) {
 	return FormatSubnetList(subnets), true
 }
 
-func tryHostCount(expr string) (string, bool) {
+func handleHostCount(expr, exprLower string) (string, bool) {
 	// Pattern: "how many hosts in 10.100.0.0/28" or "hosts in 10.100.0.0/28" or "host count 10.100.0.0/28"
 	re := regexp.MustCompile(`(?:how\s+many\s+)?hosts?\s+(?:in|for|count)?\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		// Try just prefix: "hosts in /24"
 		re = regexp.MustCompile(`(?:how\s+many\s+)?hosts?\s+(?:in|for)?\s*/(\d{1,2})`)
-		matches = re.FindStringSubmatch(expr)
+		matches = re.FindStringSubmatch(exprLower)
 		if matches == nil {
 			return "", false
 		}
@@ -186,10 +165,10 @@ func tryHostCount(expr string) (string, bool) {
 	return fmt.Sprintf("%d hosts", info.HostCount), true
 }
 
-func trySubnetInfo(expr string) (string, bool) {
+func handleSubnetInfo(expr, exprLower string) (string, bool) {
 	// Pattern: "subnet info 10.100.0.0/24" or "info for 10.100.0.0/24"
 	re := regexp.MustCompile(`(?:subnet\s+)?info\s+(?:for\s+)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -200,14 +179,14 @@ func trySubnetInfo(expr string) (string, bool) {
 		return fmt.Sprintf("Error: %s", err), true
 	}
 
-	return fmt.Sprintf("Network: %s/%d\nMask: %s\nHosts: %d\nRange: %s - %s\nBroadcast: %s",
+	return fmt.Sprintf("\n> Network: %s/%d\n> Mask: %s\n> Hosts: %d\n> Range: %s - %s\n> Broadcast: %s",
 		info.NetworkAddr, info.CIDR, info.Mask, info.HostCount, info.FirstHost, info.LastHost, info.Broadcast), true
 }
 
-func tryMaskForPrefix(expr string) (string, bool) {
+func handleMaskForPrefix(expr, exprLower string) (string, bool) {
 	// Pattern: "mask for /24" or "netmask /24" or "subnet mask for /24"
 	re := regexp.MustCompile(`(?:subnet\s+)?(?:net)?mask\s+(?:for\s+)?/?(\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -221,10 +200,10 @@ func tryMaskForPrefix(expr string) (string, bool) {
 	return mask, true
 }
 
-func tryWildcardMask(expr string) (string, bool) {
+func handleWildcardMask(expr, exprLower string) (string, bool) {
 	// Pattern: "wildcard for /24" or "wildcard mask /24"
 	re := regexp.MustCompile(`wildcard\s+(?:mask\s+)?(?:for\s+)?/?(\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -238,10 +217,10 @@ func tryWildcardMask(expr string) (string, bool) {
 	return wildcard, true
 }
 
-func tryPrefixFromMask(expr string) (string, bool) {
+func handlePrefixFromMask(expr, exprLower string) (string, bool) {
 	// Pattern: "prefix for 255.255.255.0" or "cidr for 255.255.255.0"
 	re := regexp.MustCompile(`(?:prefix|cidr)\s+(?:for\s+)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -255,10 +234,10 @@ func tryPrefixFromMask(expr string) (string, bool) {
 	return fmt.Sprintf("/%d", prefix), true
 }
 
-func tryIPInRange(expr string) (string, bool) {
+func handleIPInRange(expr, exprLower string) (string, bool) {
 	// Pattern: "is 10.100.0.50 in 10.100.0.0/24"
 	re := regexp.MustCompile(`is\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s+in\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -277,10 +256,10 @@ func tryIPInRange(expr string) (string, bool) {
 	return "no", true
 }
 
-func tryNextSubnet(expr string) (string, bool) {
+func handleNextSubnet(expr, exprLower string) (string, bool) {
 	// Pattern: "next subnet after 10.100.0.0/24"
 	re := regexp.MustCompile(`next\s+subnet\s+(?:after\s+)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -294,10 +273,10 @@ func tryNextSubnet(expr string) (string, bool) {
 	return next, true
 }
 
-func tryBroadcast(expr string) (string, bool) {
+func handleBroadcast(expr, exprLower string) (string, bool) {
 	// Pattern: "broadcast for 10.100.0.0/24" or "broadcast of 10.100.0.0/24"
 	re := regexp.MustCompile(`broadcast\s+(?:for|of|address)?\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -311,10 +290,10 @@ func tryBroadcast(expr string) (string, bool) {
 	return info.Broadcast, true
 }
 
-func tryNetworkAddress(expr string) (string, bool) {
+func handleNetworkAddress(expr, exprLower string) (string, bool) {
 	// Pattern: "network for 10.100.0.50/24" or "network address 10.100.0.50/24"
 	re := regexp.MustCompile(`network\s+(?:for|of|address)?\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})`)
-	matches := re.FindStringSubmatch(expr)
+	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
 		return "", false
 	}
@@ -328,7 +307,7 @@ func tryNetworkAddress(expr string) (string, bool) {
 	return fmt.Sprintf("%s/%d", info.NetworkAddr, info.CIDR), true
 }
 
-func tryJustCIDR(expr string) (string, bool) {
+func handleJustCIDR(expr, exprLower string) (string, bool) {
 	// Just a CIDR notation - return basic info
 	re := regexp.MustCompile(`^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2})$`)
 	matches := re.FindStringSubmatch(strings.TrimSpace(expr))
