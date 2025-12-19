@@ -114,10 +114,8 @@ func extractInlineComment(line string, eqPos int) string {
 	afterEq := line[eqPos+1:]
 	hashIdx := strings.Index(afterEq, "#")
 	if hashIdx >= 0 {
-		// Preserve the comment as-is, just ensure there's a space before #
+		// Preserve the comment exactly as typed, no trimming
 		comment := afterEq[hashIdx:]
-		// Trim trailing whitespace only, preserve internal spaces
-		comment = strings.TrimRight(comment, " \t\n\r")
 		return " " + comment
 	}
 	return ""
