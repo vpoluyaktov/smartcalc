@@ -77,6 +77,7 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - ASCII Table: `ascii table` (displays full ASCII table)
 - UUID generation: `uuid`
 - Hash functions: `md5 hello`, `sha256 hello`
+- Base64 encoding: `base64 encode hello world`, `base64 decode SGVsbG8gd29ybGQ=`
 
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
@@ -157,6 +158,8 @@ stddev(2, 4, 4, 4, 5, 5, 7, 9) = 2
 1 << 8 = 256 (0x100)
 ascii A = 65 (0x41)
 uuid = a1b2c3d4-e5f6-7890-abcd-ef1234567890
+base64 encode hello world = aGVsbG8gd29ybGQ=
+base64 decode SGVsbG8gd29ybGQ= = hello world
 
 # Physical Constants
 pi = 3.141592654

@@ -879,6 +879,8 @@ range(1, 5, 10, 3) = 9
 ascii A = 65
 char 65 = A
 md5 hello = 5d41402abc4b2a76...
+base64 encode hello = aGVsbG8=
+base64 decode aGVsbG8= = hello
 uuid = (random UUID)
 random 1 to 100 = (random number)
 
