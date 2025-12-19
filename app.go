@@ -185,9 +185,11 @@ type EvalResult struct {
 }
 
 // Evaluate evaluates all lines and returns results
-func (a *App) Evaluate(text string) []EvalResult {
+// activeLineNum is 1-based line number of the line currently being edited (skip formatting for this line)
+// Pass 0 or negative to format all lines
+func (a *App) Evaluate(text string, activeLineNum int) []EvalResult {
 	lines := strings.Split(text, "\n")
-	results := calc.EvalLines(lines)
+	results := calc.EvalLines(lines, activeLineNum)
 
 	evalResults := make([]EvalResult, len(results))
 	for i, r := range results {

@@ -10,7 +10,7 @@ export function AutoSave(arg1:string,arg2:string):Promise<void>;
 
 export function CopyWithResolvedRefs(arg1:string):Promise<string>;
 
-export function Evaluate(arg1:string):Promise<Array<main.EvalResult>>;
+export function Evaluate(arg1:string,arg2:number):Promise<Array<main.EvalResult>>;
 
 export function GetLastFile():Promise<string>;
 

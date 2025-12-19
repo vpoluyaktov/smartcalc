@@ -18,8 +18,8 @@ export function CopyWithResolvedRefs(arg1) {
   return window['go']['main']['App']['CopyWithResolvedRefs'](arg1);
 }
 
-export function Evaluate(arg1) {
-  return window['go']['main']['App']['Evaluate'](arg1);
+export function Evaluate(arg1, arg2) {
+  return window['go']['main']['App']['Evaluate'](arg1, arg2);
 }
 
 export function GetLastFile() {

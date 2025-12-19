@@ -2,11 +2,13 @@ package programmer
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,6 +47,7 @@ var handlerChain = []Handler{
 	HandlerFunc(handleBase64Encode),
 	HandlerFunc(handleBase64Decode),
 	HandlerFunc(handleRandomNumber),
+	HandlerFunc(handlePasswordGenerator),
 }
 
 // EvalProgrammer evaluates a programmer utility expression and returns the result.
@@ -82,6 +85,7 @@ func IsProgrammerExpression(expr string) bool {
 		`^random\s+`,
 		`^base64\s+(?:encode|-e)\s+`,
 		`^base64\s+(?:decode|-d)\s+`,
+		`^pwgen`,
 	}
 
 	for _, pattern := range patterns {
@@ -415,4 +419,99 @@ func handleRandomNumber(expr, exprLower string) (string, bool) {
 
 	result := min + int(num%uint64(max-min+1))
 	return fmt.Sprintf("%d", result), true
+}
+
+func handlePasswordGenerator(expr, exprLower string) (string, bool) {
+	// Pattern: "pwgen" or "pwgen -c 16" or "pwgen -h" or "pwgen -c 20 -h"
+	if !strings.HasPrefix(exprLower, "pwgen") {
+		return "", false
+	}
+
+	// Default values
+	length := 16
+	hyphenated := false
+
+	// Parse flags
+	parts := strings.Fields(exprLower)
+	for i := 1; i < len(parts); i++ {
+		switch parts[i] {
+		case "-c":
+			if i+1 < len(parts) {
+				if l, err := strconv.Atoi(parts[i+1]); err == nil && l > 0 && l <= 128 {
+					length = l
+				}
+				i++
+			}
+		case "-h":
+			hyphenated = true
+		}
+	}
+
+	// Generate 20 passwords (5 rows x 4 columns)
+	var sb strings.Builder
+	for row := 0; row < 5; row++ {
+		sb.WriteString("\n> ")
+		for col := 0; col < 4; col++ {
+			if col > 0 {
+				sb.WriteString(" ")
+			}
+			pw := generatePassword(length, hyphenated)
+			sb.WriteString(pw)
+		}
+	}
+
+	return sb.String(), true
+}
+
+func generatePassword(length int, hyphenated bool) string {
+	// Character sets
+	lowercase := "abcdefghijklmnopqrstuvwxyz"
+	uppercase := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	digits := "0123456789"
+	special := "!@#$%^&*()-_=+[]{}|;:,.<>?/\\'\"`~"
+
+	// For hyphenated passwords, use only alphanumeric
+	var charset string
+	if hyphenated {
+		charset = lowercase + uppercase + digits
+	} else {
+		charset = lowercase + uppercase + digits + special
+	}
+
+	charsetLen := big.NewInt(int64(len(charset)))
+	var result strings.Builder
+
+	if hyphenated {
+		// Generate hyphen-separated segments (4 chars each)
+		segmentLen := 4
+		numSegments := (length + segmentLen) / (segmentLen + 1) // account for hyphens
+		if numSegments < 1 {
+			numSegments = 1
+		}
+
+		for seg := 0; seg < numSegments; seg++ {
+			if seg > 0 {
+				result.WriteString("-")
+			}
+			for i := 0; i < segmentLen; i++ {
+				idx, _ := rand.Int(rand.Reader, charsetLen)
+				result.WriteByte(charset[idx.Int64()])
+			}
+		}
+
+		// Trim to exact length if needed
+		pw := result.String()
+		if len(pw) > length {
+			return pw[:length]
+		}
+		return pw
+	}
+
+	// Regular password generation
+	for i := 0; i < length; i++ {
+		idx, _ := rand.Int(rand.Reader, charsetLen)
+		result.WriteByte(charset[idx.Int64()])
+	}
+
+	return result.String()
 }
