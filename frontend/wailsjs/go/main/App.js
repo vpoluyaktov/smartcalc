@@ -57,3 +57,7 @@ export function SetUnsavedState(arg1, arg2) {
 export function WriteFile(arg1, arg2) {
   return window['go']['main']['App']['WriteFile'](arg1, arg2);
 }
+
+export function ShowInfoDialog(arg1, arg2) {
+  return window['go']['main']['App']['ShowInfoDialog'](arg1, arg2);
+}
