@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"smartcalc/internal/data"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -98,38 +99,16 @@ func createAppMenu(app *App) *menu.Menu {
 		runtime.EventsEmit(app.ctx, "menu:paste")
 	})
 
-	// Snippets menu
+	// Snippets menu - populated from data package
 	snippetsMenu := appMenu.AddSubmenu("Snippets")
-	snippets := []struct {
-		Name    string
-		Content string
-	}{
-		{"Basic Math", "10 + 20 * 3 =\n"},
-		{"Percentage", "$100 - 20% =\n"},
-		{"Currency Calculation", "$1,500.00 + $250.50 =\n"},
-		{"Line Reference", "100 =\n\\1 * 2 =\n"},
-		{"Scientific", "sin(45) + cos(30) =\n"},
-		{"Complex Expression", "$1,000 x 12 - 15% + $500 =\n"},
-		{"Comparison", "25 > 2.5 =\n100 >= 100 =\n5 != 3 =\n"},
-		{"Base Conversion", "255 in hex =\n0xFF in dec =\n25 in bin =\n0b11001 in oct =\n"},
-		{"Current Time", "now ="},
-		{"Time in City", "now in Seattle =\nnow in New York =\nnow in Kiev =\n"},
-		{"Date Arithmetic", "today() =\n\\1 + 30 days =\n\\1 - 1 week =\n"},
-		{"Date Difference", "19/01/22 - now =\n"},
-		{"Duration Conversion", "861.5 hours in days =\n"},
-		{"Time Zone Conversion", "6:00 am Seattle in Kiev =\n"},
-		{"Date Range", "Dec 6 till March 11 =\n"},
-		{"Subnet Info", "10.100.0.0/24 =\n"},
-		{"Split to Subnet", "10.100.0.0/16 / 4 subnets =\n"},
-		{"Split by Hosts", "10.100.0.0/28 / 16 hosts =\n"},
-		{"Subnet Mask", "mask for /24 =\nwildcard for /24 =\n"},
-		{"IP in Range", "is 10.100.0.50 in 10.100.0.0/24 =\n"},
-	}
-	for _, s := range snippets {
-		snippet := s.Content
-		snippetsMenu.AddText(s.Name, nil, func(_ *menu.CallbackData) {
-			runtime.EventsEmit(app.ctx, "menu:snippet", snippet)
-		})
+	for _, category := range data.GetSnippetCategories() {
+		categoryMenu := snippetsMenu.AddSubmenu(category.Name)
+		for _, s := range category.Snippets {
+			snippet := s.Content
+			categoryMenu.AddText(s.Name, nil, func(_ *menu.CallbackData) {
+				runtime.EventsEmit(app.ctx, "menu:snippet", snippet)
+			})
+		}
 	}
 
 	// Help menu

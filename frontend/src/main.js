@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, ShowInfoDialog } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -195,7 +195,7 @@ function buildDecorations(view) {
             }
             
             // Functions
-            const funcMatch = remaining.match(/^(sin|cos|tan|sqrt|abs|log|ln|exp|floor|ceil|round|min|max)\s*\(/i);
+            const funcMatch = remaining.match(/^(sin|cos|tan|sqrt|abs|log|ln|exp|floor|ceil|round|min|max|avg|average|mean|median|sum|stddev|stdev|variance|var|count|range)\s*\(/i);
             if (funcMatch) {
                 builder.add(from + pos, from + pos + funcMatch[1].length, functionMark);
                 pos += funcMatch[1].length;
@@ -204,7 +204,7 @@ function buildDecorations(view) {
             }
             
             // Keywords
-            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast)\b/i);
+            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast|what|percent|percentage|increase|decrease|tip|loan|mortgage|compound|simple|interest|invest|avg|average|mean|median|sum|stddev|stdev|variance|count|range|ascii|char|uuid|md5|sha1|sha256|random|and|or|xor|not|speed\s+of\s+light|gravity|pi|avogadro|planck|golden\s+ratio|value\s+of)\b/i);
             if (kwMatch) {
                 builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
                 pos += kwMatch[0].length;
@@ -692,66 +692,44 @@ async function insertSnippet(snippet) {
 
 // Show manual dialog
 function showManual() {
-    const manual = `
-# SmartCalc Manual
+    const manual = `Basic Usage: Type expressions followed by = to calculate.
 
-## Basic Usage
-Type mathematical expressions followed by = to calculate results.
+Operations: +, -, *, /, ^, ()
+Percentages: $100 - 20%, increase 100 by 20%
+Currency: $1,500.00 + $250.50
+Line References: \\1, \\2 (reference previous results)
+Functions: sin, cos, tan, sqrt, abs, log, ln
 
-## Supported Operations
-- **Addition**: +
-- **Subtraction**: -
-- **Multiplication**: * or x
-- **Division**: /
-- **Power**: ^
-- **Parentheses**: ( )
+Date/Time: now, today, now in Seattle, today + 30 days
+Network/IP: 10.100.0.0/24, mask for /24, split to subnets
+Unit Conversions: 5 miles in km, 100 f to c, 10 kg in lbs
+Percentage: what is 15% of 200, tip 20% on $85
+Financial: loan $250000 at 6.5% for 30 years
+Statistics: avg(1,2,3), median(1,2,3,4,5), stddev(...)
+Programmer: 0xFF AND 0x0F, ascii A, uuid, md5 hello
+Constants: pi, e, speed of light, gravity
 
-## Percentages
-- 100 + 20% = 120 (adds 20% of 100)
-- 100 - 20% = 80 (subtracts 20% of 100)
-
-## Currency
-- Prefix numbers with $ for currency formatting
-- Supports thousands separators: $1,500.00
-
-## Line References
-- Use \\1, \\2, etc. to reference results from previous lines
-
-## Functions
-- sin(), cos(), tan()
-- sqrt(), abs()
-- log(), ln()
-
-## Date/Time
-- **Current time**: now, now(), today, today()
-- **Time in city**: now in Seattle, now in New York
-- **Time conversion**: 6:00 am Seattle in Kiev
-- **Date arithmetic**: today() + 30 days, \\1 - 1 week
-- **Duration conversion**: 861.5 hours in days
-- **Date range**: Dec 6 till March 11
-
-## Network/IP Calculations
-- **Subnet info**: 10.100.0.0/24
-- **Split by count**: split 10.100.0.0/16 to 4 subnets
-- **Host count**: how many hosts in 10.100.0.0/28
-- **Subnet mask**: mask for /24, wildcard for /24
-- **IP in range**: is 10.100.0.50 in 10.100.0.0/24
-`;
-    alert(manual);
+Check the Snippets menu for more examples!`;
+    ShowInfoDialog("SmartCalc Manual", manual);
 }
 
 // Show about dialog
 function showAbout() {
     GetVersion().then(version => {
-        alert(`SmartCalc ${version}
+        const about = `SmartCalc ${version}
 
-A powerful calculator with support for:
-• Multi-line expressions
-• Line references
-• Currency formatting
-• Mathematical functions
-• Date/Time calculations
-• Network/IP subnet calculations`);
+A powerful multi-purpose calculator with support for:
+• Mathematical expressions & functions
+• Unit conversions (length, weight, temperature, etc.)
+• Percentage & financial calculations
+• Statistics (avg, median, stddev, etc.)
+• Date/Time calculations & time zones
+• Network/IP subnet calculations
+• Programmer utilities (bitwise, ASCII, hashing)
+• Physical & mathematical constants
+
+© 2025`;
+        ShowInfoDialog("About SmartCalc", about);
     });
 }
 
