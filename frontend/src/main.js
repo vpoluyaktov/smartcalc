@@ -381,29 +381,52 @@ function onTextChanged() {
         return;
     }
     
+    // Immediately capture current state to prevent stale comparisons
+    const currentText = editor.state.doc.toString();
+    const currentLineCount = currentText.split('\n').length;
+    
     if (debounceTimer) {
         clearTimeout(debounceTimer);
     }
     debounceTimer = setTimeout(() => {
-        checkAndAdjustReferences();
+        checkAndAdjustReferences(currentText, currentLineCount);
     }, 150);
     
     // Schedule autosave
     scheduleAutosave();
 }
 
+// Count non-output lines (lines that don't start with ">")
+// This is used to detect actual user edits vs evaluation output changes
+function countNonOutputLines(text) {
+    return text.split('\n').filter(line => !line.startsWith('>')).length;
+}
+
 // Check if line count changed and adjust references
-async function checkAndAdjustReferences() {
+// snapshotText/snapshotLineCount are the state captured when the change was detected
+async function checkAndAdjustReferences(snapshotText, snapshotLineCount) {
     // Prevent re-entry when we dispatch programmatically
     if (isUpdatingEditor) {
         return;
     }
     
-    const currentText = editor.state.doc.toString();
-    const currentLineCount = currentText.split('\n').length;
+    // Use snapshot if provided, otherwise get current state
+    const currentText = snapshotText || editor.state.doc.toString();
+    const currentLineCount = snapshotLineCount || currentText.split('\n').length;
     
-    // If line count changed, adjust references
-    if (previousLineCount > 0 && currentLineCount !== previousLineCount && previousText !== '') {
+    // Skip if the editor content has changed since the snapshot was taken
+    // This prevents processing stale snapshots after evaluation has already updated the content
+    if (snapshotText && editor.state.doc.toString() !== snapshotText) {
+        return;
+    }
+    
+    // Count non-output lines to detect actual user edits
+    // Output lines (starting with ">") shouldn't trigger reference adjustment
+    const prevNonOutputLines = countNonOutputLines(previousText);
+    const currNonOutputLines = countNonOutputLines(currentText);
+    
+    // If non-output line count changed, adjust references
+    if (prevNonOutputLines > 0 && currNonOutputLines !== prevNonOutputLines && previousText !== '') {
         try {
             const adjusted = await AdjustReferences(previousText, currentText);
             if (adjusted !== currentText) {
@@ -497,7 +520,11 @@ async function evaluateContent() {
 async function evaluateContentInternal() {
     const text = editor.state.doc.toString();
     try {
-        const results = await Evaluate(text);
+        // Get current cursor line number (1-based) to skip formatting for active line
+        const cursorPos = editor.state.selection.main.head;
+        const activeLineNum = editor.state.doc.lineAt(cursorPos).number;
+        
+        const results = await Evaluate(text, activeLineNum);
         
         // Build new content from results
         const newLines = results.map(r => r.output);
@@ -512,6 +539,11 @@ async function evaluateContentInternal() {
             const cursorLine = editor.state.doc.lineAt(cursorPos);
             const lineNumber = cursorLine.number;
             const columnOffset = cursorPos - cursorLine.from;
+            
+            // Detect if multi-line output was added (new lines starting with ">")
+            const oldOutputLines = text.split('\n').filter(l => l.startsWith('>')).length;
+            const newOutputLines = newText.split('\n').filter(l => l.startsWith('>')).length;
+            const hasNewMultiLineOutput = newOutputLines > oldOutputLines && newOutputLines > 1;
             
             editor.dispatch({
                 changes: { from: 0, to: editor.state.doc.length, insert: newText },
@@ -532,10 +564,21 @@ async function evaluateContentInternal() {
                 });
             }
             
-            // Restore scroll position after update
+            // Scroll handling after update
             requestAnimationFrame(() => {
-                editor.scrollDOM.scrollTop = scrollTop;
-                editor.scrollDOM.scrollLeft = scrollLeft;
+                if (hasNewMultiLineOutput) {
+                    // Scroll to show the last output line
+                    const lastLineNum = newDoc.lines;
+                    const lastLine = newDoc.line(lastLineNum);
+                    // Use scrollIntoView effect to scroll the last line into view
+                    editor.dispatch({
+                        effects: EditorView.scrollIntoView(lastLine.from, { y: 'end' })
+                    });
+                } else {
+                    // Restore previous scroll position
+                    editor.scrollDOM.scrollTop = scrollTop;
+                    editor.scrollDOM.scrollLeft = scrollLeft;
+                }
             });
             
             // Update previous text to the evaluated result

@@ -50,7 +50,7 @@ func TestEvalLinesBasic(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := EvalLines(tt.lines)
+			results := EvalLines(tt.lines, 0)
 			if len(results) != len(tt.expected) {
 				t.Fatalf("EvalLines() returned %d results, want %d", len(results), len(tt.expected))
 			}
@@ -79,7 +79,7 @@ func TestEvalLinesWithReferences(t *testing.T) {
 		"\\1 + \\2 =",
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	if len(results) != 3 {
 		t.Fatalf("EvalLines() returned %d results, want 3", len(results))
@@ -106,7 +106,7 @@ func TestEvalLinesReferenceError(t *testing.T) {
 		"\\1 + 5 =", // references itself - should error
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	if !containsERR(results[0].Output) {
 		t.Errorf("expected ERR in output for self-reference, got %q", results[0].Output)
@@ -119,7 +119,7 @@ func TestEvalLinesCurrencyPropagation(t *testing.T) {
 		"\\1 + 50 =", // should inherit currency from line 1
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	if !results[0].IsCurrency {
 		t.Error("result[0] should be currency")
@@ -140,7 +140,7 @@ func TestEvalLinesMultipleExpressions(t *testing.T) {
 		"$1,000 x 12 - 15% + $500 =",
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	// Verify each line has a result (no ERR)
 	for i, r := range results {
@@ -264,7 +264,7 @@ func TestEvalLinesSkipsOutputLines(t *testing.T) {
 		"> 2: 10.100.128.0/17 (32766 hosts)",
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	// Should only have 1 result (the expression line) after cleaning
 	if len(results) != 1 {
@@ -285,7 +285,7 @@ func TestEvalLinesSkipsOutputLines(t *testing.T) {
 func TestEvalLinesSubnetOutputFormat(t *testing.T) {
 	lines := []string{"10.100.0.0/24 / 2 subnets ="}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	if len(results) != 1 {
 		t.Fatalf("EvalLines() returned %d results, want 1", len(results))
@@ -356,7 +356,7 @@ func TestEvalLinesNetworkExpressions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := EvalLines(tt.lines)
+			results := EvalLines(tt.lines, 0)
 			if len(results) == 0 {
 				t.Fatal("EvalLines returned no results")
 			}
@@ -376,7 +376,7 @@ func TestEvalLinesMixedContent(t *testing.T) {
 		"$100 - 20% =",
 	}
 
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0)
 
 	// First line: math
 	if results[0].Value != 150 {
@@ -459,7 +459,7 @@ func TestEvalLinesInlineCommentsAfterResult(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := EvalLines([]string{tt.input})
+			results := EvalLines([]string{tt.input}, 0)
 			if len(results) != 1 {
 				t.Fatalf("Expected 1 result, got %d", len(results))
 			}

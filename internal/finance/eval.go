@@ -96,7 +96,7 @@ func handleLoanPayment(expr, exprLower string) (string, bool) {
 	totalPayment := monthlyPayment * float64(numPayments)
 	totalInterest := totalPayment - principal
 
-	return fmt.Sprintf("Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
+	return fmt.Sprintf("\n> Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
 		monthlyPayment, totalPayment, totalInterest), true
 }
 
@@ -129,7 +129,7 @@ func handleCompoundInterest(expr, exprLower string) (string, bool) {
 	amount := principal * math.Pow(1+annualRate/float64(n), float64(n*years))
 	interest := amount - principal
 
-	return fmt.Sprintf("Final: $%.2f\n> Interest earned: $%.2f", amount, interest), true
+	return fmt.Sprintf("\n> Final: $%.2f\n> Interest earned: $%.2f", amount, interest), true
 }
 
 func handleSimpleInterest(expr, exprLower string) (string, bool) {
@@ -151,7 +151,7 @@ func handleSimpleInterest(expr, exprLower string) (string, bool) {
 	interest := principal * rate * float64(years)
 	total := principal + interest
 
-	return fmt.Sprintf("Interest: $%.2f\n> Total: $%.2f", interest, total), true
+	return fmt.Sprintf("\n> Interest: $%.2f\n> Total: $%.2f", interest, total), true
 }
 
 func handleMortgagePayment(expr, exprLower string) (string, bool) {
@@ -184,7 +184,7 @@ func handleMortgagePayment(expr, exprLower string) (string, bool) {
 	totalPayment := monthlyPayment * float64(numPayments)
 	totalInterest := totalPayment - principal
 
-	return fmt.Sprintf("Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
+	return fmt.Sprintf("\n> Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
 		monthlyPayment, totalPayment, totalInterest), true
 }
 
@@ -209,7 +209,7 @@ func handleInvestmentGrowth(expr, exprLower string) (string, bool) {
 	growth := amount - principal
 	growthPercent := (growth / principal) * 100
 
-	return fmt.Sprintf("Final: $%.2f\n> Growth: $%.2f (+%.1f%%)", amount, growth, growthPercent), true
+	return fmt.Sprintf("\n> Final: $%.2f\n> Growth: $%.2f (+%.1f%%)", amount, growth, growthPercent), true
 }
 
 func parseAmount(s string) float64 {

@@ -78,6 +78,7 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - UUID generation: `uuid`
 - Hash functions: `md5 hello`, `sha256 hello`
 - Base64 encoding: `base64 encode hello world`, `base64 decode SGVsbG8gd29ybGQ=`
+- Password generator: `pwgen`, `pwgen -c 20` (custom length), `pwgen -h` (hyphenated)
 
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`

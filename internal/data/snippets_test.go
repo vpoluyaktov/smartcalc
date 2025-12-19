@@ -18,7 +18,7 @@ func TestSnippetsNoErrors(t *testing.T) {
 				// Split snippet content into lines
 				lines := strings.Split(strings.TrimSuffix(snippet.Content, "\n"), "\n")
 
-				results := calc.EvalLines(lines)
+				results := calc.EvalLines(lines, 0)
 
 				for i, result := range results {
 					if strings.HasSuffix(result.Output, "ERR") {
@@ -72,7 +72,7 @@ func TestBasicMathSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -107,7 +107,7 @@ func TestConstantsSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -158,7 +158,7 @@ func TestDateTimeSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -209,7 +209,7 @@ func TestNetworkSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -260,7 +260,7 @@ func TestUnitConversionSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -311,7 +311,7 @@ func TestPercentageSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -354,7 +354,7 @@ func TestFinancialSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -405,7 +405,7 @@ func TestStatisticsSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
@@ -456,7 +456,7 @@ func TestProgrammerSnippets(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results := calc.EvalLines(tt.lines)
+			results := calc.EvalLines(tt.lines, 0)
 			for i, result := range results {
 				if strings.HasSuffix(result.Output, "ERR") {
 					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)

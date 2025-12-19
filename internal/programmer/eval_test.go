@@ -219,6 +219,54 @@ func TestAsciiTable(t *testing.T) {
 	}
 }
 
+func TestPasswordGenerator(t *testing.T) {
+	tests := []struct {
+		expr       string
+		pwLength   int
+		hyphenated bool
+	}{
+		{"pwgen", 16, false},
+		{"pwgen -c 20", 20, false},
+		{"pwgen -h", 16, true},
+		{"pwgen -c 12 -h", 12, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalProgrammer(tt.expr)
+			if err != nil {
+				t.Errorf("EvalProgrammer(%q) error: %v", tt.expr, err)
+				return
+			}
+			// Should have 5 lines of output (each starting with "\n> ")
+			lines := strings.Split(result, "\n> ")
+			if len(lines) != 6 { // first split is empty, then 5 lines
+				t.Errorf("EvalProgrammer(%q) expected 5 output lines, got %d", tt.expr, len(lines)-1)
+			}
+			// Each line should have 4 passwords
+			for i, line := range lines[1:] {
+				passwords := strings.Fields(line)
+				if len(passwords) != 4 {
+					t.Errorf("EvalProgrammer(%q) line %d: expected 4 passwords, got %d", tt.expr, i+1, len(passwords))
+				}
+				// Check password length
+				for _, pw := range passwords {
+					if tt.hyphenated {
+						// Hyphenated passwords have hyphens, check total length
+						if len(pw) > tt.pwLength+5 { // allow some slack for hyphens
+							t.Errorf("EvalProgrammer(%q) password %q too long", tt.expr, pw)
+						}
+					} else {
+						if len(pw) != tt.pwLength {
+							t.Errorf("EvalProgrammer(%q) password %q length = %d, want %d", tt.expr, pw, len(pw), tt.pwLength)
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestIsProgrammerExpression(t *testing.T) {
 	tests := []struct {
 		expr     string
@@ -230,6 +278,9 @@ func TestIsProgrammerExpression(t *testing.T) {
 		{"ascii table", true},
 		{"uuid", true},
 		{"md5 hello", true},
+		{"pwgen", true},
+		{"pwgen -c 20", true},
+		{"pwgen -h", true},
 		{"100 + 50", false},
 		{"5 miles in km", false},
 	}

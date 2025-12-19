@@ -213,7 +213,9 @@ func cleanOutputLines(lines []string) []string {
 }
 
 // EvalLines evaluates all lines and returns the processed output lines.
-func EvalLines(lines []string) []LineResult {
+// activeLineNum is 1-based line number of the line currently being edited (skip formatting for this line).
+// Pass 0 or negative to format all lines.
+func EvalLines(lines []string, activeLineNum int) []LineResult {
 	// First pass: remove stale output lines ("> " lines that follow an expression)
 	cleanedLines := cleanOutputLines(lines)
 
@@ -221,6 +223,15 @@ func EvalLines(lines []string) []LineResult {
 	values := make([]float64, len(cleanedLines))
 	haveRes := make([]bool, len(cleanedLines))
 	currencyByLine := make([]bool, len(cleanedLines))
+
+	// Helper to conditionally format expression (skip formatting for active line)
+	maybeFormat := func(lineIdx int, expr string) string {
+		// lineIdx is 0-based, activeLineNum is 1-based
+		if activeLineNum > 0 && lineIdx+1 == activeLineNum {
+			return expr // Skip formatting for active line
+		}
+		return formatExpression(expr)
+	}
 
 	for i, line := range cleanedLines {
 		results[i].Output = line
@@ -265,7 +276,7 @@ func EvalLines(lines []string) []LineResult {
 		if constants.IsConstantExpression(expr) {
 			constResult, err := constants.EvalConstants(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + constResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + constResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -275,7 +286,7 @@ func EvalLines(lines []string) []LineResult {
 		if units.IsUnitExpression(expr) {
 			unitResult, err := units.EvalUnits(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + unitResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + unitResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -285,7 +296,7 @@ func EvalLines(lines []string) []LineResult {
 		if percentage.IsPercentageExpression(expr) {
 			pctResult, err := percentage.EvalPercentage(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + pctResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + pctResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -295,7 +306,7 @@ func EvalLines(lines []string) []LineResult {
 		if finance.IsFinanceExpression(expr) {
 			finResult, err := finance.EvalFinance(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + finResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + finResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -305,7 +316,7 @@ func EvalLines(lines []string) []LineResult {
 		if stats.IsStatsExpression(expr) {
 			statsResult, err := stats.EvalStats(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + statsResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + statsResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -315,7 +326,7 @@ func EvalLines(lines []string) []LineResult {
 		if programmer.IsProgrammerExpression(expr) {
 			progResult, err := programmer.EvalProgrammer(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + progResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + progResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -325,7 +336,7 @@ func EvalLines(lines []string) []LineResult {
 		if network.IsNetworkExpression(expr) {
 			netResult, err := network.EvalNetwork(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + netResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + netResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -348,7 +359,7 @@ func EvalLines(lines []string) []LineResult {
 
 			dtResult, err := datetime.EvalDateTimeWithRefs(expr, resolver)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + dtResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " = " + dtResult + inlineComment
 				results[i].HasResult = true
 				results[i].IsDateTime = true
 				results[i].DateTimeStr = dtResult
@@ -371,7 +382,7 @@ func EvalLines(lines []string) []LineResult {
 			return values[idx], nil
 		})
 		if err != nil {
-			results[i].Output = formatExpression(expr) + " = ERR" + inlineComment
+			results[i].Output = maybeFormat(i, expr) + " = ERR" + inlineComment
 			continue
 		}
 
@@ -385,7 +396,7 @@ func EvalLines(lines []string) []LineResult {
 		} else {
 			resultStr = utils.FormatResult(isCurrency, val)
 		}
-		results[i].Output = formatExpression(expr) + " = " + resultStr + inlineComment
+		results[i].Output = maybeFormat(i, expr) + " = " + resultStr + inlineComment
 		results[i].Value = val
 		results[i].HasResult = true
 		results[i].IsCurrency = isCurrency
@@ -406,7 +417,7 @@ func BuildLineNumbers(n int) string {
 // GetLineValues returns a map of line number (1-based) to formatted result string.
 // This is used for replacing references with actual values when copying.
 func GetLineValues(lines []string) map[int]string {
-	results := EvalLines(lines)
+	results := EvalLines(lines, 0) // Format all lines when copying
 	values := make(map[int]string)
 	for i, r := range results {
 		if r.HasResult {

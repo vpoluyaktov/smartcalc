@@ -52,7 +52,7 @@ func GetSnippetCategories() []SnippetCategory {
 			Snippets: []Snippet{
 				{"Subnet Info", "10.100.0.0/24 =\n\nsubnet info 10.100.0.0/16 =\n\n"},
 				{"Split to Subnets", "10.100.0.0/16 / 4 subnets =\n\n"},
-				{"Split by Hosts", "10.100.0.0/28 / 16 hosts =\n\n"},
+				{"Split by Hosts", "10.100.0.0/16 / 4096 hosts =\n\n"},
 				{"Subnet Mask", "mask for /24 =\nwildcard for /24 =\n\n"},
 				{"IP in Range", "is 10.100.0.50 in 10.100.0.0/24 =\nis 192.168.1.100 in 192.168.1.0/28 =\n\n"},
 				{"Next Subnet", "next subnet after 10.100.0.0/24 =\n\n"},
@@ -116,6 +116,7 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Hash Functions", "md5 hello =\nsha256 hello =\nsha1 test =\n\n"},
 				{"Base64 Encode/Decode", "base64 encode hello world =\nbase64 decode SGVsbG8gd29ybGQ= =\n\n"},
 				{"Random Number", "random 1 to 100 =\nrandom 1-1000 =\n\n"},
+				{"Password Generator", "pwgen =\n\npwgen -c 20 =\n\npwgen -h =\n\npwgen -c 12 -h =\n\n"},
 			},
 		},
 	}
