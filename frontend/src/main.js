@@ -773,56 +773,94 @@ function showModal(title, content, iconSrc = null) {
 function showManual() {
     const manual = `# SmartCalc Manual
 
-## Basic Usage
 Type expressions followed by = to calculate.
 
-## Operations
-+, -, *, /, ^, ()
-
-## Examples
-
-# Math & Percentages
-$100 - 20% = $80.00
-increase 100 by 20% = 120
-
-# Currency
+## Basic Math
+10 + 20 * 3 = 70
 $1,500.00 + $250.50 = $1,750.50
+$1,000 x 12 - 15% + $500 = $10,700.00
+sin(45) + cos(30) = 1.57
+sqrt(144) = 12
+abs(-50) = 50
+25 > 2.5 = true
+100 >= 100 = true
 
-# Line References
+## Line References
 100 = 100
 \\1 * 2 = 200
 
-# Functions
-sin(45) + cos(30) = 1.57
-sqrt(144) = 12
+## Base Conversion
+255 in hex = 0xFF
+0xFF in dec = 255
+25 in bin = 0b11001
 
-# Date/Time
+## Constants
+pi = 3.14159265359
+e = 2.71828182846
+speed of light = 299,792,458 m/s
+gravity = 9.80665 m/s²
+
+## Date & Time
 now = (current time)
-today + 30 days = (future date)
+today = (current date)
 now in Seattle = (Seattle time)
+today + 30 days = (future date)
+6:00 am Seattle in Kiev = (converted time)
 
-# Network/IP
+## Network/IP
 10.100.0.0/24 = 254 hosts
 mask for /24 = 255.255.255.0
+wildcard for /24 = 0.0.0.255
+broadcast for 10.100.0.0/24 = 10.100.0.255
+is 10.100.0.50 in 10.100.0.0/24 = yes
+10.100.0.0/16 / 4 subnets = (subnet list)
 
-# Unit Conversions
+## Unit Conversions
 5 miles in km = 8.05 km
 100 f to c = 37.78 °C
+10 kg in lbs = 22.05 lbs
+5 gallons in liters = 18.93 L
+60 mph to kph = 96.56 kph
+1 acre to sqft = 43,560 sqft
 
-# Financial
+## Percentage
+$100 - 20% = $80.00
+$100 + 15% = $115.00
+what is 15% of 200 = 30
+50 is what % of 200 = 25%
+increase 100 by 20% = 120
+percent change from 50 to 75 = +50%
+tip 20% on $85.50 = Tip: $17.10
+$150 split 4 ways = $37.50/person
+
+## Financial
 loan $250000 at 6.5% for 30 years = $1,580.17/month
+mortgage $350000 at 7% for 30 years = $2,328.56/month
+$10000 at 5% for 10 years compounded monthly = $16,470.09
+simple interest $5000 at 3% for 2 years = $300.00
+invest $1000 at 7% for 20 years = $3,869.68
 
-# Statistics
-avg(1, 2, 3, 4, 5) = 3
+## Statistics
+avg(10, 20, 30, 40) = 25
 median(1, 2, 3, 4, 5) = 3
+sum(10, 20, 30) = 60
+count(1, 2, 3, 4, 5) = 5
+min(10, 5, 20, 3) = 3
+max(10, 5, 20, 3) = 20
+stddev(2, 4, 4, 4, 5, 5, 7, 9) = 2
+range(1, 5, 10, 3) = 9
 
-# Programmer
+## Programmer
 0xFF AND 0x0F = 15 (0xF)
+0xF0 OR 0x0F = 255 (0xFF)
+0xFF XOR 0x0F = 240 (0xF0)
+1 << 8 = 256 (0x100)
+256 >> 4 = 16 (0x10)
 ascii A = 65
-
-# Constants
-pi = 3.14159265359
-speed of light = 299,792,458 m/s
+char 65 = A
+md5 hello = 5d41402abc4b2a76...
+uuid = (random UUID)
+random 1 to 100 = (random number)
 
 # Check the Snippets menu for more examples!`;
     showModal("SmartCalc Manual", manual);
