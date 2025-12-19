@@ -4,10 +4,11 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, ShowInfoDialog } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
+let modalEditor = null; // Editor instance for modal dialogs
 let currentFile = '';
 let debounceTimer = null;
 let autosaveTimer = null;
@@ -690,35 +691,153 @@ async function insertSnippet(snippet) {
     editor.focus();
 }
 
+// Modal dialog functions
+function showModal(title, content, iconSrc = null) {
+    const overlay = document.getElementById('modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const contentEl = document.getElementById('modal-content');
+    const iconEl = document.getElementById('modal-icon');
+    const okBtn = document.getElementById('modal-ok-btn');
+
+    // Set title
+    titleEl.textContent = title;
+
+    // Set icon
+    if (iconSrc) {
+        iconEl.src = iconSrc;
+        iconEl.classList.remove('hidden');
+    } else {
+        iconEl.classList.add('hidden');
+    }
+
+    // Clear previous content
+    contentEl.innerHTML = '';
+
+    // Destroy previous modal editor if exists
+    if (modalEditor) {
+        modalEditor.destroy();
+        modalEditor = null;
+    }
+
+    // Create read-only CodeMirror editor for content
+    const modalState = EditorState.create({
+        doc: content,
+        extensions: [
+            EditorState.readOnly.of(true),
+            EditorView.editable.of(false),
+            getCurrentTheme(),
+            syntaxHighlighter,
+            EditorView.lineWrapping,
+        ],
+    });
+
+    modalEditor = new EditorView({
+        state: modalState,
+        parent: contentEl,
+    });
+
+    // Show modal
+    overlay.classList.remove('hidden');
+
+    // Focus OK button
+    okBtn.focus();
+
+    // Close handlers
+    const closeModal = () => {
+        overlay.classList.add('hidden');
+        if (modalEditor) {
+            modalEditor.destroy();
+            modalEditor = null;
+        }
+        editor.focus();
+    };
+
+    okBtn.onclick = closeModal;
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            closeModal();
+        }
+    };
+
+    // ESC key to close
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
 // Show manual dialog
 function showManual() {
-    const manual = `Basic Usage: Type expressions followed by = to calculate.
+    const manual = `# SmartCalc Manual
 
-Operations: +, -, *, /, ^, ()
-Percentages: $100 - 20%, increase 100 by 20%
-Currency: $1,500.00 + $250.50
-Line References: \\1, \\2 (reference previous results)
-Functions: sin, cos, tan, sqrt, abs, log, ln
+## Basic Usage
+Type expressions followed by = to calculate.
 
-Date/Time: now, today, now in Seattle, today + 30 days
-Network/IP: 10.100.0.0/24, mask for /24, split to subnets
-Unit Conversions: 5 miles in km, 100 f to c, 10 kg in lbs
-Percentage: what is 15% of 200, tip 20% on $85
-Financial: loan $250000 at 6.5% for 30 years
-Statistics: avg(1,2,3), median(1,2,3,4,5), stddev(...)
-Programmer: 0xFF AND 0x0F, ascii A, uuid, md5 hello
-Constants: pi, e, speed of light, gravity
+## Operations
++, -, *, /, ^, ()
 
-Check the Snippets menu for more examples!`;
-    ShowInfoDialog("SmartCalc Manual", manual);
+## Examples
+
+# Math & Percentages
+$100 - 20% =
+increase 100 by 20% =
+
+# Currency
+$1,500.00 + $250.50 =
+
+# Line References
+100 =
+\\1 * 2 =
+
+# Functions
+sin(45) + cos(30) =
+sqrt(144) =
+
+# Date/Time
+now =
+today + 30 days =
+now in Seattle =
+
+# Network/IP
+10.100.0.0/24 =
+mask for /24 =
+
+# Unit Conversions
+5 miles in km =
+100 f to c =
+
+# Financial
+loan $250000 at 6.5% for 30 years =
+
+# Statistics
+avg(1, 2, 3, 4, 5) =
+median(1, 2, 3, 4, 5) =
+
+# Programmer
+0xFF AND 0x0F =
+ascii A =
+uuid =
+
+# Constants
+pi =
+speed of light =
+
+# Check the Snippets menu for more examples!`;
+    showModal("SmartCalc Manual", manual);
 }
 
 // Show about dialog
 function showAbout() {
     GetVersion().then(version => {
-        const about = `SmartCalc ${version}
+        const about = `# About SmartCalc
+
+Version: ${version}
 
 A powerful multi-purpose calculator with support for:
+
 • Mathematical expressions & functions
 • Unit conversions (length, weight, temperature, etc.)
 • Percentage & financial calculations
@@ -728,8 +847,17 @@ A powerful multi-purpose calculator with support for:
 • Programmer utilities (bitwise, ASCII, hashing)
 • Physical & mathematical constants
 
-© 2025`;
-        ShowInfoDialog("About SmartCalc", about);
+© 2025
+
+# Keyboard Shortcuts
+
+Ctrl+N    New file
+Ctrl+O    Open file
+Ctrl+S    Save file
+Ctrl+C    Copy (with resolved references)
+Ctrl+V    Paste
+Enter     Auto-append = and calculate`;
+        showModal("About SmartCalc", about);
     });
 }
 

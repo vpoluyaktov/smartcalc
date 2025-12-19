@@ -178,3 +178,146 @@ html, body {
     .cm-comment { color: #78909c; font-style: italic; }
     .cm-output-prefix { color: #90a4ae; }
 }
+
+/* ==================== MODAL DIALOG ==================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-dialog {
+    background-color: #1a1b26;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #3b4261;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px 16px;
+    gap: 16px;
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+}
+
+.modal-icon.hidden {
+    display: none;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #c0caf5;
+}
+
+.modal-content {
+    flex: 1;
+    overflow: hidden;
+    margin: 0 24px;
+    border-radius: 8px;
+    border: 1px solid #3b4261;
+}
+
+.modal-content .cm-editor {
+    height: 100%;
+    max-height: 400px;
+    font-size: 14px;
+    background-color: #16161e;
+}
+
+.modal-content .cm-editor .cm-scroller {
+    padding: 12px 0;
+}
+
+.modal-content .cm-editor .cm-gutters {
+    display: none;
+}
+
+.modal-content .cm-editor .cm-activeLine {
+    background-color: transparent;
+}
+
+.modal-content .cm-editor .cm-cursor {
+    display: none !important;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 24px 20px;
+}
+
+.modal-btn {
+    background-color: #7aa2f7;
+    color: #1a1b26;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 32px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.modal-btn:hover {
+    background-color: #89b4fa;
+}
+
+.modal-btn:active {
+    transform: scale(0.98);
+}
+
+/* Light theme modal */
+@media (prefers-color-scheme: light) {
+    .modal-dialog {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header h2 {
+        color: #343a40;
+    }
+
+    .modal-content {
+        border: 1px solid #dee2e6;
+    }
+
+    .modal-content .cm-editor {
+        background-color: #f8f9fa;
+    }
+
+    .modal-btn {
+        background-color: #4285f4;
+        color: #ffffff;
+    }
+
+    .modal-btn:hover {
+        background-color: #5a95f5;
+    }
+}
