@@ -203,9 +203,8 @@ type LineResult struct {
 func cleanOutputLines(lines []string) []string {
 	var result []string
 	for _, line := range lines {
-		trim := strings.TrimSpace(line)
-		// Skip output lines - they will be regenerated
-		if strings.HasPrefix(trim, "> ") {
+		// Skip output lines (start with ">") - they will be regenerated
+		if strings.HasPrefix(line, ">") {
 			continue
 		}
 		result = append(result, line)
@@ -225,16 +224,12 @@ func EvalLines(lines []string) []LineResult {
 
 	for i, line := range cleanedLines {
 		results[i].Output = line
-		trim := strings.TrimSpace(line)
-		if trim == "" {
+		// Skip empty lines
+		if line == "" {
 			continue
 		}
-		// Skip output lines (prefixed with "> ")
-		if strings.HasPrefix(trim, "> ") {
-			continue
-		}
-		// Skip comment lines (starting with #)
-		if strings.HasPrefix(trim, "#") {
+		// Skip comment lines (starting with #, allowing leading whitespace)
+		if strings.HasPrefix(strings.TrimLeft(line, " \t"), "#") {
 			continue
 		}
 

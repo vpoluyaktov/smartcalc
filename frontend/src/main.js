@@ -110,13 +110,13 @@ function buildDecorations(view) {
         const text = line.text;
         const from = line.from;
         
-        // Output lines starting with "> "
-        if (text.startsWith('> ')) {
-            builder.add(from, from + 2, outputPrefixMark);
+        // Output lines starting with "> " or just ">"
+        if (text.startsWith('> ') || text.trim() === '>') {
+            builder.add(from, from + Math.min(2, text.length), outputPrefixMark);
             // Check for errors in output
             if (text.includes('ERR:') || text.includes('error')) {
                 builder.add(from + 2, line.to, errorMark);
-            } else {
+            } else if (text.length > 2) {
                 builder.add(from + 2, line.to, resultMark);
             }
             continue;
