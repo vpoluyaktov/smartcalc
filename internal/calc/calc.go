@@ -86,6 +86,41 @@ func isBaseConversionExpr(expr string) bool {
 		strings.Contains(exprLower, " in binary")
 }
 
+// findResultEquals finds the position of the trailing '=' that marks the result,
+// skipping '=' characters that are part of comparison operators (>=, <=, ==, !=).
+// Returns -1 if no result '=' is found.
+func findResultEquals(s string) int {
+	// Find the last '=' that is not part of a comparison operator
+	for i := len(s) - 1; i >= 0; i-- {
+		if s[i] == '=' {
+			// Check if this '=' is part of >=, <=, ==, or !=
+			if i > 0 {
+				prev := s[i-1]
+				if prev == '>' || prev == '<' || prev == '=' || prev == '!' {
+					continue // Skip this '=', it's part of a comparison operator
+				}
+			}
+			return i
+		}
+	}
+	return -1
+}
+
+// extractInlineComment extracts an inline comment from a line.
+// Returns the comment string (including the # prefix) if found, empty string otherwise.
+// The comment must appear after the result '=' to be preserved.
+func extractInlineComment(line string, eqPos int) string {
+	// Look for # after the = sign
+	afterEq := line[eqPos+1:]
+	hashIdx := strings.Index(afterEq, "#")
+	if hashIdx >= 0 {
+		// Preserve the comment exactly as typed, no trimming
+		comment := afterEq[hashIdx:]
+		return " " + comment
+	}
+	return ""
+}
+
 // isComparisonExpr checks if an expression contains comparison operators
 func isComparisonExpr(expr string) bool {
 	// Check for comparison operators: >, <, >=, <=, ==, !=
@@ -134,9 +169,9 @@ func formatExpression(expr string) string {
 		// Multiplication variants
 		{`(\S)\s*×\s*(\S)`, `$1 × $2`},
 		{`(\S)\s*÷\s*(\S)`, `$1 ÷ $2`},
-		{`(\d)\s*x\s*(\d)`, `$1 x $2`},  // x between digits (multiplication)
-		{`(\d)\s*\*\s*(\d)`, `$1 * $2`}, // * between digits
-		{`(\d)\s*\^\s*(\d)`, `$1 ^ $2`}, // ^ between digits
+		{`([^0])\s*x\s*(\d)`, `$1 x $2`}, // x as multiplication, but not after 0 (hex notation 0x)
+		{`(\d)\s*\*\s*(\d)`, `$1 * $2`},  // * between digits
+		{`(\d)\s*\^\s*(\d)`, `$1 ^ $2`},  // ^ between digits
 		// Addition - digit/paren/percent followed by +
 		{`([\d\)%])\s*\+\s*(\S)`, `$1 + $2`},
 		// Subtraction - digit/paren/percent followed by -
@@ -205,11 +240,12 @@ func EvalLines(lines []string) []LineResult {
 
 		// Handle inline comments - strip everything after #
 		workingLine := line
+		inlineComment := ""
 		if hashIdx := strings.Index(line, "#"); hashIdx >= 0 {
 			workingLine = line[:hashIdx]
 		}
 
-		eq := strings.IndexRune(workingLine, '=')
+		eq := findResultEquals(workingLine)
 		if eq < 0 {
 			continue
 		}
@@ -218,10 +254,13 @@ func EvalLines(lines []string) []LineResult {
 			continue
 		}
 
+		// Extract inline comment from original line (after the = sign)
+		inlineComment = extractInlineComment(line, eq)
+
 		// Try base conversion first (24 in hex, 0xFF in dec, etc.)
 		if isBaseConversionExpr(expr) {
 			if baseResult, ok := tryBaseConversion(expr); ok {
-				results[i].Output = expr + " = " + baseResult
+				results[i].Output = expr + " = " + baseResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -231,7 +270,7 @@ func EvalLines(lines []string) []LineResult {
 		if constants.IsConstantExpression(expr) {
 			constResult, err := constants.EvalConstants(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + constResult
+				results[i].Output = formatExpression(expr) + " = " + constResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -241,7 +280,7 @@ func EvalLines(lines []string) []LineResult {
 		if units.IsUnitExpression(expr) {
 			unitResult, err := units.EvalUnits(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + unitResult
+				results[i].Output = formatExpression(expr) + " = " + unitResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -251,7 +290,7 @@ func EvalLines(lines []string) []LineResult {
 		if percentage.IsPercentageExpression(expr) {
 			pctResult, err := percentage.EvalPercentage(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + pctResult
+				results[i].Output = formatExpression(expr) + " = " + pctResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -261,7 +300,7 @@ func EvalLines(lines []string) []LineResult {
 		if finance.IsFinanceExpression(expr) {
 			finResult, err := finance.EvalFinance(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + finResult
+				results[i].Output = formatExpression(expr) + " = " + finResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -271,7 +310,7 @@ func EvalLines(lines []string) []LineResult {
 		if stats.IsStatsExpression(expr) {
 			statsResult, err := stats.EvalStats(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + statsResult
+				results[i].Output = formatExpression(expr) + " = " + statsResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -281,7 +320,7 @@ func EvalLines(lines []string) []LineResult {
 		if programmer.IsProgrammerExpression(expr) {
 			progResult, err := programmer.EvalProgrammer(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + progResult
+				results[i].Output = formatExpression(expr) + " = " + progResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -291,7 +330,7 @@ func EvalLines(lines []string) []LineResult {
 		if network.IsNetworkExpression(expr) {
 			netResult, err := network.EvalNetwork(expr)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + netResult
+				results[i].Output = formatExpression(expr) + " = " + netResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
@@ -314,7 +353,7 @@ func EvalLines(lines []string) []LineResult {
 
 			dtResult, err := datetime.EvalDateTimeWithRefs(expr, resolver)
 			if err == nil {
-				results[i].Output = formatExpression(expr) + " = " + dtResult
+				results[i].Output = formatExpression(expr) + " = " + dtResult + inlineComment
 				results[i].HasResult = true
 				results[i].IsDateTime = true
 				results[i].DateTimeStr = dtResult
@@ -337,7 +376,7 @@ func EvalLines(lines []string) []LineResult {
 			return values[idx], nil
 		})
 		if err != nil {
-			results[i].Output = formatExpression(expr) + " = ERR"
+			results[i].Output = formatExpression(expr) + " = ERR" + inlineComment
 			continue
 		}
 
@@ -351,7 +390,7 @@ func EvalLines(lines []string) []LineResult {
 		} else {
 			resultStr = utils.FormatResult(isCurrency, val)
 		}
-		results[i].Output = formatExpression(expr) + " = " + resultStr
+		results[i].Output = formatExpression(expr) + " = " + resultStr + inlineComment
 		results[i].Value = val
 		results[i].HasResult = true
 		results[i].IsCurrency = isCurrency

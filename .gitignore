@@ -1,10 +1,13 @@
 # Binaries
 smartcalc
+SmartCalc-*
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+*.bin
+*.app
 
 # Test binary
 *.test
@@ -28,7 +31,22 @@ Thumbs.db
 # Fyne
 fyne-cross/
 main_fyne.go.bak
-smartcalc
 
 # Frontend
 frontend/node_modules/
+frontend/dist/
+frontend/package.json.md5
+frontend/package-lock.json
+
+# Build artifacts
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+*.dmg
+*.pkg
+*.msi
+*.AppImage
+
+# Wails build output
+build/bin/

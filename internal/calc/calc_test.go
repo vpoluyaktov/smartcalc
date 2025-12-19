@@ -393,3 +393,121 @@ func TestEvalLinesMixedContent(t *testing.T) {
 		t.Errorf("Last line value = %v, want 80", lastResult.Value)
 	}
 }
+
+func TestEvalLinesInlineCommentsAfterResult(t *testing.T) {
+	tests := []struct {
+		name           string
+		input          string
+		expectedOutput string
+		expectedValue  float64
+	}{
+		{
+			name:           "simple math with comment",
+			input:          "2 * 2 = # This is a comment",
+			expectedOutput: "2 * 2 = 4 # This is a comment",
+			expectedValue:  4,
+		},
+		{
+			name:           "addition with comment",
+			input:          "10 + 5 = # sum of numbers",
+			expectedOutput: "10 + 5 = 15 # sum of numbers",
+			expectedValue:  15,
+		},
+		{
+			name:           "currency with comment",
+			input:          "$100 + $50 = # total cost",
+			expectedOutput: "$100 + $50 = $150.00 # total cost",
+			expectedValue:  150,
+		},
+		{
+			name:           "percentage with comment",
+			input:          "100 - 20% = # discounted price",
+			expectedOutput: "100 - 20% = 80 # discounted price",
+			expectedValue:  80,
+		},
+		{
+			name:           "comparison with comment",
+			input:          "5 > 3 = # is five greater than three",
+			expectedOutput: "5 > 3 = true # is five greater than three",
+			expectedValue:  1,
+		},
+		{
+			name:           "no comment preserves normal output",
+			input:          "3 + 4 =",
+			expectedOutput: "3 + 4 = 7",
+			expectedValue:  7,
+		},
+		{
+			name:           "comment with existing result gets updated",
+			input:          "5 + 5 = 10 # my note",
+			expectedOutput: "5 + 5 = 10 # my note",
+			expectedValue:  10,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := EvalLines([]string{tt.input})
+			if len(results) != 1 {
+				t.Fatalf("Expected 1 result, got %d", len(results))
+			}
+			if results[0].Output != tt.expectedOutput {
+				t.Errorf("Output = %q, want %q", results[0].Output, tt.expectedOutput)
+			}
+			if math.Abs(results[0].Value-tt.expectedValue) > 0.01 {
+				t.Errorf("Value = %v, want %v", results[0].Value, tt.expectedValue)
+			}
+		})
+	}
+}
+
+func TestExtractInlineComment(t *testing.T) {
+	tests := []struct {
+		line     string
+		eqPos    int
+		expected string
+	}{
+		{"2 + 2 = # comment", 6, " # comment"},
+		{"2 + 2 = 4 # comment", 6, " # comment"},
+		{"2 + 2 =", 6, ""},
+		{"2 + 2 = 4", 6, ""},
+		{"10 + 5 = # sum", 7, " # sum"},
+		{"2 x 3 = 6 # This is a result of the calculation", 6, " # This is a result of the calculation"},
+		{"5 + 5 = # spaces   preserved", 6, " # spaces   preserved"},
+		{"2 x 3 = 6 #This ", 6, " #This "},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.line, func(t *testing.T) {
+			result := extractInlineComment(tt.line, tt.eqPos)
+			if result != tt.expected {
+				t.Errorf("extractInlineComment(%q, %d) = %q, want %q", tt.line, tt.eqPos, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFindResultEquals(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"2 + 2 =", 6},
+		{"100 >= 100 =", 11},
+		{"5 != 3 =", 7},
+		{"a == b =", 7},
+		{"x <= y =", 7},
+		{"no equals", -1},
+		{">=", -1},
+		{"!=", -1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := findResultEquals(tt.input)
+			if result != tt.expected {
+				t.Errorf("findResultEquals(%q) = %d, want %d", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
