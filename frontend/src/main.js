@@ -891,6 +891,7 @@ A powerful multi-purpose calculator with support for:
 • Physical & mathematical constants
 
 © Vladimir Poluyaktov 2025
+https://github.com/vpoluyaktov/smartcalc
 
 # Keyboard Shortcuts
 
