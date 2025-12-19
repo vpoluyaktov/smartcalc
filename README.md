@@ -37,6 +37,52 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Subnet mask: `mask for /24`, `wildcard for /24`
 - IP range check: `is 10.100.0.50 in 10.100.0.0/24`
 
+### Unit Conversions
+- Length: `5 miles in km`, `100 cm to inches`
+- Weight: `10 kg in lbs`, `5 oz to grams`
+- Temperature: `100 f to c`, `25 celsius to fahrenheit`
+- Volume: `5 gallons in liters`, `2 cups to ml`
+- Data: `500 mb in gb`, `1 tb to bytes`
+- Speed: `60 mph to kph`
+- Area: `1 acre to sqft`, `100 sqm to sqft`
+
+### Percentage Calculations
+- What is X% of Y: `what is 15% of 200`
+- What percent is X of Y: `50 is what % of 200`
+- Increase/decrease: `increase 100 by 20%`, `decrease 500 by 15%`
+- Percent change: `percent change from 50 to 75`
+- Tip calculator: `tip 20% on $85.50`
+- Bill splitting: `$150 split 4 ways with 18% tip`
+
+### Financial Calculations
+- Loan payments: `loan $250000 at 6.5% for 30 years`
+- Mortgage: `mortgage $350000 at 7% for 30 years`
+- Compound interest: `$10000 at 5% for 10 years compounded monthly`
+- Simple interest: `simple interest $5000 at 3% for 2 years`
+- Investment growth: `invest $1000 at 7% for 20 years`
+
+### Statistics
+- Average: `avg(10, 20, 30, 40)` or `mean(1, 2, 3, 4, 5)`
+- Median: `median(1, 2, 3, 4, 100)`
+- Sum: `sum(10, 20, 30)`
+- Min/Max: `min(5, 10, 3)`, `max(5, 10, 3)`
+- Standard deviation: `stddev(2, 4, 4, 4, 5, 5, 7, 9)`
+- Variance: `variance(1, 2, 3, 4, 5)`
+- Count: `count(1, 2, 3, 4, 5)`
+
+### Programmer Utilities
+- Bitwise operations: `0xFF AND 0x0F`, `0xF0 OR 0x0F`, `0xFF XOR 0x0F`
+- Bit shifts: `1 << 8`, `256 >> 4`
+- ASCII/Char: `ascii A`, `char 65`
+- ASCII Table: `ascii table` (displays full ASCII table)
+- UUID generation: `uuid`
+- Hash functions: `md5 hello`, `sha256 hello`
+
+### Physical & Mathematical Constants
+- Mathematical: `pi`, `e`, `phi`, `golden ratio`
+- Physical: `speed of light`, `gravity`, `avogadro`, `planck`
+- Lookup: `value of pi`, `value of speed of light`
+
 ## Examples
 
 ```
@@ -83,6 +129,39 @@ today() + 30 days = 2026-01-17
 mask for /24 = 255.255.255.0
 wildcard for /24 = 0.0.0.255
 is 10.100.0.50 in 10.100.0.0/24 = yes
+
+# Unit Conversions
+5 miles in km = 8.05 km
+100 f to c = 37.78°C
+10 kg in lbs = 22.05 lbs
+500 mb in gb = 0.49 GB
+
+# Percentage Calculations
+what is 15% of 200 = 30
+50 is what % of 200 = 25.00%
+increase 100 by 20% = 120
+tip 20% on $85.50 = Tip: $17.10, Total: $102.60
+
+# Financial Calculations
+loan $250000 at 6.5% for 30 years = Monthly: $1580.17
+> Total: $568,861.22
+> Interest: $318,861.22
+
+# Statistics
+avg(10, 20, 30, 40) = 25
+median(1, 2, 3, 4, 100) = 3
+stddev(2, 4, 4, 4, 5, 5, 7, 9) = 2
+
+# Programmer Utilities
+0xFF AND 0x0F = 15 (0xF)
+1 << 8 = 256 (0x100)
+ascii A = 65 (0x41)
+uuid = a1b2c3d4-e5f6-7890-abcd-ef1234567890
+
+# Physical Constants
+pi = 3.141592654
+speed of light = 2.99792458e+08 m/s
+gravity = 9.80665 m/s²
 ```
 
 ## Installation

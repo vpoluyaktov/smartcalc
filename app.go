@@ -247,3 +247,12 @@ func (a *App) WriteFile(path, content string) error {
 func (a *App) CopyWithResolvedRefs(text string) string {
 	return calc.ReplaceRefsWithValues(text)
 }
+
+// ShowInfoDialog shows an information dialog with the given title and message
+func (a *App) ShowInfoDialog(title, message string) {
+	runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
+		Type:    runtime.InfoDialog,
+		Title:   title,
+		Message: message,
+	})
+}

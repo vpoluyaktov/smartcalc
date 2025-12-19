@@ -6,9 +6,15 @@ import (
 	"strconv"
 	"strings"
 
+	"smartcalc/internal/constants"
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
+	"smartcalc/internal/finance"
 	"smartcalc/internal/network"
+	"smartcalc/internal/percentage"
+	"smartcalc/internal/programmer"
+	"smartcalc/internal/stats"
+	"smartcalc/internal/units"
 	"smartcalc/internal/utils"
 )
 
@@ -216,6 +222,66 @@ func EvalLines(lines []string) []LineResult {
 		if isBaseConversionExpr(expr) {
 			if baseResult, ok := tryBaseConversion(expr); ok {
 				results[i].Output = expr + " = " + baseResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try physical constants
+		if constants.IsConstantExpression(expr) {
+			constResult, err := constants.EvalConstants(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + constResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try unit conversions
+		if units.IsUnitExpression(expr) {
+			unitResult, err := units.EvalUnits(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + unitResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try percentage calculations
+		if percentage.IsPercentageExpression(expr) {
+			pctResult, err := percentage.EvalPercentage(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + pctResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try financial calculations
+		if finance.IsFinanceExpression(expr) {
+			finResult, err := finance.EvalFinance(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + finResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try statistics functions
+		if stats.IsStatsExpression(expr) {
+			statsResult, err := stats.EvalStats(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + statsResult
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try programmer utilities
+		if programmer.IsProgrammerExpression(expr) {
+			progResult, err := programmer.EvalProgrammer(expr)
+			if err == nil {
+				results[i].Output = formatExpression(expr) + " = " + progResult
 				results[i].HasResult = true
 				continue
 			}
