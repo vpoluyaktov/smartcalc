@@ -472,6 +472,8 @@ func TestExtractInlineComment(t *testing.T) {
 		{"2 + 2 =", 6, ""},
 		{"2 + 2 = 4", 6, ""},
 		{"10 + 5 = # sum", 7, " # sum"},
+		{"2 x 3 = 6 # This is a result of the calculation", 6, " # This is a result of the calculation"},
+		{"5 + 5 = # spaces   preserved", 6, " # spaces   preserved"},
 	}
 
 	for _, tt := range tests {
