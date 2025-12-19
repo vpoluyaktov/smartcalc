@@ -226,6 +226,18 @@ func TestCleanOutputLines(t *testing.T) {
 			input:    []string{},
 			expected: []string{},
 		},
+		{
+			name: "bare > output lines",
+			input: []string{
+				"ascii table =",
+				"> Control Characters",
+				"> ",
+				">",
+				"",
+				"100 + 50 =",
+			},
+			expected: []string{"ascii table =", "", "100 + 50 ="},
+		},
 	}
 
 	for _, tt := range tests {
