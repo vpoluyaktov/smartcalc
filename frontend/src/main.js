@@ -773,7 +773,13 @@ function showModal(title, content, iconSrc = null) {
 function showManual() {
     const manual = `# SmartCalc Manual
 
-Type expressions followed by = to calculate.
+SmartCalc is a powerful multi-purpose calculator that goes
+beyond basic arithmetic. It understands natural language
+expressions for dates, units, percentages, finances, and more.
+
+Simply type your expression followed by = and SmartCalc
+will calculate the result. Use line references (\\1, \\2)
+to build on previous calculations. Add comments with #.
 
 ## Basic Math
 10 + 20 * 3 = 70
