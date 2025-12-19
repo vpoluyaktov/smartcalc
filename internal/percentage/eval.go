@@ -51,7 +51,7 @@ func IsPercentageExpression(expr string) bool {
 
 	patterns := []string{
 		`what\s+is\s+[\d.]+%?\s+of`,
-		`[\d.]+\s+is\s+what\s+%`,
+		`[\d.]+\s+is\s+what\s+(?:%|percent|percentage)`,
 		`increase\s+[\d.]+\s+by`,
 		`decrease\s+[\d.]+\s+by`,
 		`percent\s+change`,
