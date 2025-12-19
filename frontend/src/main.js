@@ -131,13 +131,10 @@ function buildDecorations(view) {
         // Check for inline comment (# after =)
         const eqIndex = text.indexOf('=');
         const hashIndex = text.indexOf('#');
-        if (eqIndex >= 0 && hashIndex > eqIndex) {
-            // Mark everything from # to end of line as comment
-            builder.add(from + hashIndex, line.to, commentMark);
-        }
+        const hasInlineComment = eqIndex >= 0 && hashIndex > eqIndex;
         
         // Process tokens in the line (up to inline comment if present)
-        const tokenEnd = (eqIndex >= 0 && hashIndex > eqIndex) ? hashIndex : text.length;
+        const tokenEnd = hasInlineComment ? hashIndex : text.length;
         let pos = 0;
         while (pos < tokenEnd) {
             const remaining = text.slice(pos, tokenEnd);
@@ -234,6 +231,11 @@ function buildDecorations(view) {
             if (!matched) {
                 pos++;
             }
+        }
+        
+        // Add inline comment decoration after all tokens (must be in order)
+        if (hasInlineComment) {
+            builder.add(from + hashIndex, line.to, commentMark);
         }
     }
     
