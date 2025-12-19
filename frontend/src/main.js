@@ -782,48 +782,47 @@ Type expressions followed by = to calculate.
 ## Examples
 
 # Math & Percentages
-$100 - 20% =
-increase 100 by 20% =
+$100 - 20% = $80.00
+increase 100 by 20% = 120
 
 # Currency
-$1,500.00 + $250.50 =
+$1,500.00 + $250.50 = $1,750.50
 
 # Line References
-100 =
-\\1 * 2 =
+100 = 100
+\\1 * 2 = 200
 
 # Functions
-sin(45) + cos(30) =
-sqrt(144) =
+sin(45) + cos(30) = 1.57
+sqrt(144) = 12
 
 # Date/Time
-now =
-today + 30 days =
-now in Seattle =
+now = (current time)
+today + 30 days = (future date)
+now in Seattle = (Seattle time)
 
 # Network/IP
-10.100.0.0/24 =
-mask for /24 =
+10.100.0.0/24 = 254 hosts
+mask for /24 = 255.255.255.0
 
 # Unit Conversions
-5 miles in km =
-100 f to c =
+5 miles in km = 8.05 km
+100 f to c = 37.78 °C
 
 # Financial
-loan $250000 at 6.5% for 30 years =
+loan $250000 at 6.5% for 30 years = $1,580.17/month
 
 # Statistics
-avg(1, 2, 3, 4, 5) =
-median(1, 2, 3, 4, 5) =
+avg(1, 2, 3, 4, 5) = 3
+median(1, 2, 3, 4, 5) = 3
 
 # Programmer
-0xFF AND 0x0F =
-ascii A =
-uuid =
+0xFF AND 0x0F = 15 (0xF)
+ascii A = 65
 
 # Constants
-pi =
-speed of light =
+pi = 3.14159265359
+speed of light = 299,792,458 m/s
 
 # Check the Snippets menu for more examples!`;
     showModal("SmartCalc Manual", manual);
