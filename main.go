@@ -116,10 +116,6 @@ func createAppMenu(app *App) *menu.Menu {
 	helpMenu.AddText("Manual", keys.Key("F1"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:manual")
 	})
-	helpMenu.AddSeparator()
-	helpMenu.AddText("About SmartCalc", nil, func(_ *menu.CallbackData) {
-		runtime.EventsEmit(app.ctx, "menu:about")
-	})
 
 	return appMenu
 }
