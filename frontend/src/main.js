@@ -890,7 +890,7 @@ A powerful multi-purpose calculator with support for:
 • Programmer utilities (bitwise, ASCII, hashing)
 • Physical & mathematical constants
 
-© 2025
+© Vladimir Poluyaktov 2025
 
 # Keyboard Shortcuts
 
