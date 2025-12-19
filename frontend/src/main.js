@@ -204,7 +204,7 @@ function buildDecorations(view) {
             }
             
             // Keywords
-            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is)\b/i);
+            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast)\b/i);
             if (kwMatch) {
                 builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
                 pos += kwMatch[0].length;
