@@ -169,9 +169,9 @@ func formatExpression(expr string) string {
 		// Multiplication variants
 		{`(\S)\s*×\s*(\S)`, `$1 × $2`},
 		{`(\S)\s*÷\s*(\S)`, `$1 ÷ $2`},
-		{`(\d)\s*x\s*(\d)`, `$1 x $2`},  // x between digits (multiplication)
-		{`(\d)\s*\*\s*(\d)`, `$1 * $2`}, // * between digits
-		{`(\d)\s*\^\s*(\d)`, `$1 ^ $2`}, // ^ between digits
+		{`([^0])\s*x\s*(\d)`, `$1 x $2`}, // x as multiplication, but not after 0 (hex notation 0x)
+		{`(\d)\s*\*\s*(\d)`, `$1 * $2`},  // * between digits
+		{`(\d)\s*\^\s*(\d)`, `$1 ^ $2`},  // ^ between digits
 		// Addition - digit/paren/percent followed by +
 		{`([\d\)%])\s*\+\s*(\S)`, `$1 + $2`},
 		// Subtraction - digit/paren/percent followed by -
