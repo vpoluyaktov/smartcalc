@@ -140,7 +140,7 @@ function buildDecorations(view) {
         const tokenEnd = (eqIndex >= 0 && hashIndex > eqIndex) ? hashIndex : text.length;
         let pos = 0;
         while (pos < tokenEnd) {
-            const remaining = text.slice(pos);
+            const remaining = text.slice(pos, tokenEnd);
             let matched = false;
             
             // Line references \1, \2, etc.
