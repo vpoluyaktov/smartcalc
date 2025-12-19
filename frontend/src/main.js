@@ -257,11 +257,14 @@ function handleEnterKey(view) {
     // 2. Line is not empty
     // 3. Line is not a comment (starting with #)
     // 4. Line doesn't already end with '='
+    // 5. Line doesn't contain an inline comment (# after =)
+    const hasInlineComment = lineText.includes('=') && lineText.indexOf('#') > lineText.indexOf('=');
     if (cursorAtEnd && 
         lineText.trim().length > 0 && 
         !lineText.trim().startsWith('#') && 
         !lineText.trim().startsWith('//') &&
-        !lineText.trimEnd().endsWith('=')) {
+        !lineText.trimEnd().endsWith('=') &&
+        !hasInlineComment) {
         
         // Insert ' =' at cursor, then newline
         view.dispatch({
