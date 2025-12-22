@@ -50,3 +50,7 @@ frontend/package-lock.json
 
 # Wails build output
 build/bin/
+
+# Playwright test artifacts
+frontend/playwright-report/
+frontend/test-results/
