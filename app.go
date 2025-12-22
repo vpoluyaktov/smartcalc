@@ -62,12 +62,17 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 		return false // On error, allow close
 	}
 
+	// Handle different button labels across platforms:
+	// - Custom buttons: "Save", "Don't Save", "Cancel"
+	// - macOS native: "Yes", "No", "Cancel" or button index
+	// - Linux/GTK: "Yes", "No" or button text
+	// - Windows: button text or "Yes", "No"
 	switch result {
-	case "Save":
+	case "Save", "Yes", "OK":
 		// Emit saveAndQuit event - frontend will save and then quit
 		runtime.EventsEmit(a.ctx, "app:saveAndQuit")
 		return true // Prevent close - frontend will call Quit after saving
-	case "Don't Save":
+	case "Don't Save", "No":
 		return false // Allow close without saving
 	case "Cancel":
 		return true // Prevent close
@@ -257,4 +262,38 @@ func (a *App) ShowInfoDialog(title, message string) {
 		Title:   title,
 		Message: message,
 	})
+}
+
+// StripLineResult removes the result from a line, keeping expression, '=' and inline comment
+func (a *App) StripLineResult(line string) string {
+	return calc.StripResult(line)
+}
+
+// HasLineResult checks if a line has a calculated result
+func (a *App) HasLineResult(line string) bool {
+	return calc.HasResult(line)
+}
+
+// FindDependentLines returns line numbers (1-based) that depend on the given line
+func (a *App) FindDependentLines(text string, changedLine int) []int {
+	lines := strings.Split(text, "\n")
+	return calc.FindDependentLines(lines, changedLine)
+}
+
+// EvaluateLines evaluates specific lines and their dependents
+// changedLine is the 1-based line number that was changed
+// Returns results for all lines
+func (a *App) EvaluateLines(text string, changedLine int) []EvalResult {
+	lines := strings.Split(text, "\n")
+	results := calc.EvalLines(lines, 0)
+
+	evalResults := make([]EvalResult, len(results))
+	for i, r := range results {
+		evalResults[i] = EvalResult{
+			LineNum: i + 1,
+			Input:   lines[i],
+			Output:  r.Output,
+		}
+	}
+	return evalResults
 }

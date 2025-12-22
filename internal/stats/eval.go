@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"smartcalc/internal/utils"
 )
 
 // Handler defines the interface for statistics handlers.
@@ -301,16 +303,5 @@ func handleRange(expr, exprLower string) (string, bool) {
 }
 
 func formatResult(value float64) string {
-	if value == float64(int64(value)) && math.Abs(value) < 1e15 {
-		return fmt.Sprintf("%.0f", value)
-	}
-	if math.Abs(value) >= 1000000 || (math.Abs(value) < 0.001 && value != 0) {
-		return fmt.Sprintf("%.6g", value)
-	}
-	// Round to reasonable precision
-	rounded := math.Round(value*10000) / 10000
-	if rounded == float64(int(rounded*100))/100 {
-		return fmt.Sprintf("%.2f", value)
-	}
-	return fmt.Sprintf("%.4f", value)
+	return utils.FormatResult(false, value)
 }

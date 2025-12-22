@@ -22,6 +22,14 @@ export function Evaluate(arg1, arg2) {
   return window['go']['main']['App']['Evaluate'](arg1, arg2);
 }
 
+export function EvaluateLines(arg1, arg2) {
+  return window['go']['main']['App']['EvaluateLines'](arg1, arg2);
+}
+
+export function FindDependentLines(arg1, arg2) {
+  return window['go']['main']['App']['FindDependentLines'](arg1, arg2);
+}
+
 export function GetLastFile() {
   return window['go']['main']['App']['GetLastFile']();
 }
@@ -32,6 +40,10 @@ export function GetRecentFiles() {
 
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
+}
+
+export function HasLineResult(arg1) {
+  return window['go']['main']['App']['HasLineResult'](arg1);
 }
 
 export function OpenFileDialog() {
@@ -56,6 +68,10 @@ export function SetUnsavedState(arg1, arg2) {
 
 export function ShowInfoDialog(arg1, arg2) {
   return window['go']['main']['App']['ShowInfoDialog'](arg1, arg2);
+}
+
+export function StripLineResult(arg1) {
+  return window['go']['main']['App']['StripLineResult'](arg1);
 }
 
 export function WriteFile(arg1, arg2) {

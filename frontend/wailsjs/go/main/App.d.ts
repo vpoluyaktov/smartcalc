@@ -12,11 +12,17 @@ export function CopyWithResolvedRefs(arg1:string):Promise<string>;
 
 export function Evaluate(arg1:string,arg2:number):Promise<Array<main.EvalResult>>;
 
+export function EvaluateLines(arg1:string,arg2:number):Promise<Array<main.EvalResult>>;
+
+export function FindDependentLines(arg1:string,arg2:number):Promise<Array<number>>;
+
 export function GetLastFile():Promise<string>;
 
 export function GetRecentFiles():Promise<Array<string>>;
 
 export function GetVersion():Promise<string>;
+
+export function HasLineResult(arg1:string):Promise<boolean>;
 
 export function OpenFileDialog():Promise<string>;
 
@@ -29,5 +35,7 @@ export function SaveFileDialog():Promise<string>;
 export function SetUnsavedState(arg1:boolean,arg2:string):Promise<void>;
 
 export function ShowInfoDialog(arg1:string,arg2:string):Promise<void>;
+
+export function StripLineResult(arg1:string):Promise<string>;
 
 export function WriteFile(arg1:string,arg2:string):Promise<void>;

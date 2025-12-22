@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"smartcalc/internal/utils"
 )
 
 // Handler defines the interface for percentage calculation handlers.
@@ -277,13 +279,5 @@ func handleSplitBill(expr, exprLower string) (string, bool) {
 }
 
 func formatResult(value float64) string {
-	if value == float64(int64(value)) && value < 1e15 {
-		return fmt.Sprintf("%.0f", value)
-	}
-	// Check if it's a clean decimal (no trailing digits beyond 2 places)
-	rounded := float64(int(value*100+0.5)) / 100
-	if value == rounded {
-		return fmt.Sprintf("%.2f", value)
-	}
-	return fmt.Sprintf("%.2f", value)
+	return utils.FormatResult(false, value)
 }
