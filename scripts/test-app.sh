@@ -218,10 +218,11 @@ run_e2e_tests() {
     # Use timeout to prevent hanging (2 minutes max for 37 tests)
     local playwright_timeout=120
     
-    # Always use list reporter for visibility
-    if timeout $playwright_timeout npx playwright test --reporter=list 2>&1; then
+    # Use both list (for console output) and html (for report) reporters
+    if timeout $playwright_timeout npx playwright test --reporter=list,html 2>&1; then
         E2E_TESTS_PASSED=1
         print_success "All E2E tests passed"
+        print_info "View report: cd frontend && npx playwright show-report"
     else
         local exit_code=$?
         E2E_TESTS_FAILED=1
