@@ -36,6 +36,14 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Split by host count: `10.100.0.0/28 / 16 hosts`
 - Subnet mask: `mask for /24`, `wildcard for /24`
 - IP range check: `is 10.100.0.50 in 10.100.0.0/24`
+- DNS lookup: `dig google.com`, `nslookup github.com` (shows CNAME chain, A/AAAA, MX, NS, TXT records)
+- WHOIS lookup: `whois google.com` (shows registrar, dates, name servers)
+
+### SSL Certificate Decoder
+- Decode certificates: `cert decode https://google.com` or `ssl decode example.com`
+- Test certificates: `cert test https://expired.badssl.com`
+- Shows subject, issuer, validity, SANs, key usage
+- Displays certificate chain as tree
 
 ### Unit Conversions
 - Length: `5 miles in km`, `100 cm to inches`
@@ -154,6 +162,31 @@ today() + 30 days = 2026-01-17
 mask for /24 = 255.255.255.0
 wildcard for /24 = 0.0.0.255
 is 10.100.0.50 in 10.100.0.0/24 = yes
+
+# DNS Lookup
+dig google.com =
+> DNS Lookup: google.com
+> A Records:
+>   142.250.80.46
+> MX Records:
+>   smtp.google.com (priority: 10)
+
+# WHOIS Lookup
+whois google.com =
+> WHOIS: google.com
+> Registrar: MarkMonitor Inc.
+> Created: 1997-09-15T04:00:00Z
+> Expires: 2028-09-14T04:00:00Z
+
+# SSL Certificate
+cert decode https://google.com =
+> Subject: *.google.com
+> Issuer: GTS CA 1C3
+> Status: ✓ Valid (expires in 60 days)
+> Certificate Chain: 3 certificates
+> 🔐 GTS Root R1 (root)
+>    └── GTS CA 1C3 (intermediate)
+>        └── *.google.com (leaf)
 
 # Unit Conversions
 5 miles in km = 8.05 km
