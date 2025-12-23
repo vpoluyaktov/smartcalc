@@ -18,10 +18,14 @@ func IsCertExpression(expr string) bool {
 	patterns := []string{
 		`^cert\s+decode\s+`, // cert decode <url>
 		`^ssl\s+decode\s+`,  // ssl decode <url>
+		`^cert\s+test\s+`,   // cert test <url>
+		`^ssl\s+test\s+`,    // ssl test <url>
 		`^cert\s+https?://`, // cert <url>
 		`^ssl\s+https?://`,  // ssl <url>
 		`^decode\s+cert\s+`, // decode cert <url>
 		`^decode\s+ssl\s+`,  // decode ssl <url>
+		`^test\s+cert\s+`,   // test cert <url>
+		`^test\s+ssl\s+`,    // test ssl <url>
 	}
 
 	for _, pattern := range patterns {
@@ -45,10 +49,18 @@ func EvalCert(expr string) (string, error) {
 		urlStr = strings.TrimSpace(expr[12:])
 	} else if strings.HasPrefix(exprLower, "ssl decode ") {
 		urlStr = strings.TrimSpace(expr[11:])
+	} else if strings.HasPrefix(exprLower, "cert test ") {
+		urlStr = strings.TrimSpace(expr[10:])
+	} else if strings.HasPrefix(exprLower, "ssl test ") {
+		urlStr = strings.TrimSpace(expr[9:])
 	} else if strings.HasPrefix(exprLower, "decode cert ") {
 		urlStr = strings.TrimSpace(expr[12:])
 	} else if strings.HasPrefix(exprLower, "decode ssl ") {
 		urlStr = strings.TrimSpace(expr[11:])
+	} else if strings.HasPrefix(exprLower, "test cert ") {
+		urlStr = strings.TrimSpace(expr[10:])
+	} else if strings.HasPrefix(exprLower, "test ssl ") {
+		urlStr = strings.TrimSpace(expr[9:])
 	} else if strings.HasPrefix(exprLower, "cert ") {
 		urlStr = strings.TrimSpace(expr[5:])
 	} else if strings.HasPrefix(exprLower, "ssl ") {
