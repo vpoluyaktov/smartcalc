@@ -14,6 +14,14 @@ const {
 } = require('./helpers');
 
 test.describe('Reference Adjustment', () => {
+  // This test suite verifies that line references (\n syntax) are automatically
+  // adjusted when lines are inserted or deleted. This is a core feature that
+  // maintains referential integrity in spreadsheet-like calculations.
+  //
+  // When a line is inserted, all references pointing to lines at or after the
+  // insertion point must be incremented. When a line is deleted, references
+  // must be decremented accordingly.
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForEditorReady(page);
@@ -21,9 +29,13 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting a line before them', async ({ page }) => {
-    // Set up initial content:
-    // Line 1: 100 =
-    // Line 2: \1 * 2 =
+    // Verifies that inserting a line before a reference causes the reference
+    // to be incremented. If \1 points to line 1, and we insert a line before
+    // line 1, then \1 should become \2.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2
+    // Action: Insert empty line before line 1
+    // Expected: Line 3 now has \2 (was \1)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -50,10 +62,12 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting empty line in middle', async ({ page }) => {
-    // Set up:
-    // Line 1: # comment
-    // Line 2: 2 + 2 =
-    // Line 3: \2 x 4 =
+    // Verifies that inserting a line in the middle of the document adjusts
+    // only the references that point to lines at or after the insertion point.
+    //
+    // Setup: Line 1 = comment, Line 2 = 2+2=4, Line 3 = \2 * 4
+    // Action: Insert empty line after line 1
+    // Expected: Line 4 now has \3 (was \2, because line 2 moved to line 3)
     await typeInEditor(page, '# comment');
     await pressEnter(page);
     await typeInEditor(page, '2 + 2 =');
@@ -81,10 +95,12 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust chained references when inserting line', async ({ page }) => {
-    // Set up chain:
-    // Line 1: 100 =
-    // Line 2: \1 * 2 =
-    // Line 3: \2 + 50 =
+    // Verifies that a chain of references is correctly adjusted when a line
+    // is inserted. All references in the chain must be updated.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2 = 200, Line 3 = \2 + 50 = 250
+    // Action: Insert line at beginning
+    // Expected: Line 3 = \2, Line 4 = \3 (both shifted by 1)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -118,10 +134,13 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when deleting a line before them', async ({ page }) => {
-    // Set up:
-    // Line 1: (empty)
-    // Line 2: 100 =
-    // Line 3: \2 * 2 =
+    // Verifies that deleting a line before a reference causes the reference
+    // to be decremented. If \2 points to line 2, and we delete line 1,
+    // then \2 should become \1.
+    //
+    // Setup: Line 1 = empty, Line 2 = 100, Line 3 = \2 * 2
+    // Action: Delete line 1
+    // Expected: Line 2 now has \1 (was \2)
     await pressEnter(page);
     await typeInEditor(page, '100 =');
     await pressEnter(page);
@@ -146,16 +165,21 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should handle user scenario: insert empty line before refs', async ({ page }) => {
-    // This is the exact scenario from the user's screenshot
-    // Set up:
-    // Line 1-3: comments
-    // Line 4: empty
-    // Line 5: empty (cursor here)
-    // Line 6: 2 + 2 = 4
-    // Line 7: empty
-    // Line 8: \6 x 4 = 16
-    // Line 9: empty
-    // Line 10: \8 / 2 = 8
+    // Reproduces a real user scenario with comments, empty lines, and chained
+    // references. Verifies that inserting an empty line correctly shifts all
+    // subsequent references.
+    //
+    // Setup:
+    // - Lines 1-3: comments
+    // - Lines 4-5: empty
+    // - Line 6: 2 + 2 = 4
+    // - Line 7: empty
+    // - Line 8: \6 x 4 = 16
+    // - Line 9: empty
+    // - Line 10: \8 / 2 = 8
+    //
+    // Action: Insert line at line 5
+    // Expected: \6 becomes \7, \8 becomes \9
     
     await typeInEditor(page, '# Welcome to SmartCalc!');
     await pressEnter(page);
@@ -203,10 +227,13 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should not adjust references before insertion point', async ({ page }) => {
-    // Set up:
-    // Line 1: 100 =
-    // Line 2: \1 * 2 =
-    // Line 3: 50 =
+    // Verifies that references pointing to lines BEFORE the insertion point
+    // are NOT adjusted. Only references to lines at or after the insertion
+    // point should be incremented.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2, Line 3 = 50
+    // Action: Insert line after line 2
+    // Expected: Line 2 still has \1 (unchanged, points before insertion)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -231,12 +258,18 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting multiple empty lines before refs', async ({ page }) => {
-    // Set up with empty lines between values:
-    // Line 1: 100 =
-    // Line 2: (empty)
-    // Line 3: 50 =
-    // Line 4: (empty)
-    // Line 5: \1 + \3 =
+    // Verifies that inserting MULTIPLE lines at once correctly shifts all
+    // references by the number of lines inserted.
+    //
+    // Setup with empty lines between values:
+    // - Line 1: 100 =
+    // - Line 2: (empty)
+    // - Line 3: 50 =
+    // - Line 4: (empty)
+    // - Line 5: \1 + \3 = 150
+    //
+    // Action: Insert 3 empty lines before line 1
+    // Expected: \1 becomes \4, \3 becomes \6 (both shifted by 3)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -275,10 +308,13 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting empty lines between refs', async ({ page }) => {
-    // Set up:
-    // Line 1: 100 =
-    // Line 2: \1 * 2 =
-    // Line 3: \2 + 10 =
+    // Verifies reference adjustment when inserting lines between existing
+    // references. References pointing to lines before the insertion stay
+    // unchanged, while references pointing to lines after are incremented.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2, Line 3 = \2 + 10
+    // Action: Insert 2 empty lines after line 1
+    // Expected: Line 4 keeps \1, Line 5 has \4 (was \2)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -319,9 +355,13 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting empty lines after all refs', async ({ page }) => {
-    // Set up:
-    // Line 1: 100 =
-    // Line 2: \1 * 2 =
+    // Verifies that inserting lines AFTER all references does not affect
+    // any existing references. This is an edge case where no adjustment
+    // should occur.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2 = 200
+    // Action: Insert 2 empty lines after line 2
+    // Expected: Line 2 still has \1 and result 200 (unchanged)
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -349,12 +389,16 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when deleting multiple empty lines before refs', async ({ page }) => {
-    // Set up:
-    // Line 1: (empty)
-    // Line 2: (empty)
-    // Line 3: (empty)
-    // Line 4: 100 =
-    // Line 5: \4 * 2 =
+    // Verifies that deleting MULTIPLE lines correctly decrements references
+    // by the number of lines deleted.
+    //
+    // Setup:
+    // - Lines 1-3: empty
+    // - Line 4: 100 =
+    // - Line 5: \4 * 2 = 200
+    //
+    // Action: Delete lines 1, 2, 3
+    // Expected: Line 2 now has \1 (was \4, shifted by -3)
     await pressEnter(page);
     await pressEnter(page);
     await pressEnter(page);
@@ -384,6 +428,16 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when deleting empty lines between refs', async ({ page }) => {
+    // Verifies reference adjustment when deleting lines between references.
+    // References pointing to lines after the deleted section are decremented.
+    //
+    // Setup:
+    // - Lines 1-2: empty
+    // - Line 3: 100 =
+    // - Line 4: \3 * 2 = 200
+    //
+    // Action: Delete lines 1 and 2
+    // Expected: Line 2 now has \1 (was \3, shifted by -2)
     // Set up:
     // Line 1: (empty)
     // Line 2: (empty)
@@ -416,11 +470,18 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should handle complex scenario: multiple refs with inserts and deletes', async ({ page }) => {
-    // Set up a complex chain:
-    // Line 1: 10 =
-    // Line 2: 20 =
-    // Line 3: \1 + \2 =
-    // Line 4: \3 * 2 =
+    // Verifies a complex scenario with multiple references and chained
+    // dependencies. Tests that all references in a chain are correctly
+    // adjusted when lines are inserted.
+    //
+    // Setup:
+    // - Line 1: 10 =
+    // - Line 2: 20 =
+    // - Line 3: \1 + \2 = 30
+    // - Line 4: \3 * 2 = 60
+    //
+    // Action: Insert 2 empty lines at the beginning
+    // Expected: Line 5 = \3 + \4, Line 6 = \5 (all shifted by 2)
     await typeInEditor(page, '10 =');
     await pressEnter(page);
     await waitForEvaluation(page);

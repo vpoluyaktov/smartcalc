@@ -13,6 +13,11 @@ const {
 } = require('./helpers');
 
 test.describe('Lazy Evaluation', () => {
+  // This test suite verifies the lazy evaluation behavior in SmartCalc.
+  // Lazy evaluation means expressions are only evaluated when the user
+  // explicitly triggers it (Enter key or leaving the line), not while typing.
+  // This improves performance and prevents flickering during input.
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await waitForEditorReady(page);
@@ -20,7 +25,9 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should not evaluate while typing on current line', async ({ page }) => {
-    // Type an expression without pressing Enter
+    // Verifies that typing on a line does NOT trigger immediate evaluation.
+    // The result should only appear after pressing Enter or leaving the line.
+    // This prevents distracting result updates while the user is still typing.
     await typeInEditor(page, '2 + 2 =');
     
     // Wait a bit but don't press Enter
@@ -34,6 +41,8 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should evaluate when pressing Enter', async ({ page }) => {
+    // Verifies that pressing Enter triggers evaluation of the current line.
+    // This is the primary way users confirm their expression is complete.
     await typeInEditor(page, '2 + 2 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -44,7 +53,13 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should evaluate when moving to another line with arrow keys', async ({ page }) => {
-    // First create two lines so we can move between them
+    // Verifies that moving to another line with arrow keys triggers evaluation.
+    // This allows users to navigate away from a line and have it auto-evaluate,
+    // which is convenient for reviewing and editing multiple calculations.
+    //
+    // Setup: Create line 1 with result, then type on line 2 without Enter.
+    // Action: Press Up arrow to return to line 1.
+    // Expected: Line 2 should now have its result evaluated.
     await typeInEditor(page, '10 + 5 =');
     await pressEnter(page);
     await waitForEvaluation(page, 300);
@@ -71,7 +86,12 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should strip result when editing a line with existing result', async ({ page }) => {
-    // Create a line with result
+    // Verifies that when editing a line that already has a result,
+    // the old result is stripped to prevent confusion.
+    // The result will be recalculated when the user finishes editing.
+    //
+    // This prevents showing stale/incorrect results while the user
+    // is modifying the expression.
     await typeInEditor(page, '100 + 50 =');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -95,7 +115,15 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should strip results from dependent lines when editing', async ({ page }) => {
-    // Create chain: 100, \1 * 2
+    // Verifies that when editing a line, all dependent lines (lines that
+    // reference it via \n syntax) have their results stripped.
+    //
+    // This is crucial for maintaining consistency - if line 1 changes,
+    // any line referencing \1 must be recalculated.
+    //
+    // Setup: Line 1 = 100, Line 2 = \1 * 2 = 200
+    // Action: Edit line 1
+    // Expected: Line 2's result should be stripped
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page, 500);
@@ -127,6 +155,10 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should add = and evaluate when pressing Enter on line without =', async ({ page }) => {
+    // Verifies that pressing Enter on an expression without = will:
+    // 1. Automatically append = to the expression
+    // 2. Evaluate and show the result
+    // This is a convenience feature for quick calculations.
     await typeInEditor(page, '5 * 5');
     await pressEnter(page);
     await waitForEvaluation(page);
@@ -138,7 +170,14 @@ test.describe('Lazy Evaluation', () => {
   });
 
   test('should evaluate all dependent lines when source line changes', async ({ page }) => {
-    // Create: 10, \1 * 2, \2 + 5
+    // Verifies that changing a source line triggers re-evaluation of all
+    // dependent lines in the chain.
+    //
+    // Setup: Line 1 = 10, Line 2 = \1 * 2 = 20, Line 3 = \2 + 5 = 25
+    // Action: Change line 1 from 10 to 20
+    // Expected: Line 2 = 40, Line 3 = 45 (entire chain updates)
+    //
+    // This is the core spreadsheet-like behavior of SmartCalc.
     await typeInEditor(page, '10 =');
     await pressEnter(page);
     await waitForEvaluation(page);
