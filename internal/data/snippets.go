@@ -88,6 +88,8 @@ func GetSnippetCategories() []SnippetCategory {
 			Snippets: []Snippet{
 				{"Loan Payment", "loan $250000 at 6.5% for 30 years =\n\nloan $50000 at 4% for 5 years =\n\n"},
 				{"Mortgage", "mortgage $350000 at 7% for 30 years =\n\n"},
+				{"Mortgage Pay Schedule", "mortgage $100000 at 5% for 1 year pay schedule =\n\n"},
+				{"Mortgage Extra Payment", "mortgage $350000 at 7% for 30 years extra payment $500 =\n\n"},
 				{"Compound Interest", "$10000 at 5% for 10 years compounded monthly =\n\ncompound interest $5000 at 7% for 5 years =\n\n"},
 				{"Simple Interest", "simple interest $5000 at 3% for 2 years =\n\n"},
 				{"Investment Growth", "invest $1000 at 7% for 20 years =\n\ninvest $5000 at 10% for 10 years =\n\n"},
@@ -155,6 +157,8 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Decode Certificate (Google)", "cert decode https://google.com =\n\n"},
 				{"Decode Certificate (GitHub)", "ssl decode https://github.com =\n\n"},
 				{"Decode Certificate (Custom)", "cert decode example.com =\n\n"},
+				{"Test Certificate (Expired)", "cert test https://expired.badssl.com =\n\n"},
+				{"Test Certificate (Self-Signed)", "ssl test https://self-signed.badssl.com =\n\n"},
 			},
 		},
 	}
