@@ -12,6 +12,7 @@ import (
 	"smartcalc/internal/finance"
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
+	"smartcalc/internal/permissions"
 	"smartcalc/internal/programmer"
 	"smartcalc/internal/regex"
 	"smartcalc/internal/stats"
@@ -345,6 +346,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			regexResult, err := regex.EvalRegex(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + regexResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try Unix permissions evaluation
+		if permissions.IsPermissionsExpression(expr) {
+			permResult, err := permissions.EvalPermissions(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + permResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}

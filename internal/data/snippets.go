@@ -132,5 +132,15 @@ func GetSnippetCategories() []SnippetCategory {
 				{"URL Pattern", "regex /https?:\\/\\/[\\w.-]+/ test \"Visit https://example.com for more\" =\n\n"},
 			},
 		},
+		{
+			Name: "Unix Permissions",
+			Snippets: []Snippet{
+				{"Chmod Octal to Symbolic", "chmod 755 =\nchmod 644 =\nchmod 777 =\nchmod 600 =\n\n"},
+				{"Chmod Symbolic to Octal", "chmod rwxr-xr-x =\nchmod rw-r--r-- =\nchmod rwx r-x r-x =\n\n"},
+				{"Special Bits (setuid/setgid/sticky)", "chmod 4755 =\nchmod 2755 =\nchmod 1777 =\nchmod 7755 =\n\n"},
+				{"Umask Calculator", "umask 022 =\numask 077 =\numask 027 =\numask 002 =\n\n"},
+				{"Permission Conversions", "755 to symbolic =\nrwxr-xr-x to octal =\npermission 644 =\n\n"},
+			},
+		},
 	}
 }
