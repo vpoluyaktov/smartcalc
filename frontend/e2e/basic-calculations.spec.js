@@ -207,4 +207,33 @@ test.describe('Basic Calculations', () => {
     await waitForEvaluation(page);
     expect(await getLineText(page, 2)).toContain('42');
   });
+
+  test('should handle base64 encode without double evaluation', async ({ page }) => {
+    // Verifies that base64 encoding works correctly and doesn't get evaluated twice.
+    // The bug: base64 results often end with '=' (padding), which was being
+    // mistakenly interpreted as the result delimiter, causing double evaluation.
+    //
+    // "base64 encode hello world" should produce "aGVsbG8gd29ybGQ=" (with trailing =)
+    // The trailing = is base64 padding, NOT a result delimiter.
+    await typeInEditor(page, 'base64 encode hello world =');
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    const line1 = await getLineText(page, 1);
+    // Should contain the base64 result exactly once
+    expect(line1).toContain('aGVsbG8gd29ybGQ=');
+    // Should NOT contain a double-encoded result (which would happen if evaluated twice)
+    expect(line1).not.toContain('aGVsbG8gd29ybGQgPSBhR1ZzYkc4Z2QyOXliR1E=');
+  });
+
+  test('should handle base64 decode correctly', async ({ page }) => {
+    // Verifies that base64 decoding works with strings that have padding (=).
+    // "SGVsbG8gd29ybGQ=" decodes to "Hello world"
+    await typeInEditor(page, 'base64 decode SGVsbG8gd29ybGQ= =');
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    const line1 = await getLineText(page, 1);
+    expect(line1).toContain('Hello world');
+  });
 });

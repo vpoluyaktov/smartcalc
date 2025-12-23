@@ -87,10 +87,12 @@ func isBaseConversionExpr(expr string) bool {
 }
 
 // findResultEquals finds the position of the trailing '=' that marks the result,
-// skipping '=' characters that are part of comparison operators (>=, <=, ==, !=).
+// skipping '=' characters that are part of comparison operators (>=, <=, ==, !=)
+// or base64 padding (trailing = or == without space before).
 // Returns -1 if no result '=' is found.
 func findResultEquals(s string) int {
-	// Find the last '=' that is not part of a comparison operator
+	// Find the last '=' that is a result delimiter (has space before it)
+	// and is not part of a comparison operator
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] == '=' {
 			// Check if this '=' is part of >=, <=, ==, or !=
@@ -98,6 +100,11 @@ func findResultEquals(s string) int {
 				prev := s[i-1]
 				if prev == '>' || prev == '<' || prev == '=' || prev == '!' {
 					continue // Skip this '=', it's part of a comparison operator
+				}
+				// Result delimiter should have a space before it (e.g., "2 + 2 =")
+				// Skip '=' that doesn't have space before (likely base64 padding)
+				if prev != ' ' {
+					continue
 				}
 			}
 			return i

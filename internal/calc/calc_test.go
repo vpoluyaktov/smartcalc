@@ -647,3 +647,65 @@ func TestFindDependentLines(t *testing.T) {
 		})
 	}
 }
+
+func TestBase64EncodeNoDoubleEvaluation(t *testing.T) {
+	// This test verifies that base64 encoding doesn't get evaluated twice.
+	// The bug: base64 results end with '=' (padding), which could be mistakenly
+	// interpreted as the result delimiter, causing double evaluation.
+	//
+	// "base64 encode hello world" should produce "aGVsbG8gd29ybGQ=" (with trailing =)
+	// The trailing = is base64 padding, NOT a result delimiter.
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+		notContain string
+	}{
+		{
+			name:     "base64 encode without padding",
+			input:    "base64 encode abc =",
+			expected: "base64 encode abc = YWJj",
+			notContain: "",
+		},
+		{
+			name:     "base64 encode with single padding",
+			input:    "base64 encode hello world =",
+			expected: "base64 encode hello world = aGVsbG8gd29ybGQ=",
+			notContain: "aGVsbG8gd29ybGQgPSBhR1ZzYkc4Z2QyOXliR1E=", // double-encoded result
+		},
+		{
+			name:     "base64 encode with double padding",
+			input:    "base64 encode test =",
+			expected: "base64 encode test = dGVzdA==",
+			notContain: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{tt.input}
+			results := EvalLines(lines, 0)
+			
+			if results[0].Output != tt.expected {
+				t.Errorf("EvalLines(%q) = %q, want %q", tt.input, results[0].Output, tt.expected)
+			}
+			
+			if tt.notContain != "" && contains(results[0].Output, tt.notContain) {
+				t.Errorf("EvalLines(%q) contains %q (double evaluation bug!)", tt.input, tt.notContain)
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(substr) > 0 && len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
+}
+
+func containsMiddle(s, substr string) bool {
+	for i := 1; i < len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
