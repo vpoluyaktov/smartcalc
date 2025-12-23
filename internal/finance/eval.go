@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"smartcalc/internal/utils"
 )
@@ -157,7 +158,23 @@ func handleSimpleInterest(expr, exprLower string) (string, bool) {
 }
 
 func handleMortgagePayment(expr, exprLower string) (string, bool) {
-	// Pattern: "mortgage $350000 at 7% for 30 years"
+	// Check for extra payment variant first
+	// Pattern: "mortgage $350000 at 7% for 30 years extra payment $500" or "extra $500"
+	extraRe := regexp.MustCompile(`mortgage\s+\$?([\d,]+)\s+at\s+([\d.]+)%\s+for\s+(\d+)\s+years?\s+extra\s+(?:payment\s+)?\$?([\d,]+)`)
+	extraMatches := extraRe.FindStringSubmatch(exprLower)
+	if extraMatches != nil {
+		return handleMortgageWithExtraPayment(extraMatches)
+	}
+
+	// Check for pay schedule variant
+	// Pattern: "mortgage $350000 at 7% for 30 years pay schedule"
+	scheduleRe := regexp.MustCompile(`mortgage\s+\$?([\d,]+)\s+at\s+([\d.]+)%\s+for\s+(\d+)\s+years?\s+pay\s+schedule`)
+	scheduleMatches := scheduleRe.FindStringSubmatch(exprLower)
+	if scheduleMatches != nil {
+		return handleMortgagePaySchedule(scheduleMatches)
+	}
+
+	// Standard mortgage pattern: "mortgage $350000 at 7% for 30 years"
 	re := regexp.MustCompile(`mortgage\s+\$?([\d,]+)\s+at\s+([\d.]+)%\s+for\s+(\d+)\s+years?`)
 	matches := re.FindStringSubmatch(exprLower)
 	if matches == nil {
@@ -186,8 +203,146 @@ func handleMortgagePayment(expr, exprLower string) (string, bool) {
 	totalPayment := monthlyPayment * float64(numPayments)
 	totalInterest := totalPayment - principal
 
-	return fmt.Sprintf("\n> Monthly: %s\n> Total: %s\n> Interest: %s",
-		utils.FormatCurrency(monthlyPayment), utils.FormatCurrency(totalPayment), utils.FormatCurrency(totalInterest)), true
+	// Calculate payoff date (assuming payments start next month)
+	startDate := time.Now()
+	payoffDate := startDate.AddDate(0, numPayments, 0)
+
+	return fmt.Sprintf("\n> Monthly: %s\n> Total: %s\n> Interest: %s\n> Payoff: %s",
+		utils.FormatCurrency(monthlyPayment), utils.FormatCurrency(totalPayment),
+		utils.FormatCurrency(totalInterest), payoffDate.Format("Jan 2006")), true
+}
+
+func handleMortgagePaySchedule(matches []string) (string, bool) {
+	principal := parseAmount(matches[1])
+	annualRate := parseFloat(matches[2]) / 100
+	years := parseInt(matches[3])
+
+	if principal == 0 || years == 0 {
+		return "", false
+	}
+
+	monthlyRate := annualRate / 12
+	numPayments := years * 12
+
+	var monthlyPayment float64
+	if monthlyRate == 0 {
+		monthlyPayment = principal / float64(numPayments)
+	} else {
+		monthlyPayment = principal * (monthlyRate * math.Pow(1+monthlyRate, float64(numPayments))) /
+			(math.Pow(1+monthlyRate, float64(numPayments)) - 1)
+	}
+
+	// Build amortization schedule
+	var sb strings.Builder
+	sb.WriteString("\n> Payment Schedule:\n")
+	sb.WriteString("> ──────────────────────────────────────────────────────────────\n")
+	sb.WriteString("> Month      | Payment    | Principal  | Interest   | Balance\n")
+	sb.WriteString("> ──────────────────────────────────────────────────────────────\n")
+
+	balance := principal
+	startDate := time.Now()
+	totalInterest := 0.0
+
+	for i := 1; i <= numPayments; i++ {
+		interestPayment := balance * monthlyRate
+		principalPayment := monthlyPayment - interestPayment
+		balance -= principalPayment
+		totalInterest += interestPayment
+
+		// Ensure balance doesn't go negative due to rounding
+		if balance < 0 {
+			balance = 0
+		}
+
+		paymentDate := startDate.AddDate(0, i, 0)
+		sb.WriteString(fmt.Sprintf("> %s | %10s | %10s | %10s | %10s\n",
+			paymentDate.Format("Jan 2006"),
+			utils.FormatCurrency(monthlyPayment),
+			utils.FormatCurrency(principalPayment),
+			utils.FormatCurrency(interestPayment),
+			utils.FormatCurrency(balance)))
+	}
+
+	sb.WriteString("> ──────────────────────────────────────────────────────────────\n")
+	sb.WriteString(fmt.Sprintf("> Total Interest: %s", utils.FormatCurrency(totalInterest)))
+
+	return sb.String(), true
+}
+
+func handleMortgageWithExtraPayment(matches []string) (string, bool) {
+	principal := parseAmount(matches[1])
+	annualRate := parseFloat(matches[2]) / 100
+	years := parseInt(matches[3])
+	extraPayment := parseAmount(matches[4])
+
+	if principal == 0 || years == 0 {
+		return "", false
+	}
+
+	monthlyRate := annualRate / 12
+	numPayments := years * 12
+
+	var monthlyPayment float64
+	if monthlyRate == 0 {
+		monthlyPayment = principal / float64(numPayments)
+	} else {
+		monthlyPayment = principal * (monthlyRate * math.Pow(1+monthlyRate, float64(numPayments))) /
+			(math.Pow(1+monthlyRate, float64(numPayments)) - 1)
+	}
+
+	// Calculate standard mortgage totals
+	standardTotal := monthlyPayment * float64(numPayments)
+	standardInterest := standardTotal - principal
+	startDate := time.Now()
+	standardPayoffDate := startDate.AddDate(0, numPayments, 0)
+
+	// Calculate with extra payment
+	balance := principal
+	totalInterestWithExtra := 0.0
+	monthsWithExtra := 0
+
+	for balance > 0 {
+		monthsWithExtra++
+		interestPayment := balance * monthlyRate
+		totalInterestWithExtra += interestPayment
+
+		// Apply regular payment + extra payment
+		totalPaymentThisMonth := monthlyPayment + extraPayment
+		principalPayment := totalPaymentThisMonth - interestPayment
+
+		balance -= principalPayment
+		if balance < 0 {
+			balance = 0
+		}
+
+		// Safety check to prevent infinite loop
+		if monthsWithExtra > numPayments*2 {
+			break
+		}
+	}
+
+	extraPayoffDate := startDate.AddDate(0, monthsWithExtra, 0)
+	interestSavings := standardInterest - totalInterestWithExtra
+	timeSaved := numPayments - monthsWithExtra
+
+	// Format time saved
+	yearsSaved := timeSaved / 12
+	monthsSaved := timeSaved % 12
+	var timeSavedStr string
+	if yearsSaved > 0 && monthsSaved > 0 {
+		timeSavedStr = fmt.Sprintf("%d years, %d months", yearsSaved, monthsSaved)
+	} else if yearsSaved > 0 {
+		timeSavedStr = fmt.Sprintf("%d years", yearsSaved)
+	} else {
+		timeSavedStr = fmt.Sprintf("%d months", monthsSaved)
+	}
+
+	return fmt.Sprintf("\n> Monthly: %s (+ %s extra)\n> Standard Interest: %s\n> With Extra Payment: %s\n> Interest Savings: %s\n> Standard Payoff: %s\n> New Payoff: %s\n> Time Saved: %s",
+		utils.FormatCurrency(monthlyPayment), utils.FormatCurrency(extraPayment),
+		utils.FormatCurrency(standardInterest), utils.FormatCurrency(totalInterestWithExtra),
+		utils.FormatCurrency(interestSavings),
+		standardPayoffDate.Format("Jan 2006"), extraPayoffDate.Format("Jan 2006"),
+		timeSavedStr), true
 }
 
 func handleInvestmentGrowth(expr, exprLower string) (string, bool) {
