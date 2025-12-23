@@ -89,6 +89,15 @@ func TestEvalCert_Google(t *testing.T) {
 	if !strings.Contains(result, "Subject Alt Names:") {
 		t.Error("Result should contain 'Subject Alt Names:'")
 	}
+	// Check for certificate chain tree format
+	if strings.Contains(result, "Certificate Chain:") {
+		if !strings.Contains(result, "(leaf)") {
+			t.Error("Certificate chain should contain leaf certificate")
+		}
+		if !strings.Contains(result, "(root)") && !strings.Contains(result, "(intermediate)") {
+			t.Error("Certificate chain should contain root or intermediate certificate")
+		}
+	}
 }
 
 func TestEvalCert_DifferentFormats(t *testing.T) {
