@@ -167,3 +167,86 @@ func TestFormatKeyUsage(t *testing.T) {
 		}
 	}
 }
+
+// TestEvalCert_BadSSL tests various certificate issues using badssl.com test certificates
+func TestEvalCert_BadSSL(t *testing.T) {
+	tests := []struct {
+		name           string
+		url            string
+		shouldSucceed  bool
+		expectContains []string
+	}{
+		{
+			name:          "expired certificate",
+			url:           "https://expired.badssl.com",
+			shouldSucceed: true,
+			expectContains: []string{
+				"Subject:",
+				"Issuer:",
+				"EXPIRED", // Status should show expired
+			},
+		},
+		{
+			name:          "self-signed certificate",
+			url:           "https://self-signed.badssl.com",
+			shouldSucceed: true,
+			expectContains: []string{
+				"Subject:",
+				"Issuer:",
+				"Status:",
+			},
+		},
+		{
+			name:          "wrong host certificate",
+			url:           "https://wrong.host.badssl.com",
+			shouldSucceed: true,
+			expectContains: []string{
+				"Subject:",
+				"Issuer:",
+				"Status:",
+			},
+		},
+		{
+			name:          "untrusted root certificate",
+			url:           "https://untrusted-root.badssl.com",
+			shouldSucceed: true,
+			expectContains: []string{
+				"Subject:",
+				"Issuer:",
+				"Status:",
+			},
+		},
+		{
+			name:          "revoked certificate",
+			url:           "https://revoked.badssl.com",
+			shouldSucceed: true,
+			expectContains: []string{
+				"Subject:",
+				"Issuer:",
+				"Status:",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := EvalCert("cert decode " + tt.url)
+
+			if tt.shouldSucceed {
+				if err != nil {
+					t.Fatalf("EvalCert(%q) returned error: %v", tt.url, err)
+				}
+
+				for _, expected := range tt.expectContains {
+					if !strings.Contains(result, expected) {
+						t.Errorf("Result should contain %q, got:\n%s", expected, result)
+					}
+				}
+			} else {
+				if err == nil {
+					t.Errorf("EvalCert(%q) should have returned error", tt.url)
+				}
+			}
+		})
+	}
+}
