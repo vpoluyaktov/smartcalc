@@ -267,7 +267,7 @@ function buildDecorations(view) {
             }
             
             // Keywords
-            const kwMatch = remaining.match(/^(jwt|chmod|umask|permissions?|symbolic|octal|setuid|setgid|sticky|regex|test|match|against|now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast|what|percent|percentage|increase|decrease|tip|loan|mortgage|compound|simple|interest|invest|avg|average|mean|median|sum|stddev|stdev|variance|count|range|ascii|char|uuid|md5|sha1|sha256|base64|encode|decode|random|and|or|xor|not|speed\s+of\s+light|gravity|pi|avogadro|planck|golden\s+ratio|value\s+of)\b/i);
+            const kwMatch = remaining.match(/^(jwt|cert|ssl|chmod|umask|permissions?|symbolic|octal|setuid|setgid|sticky|regex|test|match|against|now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast|what|percent|percentage|increase|decrease|tip|loan|mortgage|compound|simple|interest|invest|avg|average|mean|median|sum|stddev|stdev|variance|count|range|ascii|char|uuid|md5|sha1|sha256|base64|encode|decode|random|and|or|xor|not|speed\s+of\s+light|gravity|pi|avogadro|planck|golden\s+ratio|value\s+of)\b/i);
             if (kwMatch) {
                 builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
                 pos += kwMatch[0].length;
