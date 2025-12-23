@@ -454,6 +454,72 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			}
 		}
 
+		// Try DNS lookup
+		// Note: Don't use maybeFormat for DNS expressions as domain names should not be modified
+		// Skip re-evaluation if line already has a result and is not the active line (expensive network operation)
+		if network.IsDNSExpression(expr) {
+			isActiveLine := activeLineNum > 0 && i+1 == activeLineNum
+
+			// Check if line already has an inline result
+			existingResult := strings.TrimSpace(workingLine[eq+1:])
+			if existingResult != "" && !isActiveLine {
+				results[i].Output = line
+				results[i].HasResult = true
+				continue
+			}
+
+			// Check if line had multi-line output
+			if outputLines, ok := hasMultiLineOutput[i]; ok && !isActiveLine {
+				results[i].Output = line + "\n" + strings.Join(outputLines, "\n")
+				results[i].HasResult = true
+				continue
+			}
+
+			dnsResult, err := network.EvalDNS(expr)
+			if err == nil {
+				results[i].Output = expr + " =\n" + dnsResult + inlineComment
+				results[i].HasResult = true
+				continue
+			} else {
+				results[i].Output = expr + " = ERR: " + err.Error() + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try WHOIS lookup
+		// Note: Don't use maybeFormat for WHOIS expressions as domain names should not be modified
+		// Skip re-evaluation if line already has a result and is not the active line (expensive network operation)
+		if network.IsWhoisExpression(expr) {
+			isActiveLine := activeLineNum > 0 && i+1 == activeLineNum
+
+			// Check if line already has an inline result
+			existingResult := strings.TrimSpace(workingLine[eq+1:])
+			if existingResult != "" && !isActiveLine {
+				results[i].Output = line
+				results[i].HasResult = true
+				continue
+			}
+
+			// Check if line had multi-line output
+			if outputLines, ok := hasMultiLineOutput[i]; ok && !isActiveLine {
+				results[i].Output = line + "\n" + strings.Join(outputLines, "\n")
+				results[i].HasResult = true
+				continue
+			}
+
+			whoisResult, err := network.EvalWhois(expr)
+			if err == nil {
+				results[i].Output = expr + " =\n" + whoisResult + inlineComment
+				results[i].HasResult = true
+				continue
+			} else {
+				results[i].Output = expr + " = ERR: " + err.Error() + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
 		// Try network/IP evaluation
 		if network.IsNetworkExpression(expr) {
 			netResult, err := network.EvalNetwork(expr)

@@ -161,5 +161,12 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Test Certificate (Self-Signed)", "ssl test https://self-signed.badssl.com =\n\n"},
 			},
 		},
+		{
+			Name: "Networking Utilities",
+			Snippets: []Snippet{
+				{"DNS Lookup", "# DNS lookup (aliases: dig, nslookup, dns, lookup, resolve)\ndig google.com =\n\n"},
+				{"WHOIS Lookup", "# Domain registration info\nwhois google.com =\n\n"},
+			},
+		},
 	}
 }
