@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, StripLineResult, HasLineResult, EvaluateLines } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, StripLineResult, HasLineResult, EvaluateLines, StripAndEvalReferencingLines } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -676,6 +676,10 @@ async function checkAndAdjustReferences(currentText, currentLineCount, snapshotP
         try {
             const adjusted = await AdjustReferences(oldText, currentText);
             if (adjusted !== currentText) {
+                // After adjusting references, strip results from referencing lines and re-evaluate
+                // This prevents showing ERR temporarily when references are adjusted
+                const reEvaluated = await StripAndEvalReferencingLines(adjusted);
+                
                 // Set flag to prevent re-entry
                 isUpdatingEditor = true;
                 
@@ -684,10 +688,10 @@ async function checkAndAdjustReferences(currentText, currentLineCount, snapshotP
                 const scrollLeft = editor.scrollDOM.scrollLeft;
                 const cursorPos = editor.state.selection.main.head;
                 
-                // Update with adjusted text
+                // Update with re-evaluated text
                 editor.dispatch({
-                    changes: { from: 0, to: editor.state.doc.length, insert: adjusted },
-                    selection: { anchor: Math.min(cursorPos, adjusted.length) },
+                    changes: { from: 0, to: editor.state.doc.length, insert: reEvaluated },
+                    selection: { anchor: Math.min(cursorPos, reEvaluated.length) },
                 });
                 
                 // Restore scroll
@@ -696,12 +700,11 @@ async function checkAndAdjustReferences(currentText, currentLineCount, snapshotP
                     editor.scrollDOM.scrollLeft = scrollLeft;
                 });
                 
-                // Update previous text to adjusted version
-                previousText = adjusted;
-                previousLineCount = adjusted.split('\n').length;
+                // Update previous text to re-evaluated version
+                previousText = reEvaluated;
+                previousLineCount = reEvaluated.split('\n').length;
                 
                 // Clear flag after adjustment is done
-                // Note: We don't evaluate here - lazy evaluation happens on line change or Enter
                 isUpdatingEditor = false;
                 return;
             }

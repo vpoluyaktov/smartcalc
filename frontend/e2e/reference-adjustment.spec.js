@@ -464,4 +464,76 @@ test.describe('Reference Adjustment', () => {
     expect(newLine5).toContain('\\4');
     expect(newLine6).toContain('\\5');
   });
+
+  test('should immediately show correct results after inserting lines before refs (no ERR)', async ({ page }) => {
+    // This test catches a bug where references would show ERR temporarily
+    // after inserting lines, because the old results remained but the
+    // reference numbers were adjusted to point to non-existent lines.
+    //
+    // Setup matching the user's scenario:
+    // Line 1-3: comments
+    // Line 4: empty
+    // Line 5: empty (cursor here)
+    // Line 6: 2 + 2 = 4
+    // Line 7: empty
+    // Line 8: \6 x 4 = 16
+    // Line 9: empty
+    // Line 10: \8 / 2 = 8
+    await typeInEditor(page, '# Comment 1');
+    await pressEnter(page);
+    await typeInEditor(page, '# Comment 2');
+    await pressEnter(page);
+    await typeInEditor(page, '# Comment 3');
+    await pressEnter(page);
+    await pressEnter(page); // Line 4 empty
+    await pressEnter(page); // Line 5 empty
+    
+    await typeInEditor(page, '2 + 2 =');
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    await pressEnter(page); // Line 7 empty
+    
+    await typeInEditor(page, '\\6 x 4 =');
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    await pressEnter(page); // Line 9 empty
+    
+    await typeInEditor(page, '\\8 / 2 =');
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    // Verify initial state - all results should be correct
+    let line6 = await getLineText(page, 6);
+    let line8 = await getLineText(page, 8);
+    let line10 = await getLineText(page, 10);
+    expect(line6).toContain('2 + 2 = 4');
+    expect(line8).toContain('\\6');
+    expect(line8).toContain('16');
+    expect(line10).toContain('\\8');
+    expect(line10).toContain('8');
+    
+    // Go to line 5 (empty line) and press Enter twice
+    await goToLine(page, 5);
+    await pressEnter(page);
+    await pressEnter(page);
+    await waitForEvaluation(page);
+    
+    // After inserting 2 lines at line 5:
+    // - Line 8 should now have 2 + 2 = 4
+    // - Line 10 should have \8 x 4 = 16 (NOT ERR!)
+    // - Line 12 should have \10 / 2 = 8 (NOT ERR!)
+    const newLine8 = await getLineText(page, 8);
+    const newLine10 = await getLineText(page, 10);
+    const newLine12 = await getLineText(page, 12);
+    
+    expect(newLine8).toContain('2 + 2 = 4');
+    expect(newLine10).toContain('\\8');
+    expect(newLine10).toContain('16');
+    expect(newLine10).not.toContain('ERR');
+    expect(newLine12).toContain('\\10');
+    expect(newLine12).toContain('8');
+    expect(newLine12).not.toContain('ERR');
+  });
 });

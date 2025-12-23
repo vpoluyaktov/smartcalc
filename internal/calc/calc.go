@@ -537,3 +537,27 @@ func EvalLinesSelective(lines []string, linesToEval []int) []LineResult {
 	// But we can optimize by only formatting the specified lines
 	return EvalLines(lines, 0)
 }
+
+// StripAndEvalReferencingLines strips results from all lines that contain references
+// and re-evaluates them. Returns the updated text.
+func StripAndEvalReferencingLines(text string) string {
+	lines := strings.Split(text, "\n")
+	refPattern := regexp.MustCompile(`\\(\d+)`)
+
+	// Find all lines with references and strip their results
+	for i, line := range lines {
+		if refPattern.MatchString(line) && HasResult(line) {
+			lines[i] = StripResult(line)
+		}
+	}
+
+	// Re-evaluate all lines
+	results := EvalLines(lines, 0)
+
+	// Build output
+	output := make([]string, len(results))
+	for i, r := range results {
+		output[i] = r.Output
+	}
+	return strings.Join(output, "\n")
+}

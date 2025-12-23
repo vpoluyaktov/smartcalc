@@ -36,6 +36,8 @@ export function SetUnsavedState(arg1:boolean,arg2:string):Promise<void>;
 
 export function ShowInfoDialog(arg1:string,arg2:string):Promise<void>;
 
+export function StripAndEvalReferencingLines(arg1:string):Promise<string>;
+
 export function StripLineResult(arg1:string):Promise<string>;
 
 export function WriteFile(arg1:string,arg2:string):Promise<void>;

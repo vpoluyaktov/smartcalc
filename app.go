@@ -297,3 +297,8 @@ func (a *App) EvaluateLines(text string, changedLine int) []EvalResult {
 	}
 	return evalResults
 }
+
+// StripAndEvalReferencingLines strips results from lines with references and re-evaluates them
+func (a *App) StripAndEvalReferencingLines(text string) string {
+	return calc.StripAndEvalReferencingLines(text)
+}
