@@ -11,7 +11,7 @@ module.exports = defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1, // Single worker since we have one app instance
-  reporter: 'html',
+  reporter: [['html', { open: 'never' }]], // Don't auto-open report
   timeout: 30000, // 30 second timeout per test
   
   use: {
