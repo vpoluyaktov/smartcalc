@@ -251,14 +251,13 @@ func formatCertificates(certs []*x509.Certificate, host string) (string, error) 
 				// Root certificate
 				result.WriteString(fmt.Sprintf("> 🔐 %s %s\n", name, label))
 			} else {
-				// Child certificates with tree branches
-				indent := strings.Repeat("   ", depth-1)
+				// All child certificates at same indentation level
 				if i == 0 {
 					// Last certificate (leaf)
-					result.WriteString(fmt.Sprintf(">    %s└── %s %s\n", indent, name, label))
+					result.WriteString(fmt.Sprintf(">    └── %s %s\n", name, label))
 				} else {
 					// Intermediate certificate
-					result.WriteString(fmt.Sprintf(">    %s├── %s %s\n", indent, name, label))
+					result.WriteString(fmt.Sprintf(">    ├── %s %s\n", name, label))
 				}
 			}
 		}
