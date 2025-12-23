@@ -605,6 +605,7 @@ func TestAllSnippetCategoriesExist(t *testing.T) {
 		"Regex Tester",
 		"Unix Permissions",
 		"JWT Decoder",
+		"SSL Certificate",
 	}
 
 	categories := GetSnippetCategories()

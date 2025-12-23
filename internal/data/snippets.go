@@ -149,5 +149,13 @@ func GetSnippetCategories() []SnippetCategory {
 				{"JWT with Expiration", "jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNzM1Njg5NjAwfQ.signature =\n\n"},
 			},
 		},
+		{
+			Name: "SSL Certificate",
+			Snippets: []Snippet{
+				{"Decode Certificate (Google)", "cert decode https://google.com =\n\n"},
+				{"Decode Certificate (GitHub)", "ssl decode https://github.com =\n\n"},
+				{"Decode Certificate (Custom)", "cert decode example.com =\n\n"},
+			},
+		},
 	}
 }

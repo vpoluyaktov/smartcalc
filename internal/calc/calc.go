@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"smartcalc/internal/cert"
 	"smartcalc/internal/constants"
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
@@ -226,6 +227,25 @@ func cleanOutputLines(lines []string) []string {
 // activeLineNum is 1-based line number of the line currently being edited (skip formatting for this line).
 // Pass 0 or negative to format all lines.
 func EvalLines(lines []string, activeLineNum int) []LineResult {
+	// Build a map of expression lines that have multi-line output (lines starting with ">")
+	// This is used to skip re-evaluation of expensive operations like cert decode
+	hasMultiLineOutput := make(map[int][]string) // maps cleaned line index to its output lines
+	cleanedIdx := 0
+	for i := 0; i < len(lines); i++ {
+		if strings.HasPrefix(lines[i], ">") {
+			continue // Skip output lines in this pass
+		}
+		// Check if next lines are output lines
+		var outputLines []string
+		for j := i + 1; j < len(lines) && strings.HasPrefix(lines[j], ">"); j++ {
+			outputLines = append(outputLines, lines[j])
+		}
+		if len(outputLines) > 0 {
+			hasMultiLineOutput[cleanedIdx] = outputLines
+		}
+		cleanedIdx++
+	}
+
 	// First pass: remove stale output lines ("> " lines that follow an expression)
 	cleanedLines := cleanOutputLines(lines)
 
@@ -368,6 +388,42 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			jwtResult, err := jwt.EvalJWT(expr)
 			if err == nil {
 				results[i].Output = expr + " =\n> " + jwtResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try SSL certificate decoding
+		// Note: Don't use maybeFormat for cert expressions as URLs should not be modified
+		// Skip re-evaluation if line already has a result and is not the active line (expensive network operation)
+		if cert.IsCertExpression(expr) {
+			isActiveLine := activeLineNum > 0 && i+1 == activeLineNum
+
+			// Check if line already has an inline result (like "ERR: ..." after =)
+			existingResult := strings.TrimSpace(workingLine[eq+1:])
+			if existingResult != "" && !isActiveLine {
+				// Line already has an inline result, keep it as-is
+				results[i].Output = line
+				results[i].HasResult = true
+				continue
+			}
+
+			// Check if line had multi-line output (successful cert decode)
+			if outputLines, ok := hasMultiLineOutput[i]; ok && !isActiveLine {
+				// Reconstruct the output with the existing multi-line result
+				results[i].Output = line + "\n" + strings.Join(outputLines, "\n")
+				results[i].HasResult = true
+				continue
+			}
+
+			certResult, err := cert.EvalCert(expr)
+			if err == nil {
+				results[i].Output = expr + " =\n> " + certResult + inlineComment
+				results[i].HasResult = true
+				continue
+			} else {
+				// Show the error message for cert decode failures
+				results[i].Output = expr + " = ERR: " + err.Error() + inlineComment
 				results[i].HasResult = true
 				continue
 			}
