@@ -71,25 +71,23 @@ test.describe('Context Menu', () => {
     const editor = page.locator('#editor-container');
     await editor.click({ button: 'right' });
 
+    const contextMenu = page.locator('#context-menu');
+    await expect(contextMenu).toBeVisible();
+
     // Click Select All
     await page.locator('[data-action="selectall"]').click();
 
-    // Wait a moment for selection to apply
+    // Context menu should be hidden after clicking
+    await expect(contextMenu).toBeHidden();
+
+    // Verify the action executed by checking that editor is focused
+    // and we can perform a copy operation (which requires selection)
     await page.waitForTimeout(100);
-
-    // Verify text is selected by checking if we can get the selection
-    // The selection should cover the entire text
-    const selectedText = await page.evaluate(() => {
-      const cm = document.querySelector('.cm-editor');
-      if (cm && cm.cmView) {
-        const state = cm.cmView.state;
-        const selection = state.selection.main;
-        return state.sliceDoc(selection.from, selection.to);
-      }
-      return '';
-    });
-
-    expect(selectedText.length).toBeGreaterThan(0);
+    
+    // The Select All action should have been triggered - verify by checking
+    // that the cm-selectionBackground class exists (indicates text is selected)
+    const hasSelection = await page.locator('.cm-selectionBackground').count();
+    expect(hasSelection).toBeGreaterThan(0);
   });
 
   test('should copy text via context menu', async ({ page, context }) => {
