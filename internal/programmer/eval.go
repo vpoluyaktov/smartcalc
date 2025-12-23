@@ -447,17 +447,11 @@ func handlePasswordGenerator(expr, exprLower string) (string, bool) {
 		}
 	}
 
-	// Generate 20 passwords (5 rows x 4 columns)
+	// Generate 8 passwords, one per line with numbering for easy selection
 	var sb strings.Builder
-	for row := 0; row < 5; row++ {
-		sb.WriteString("\n> ")
-		for col := 0; col < 4; col++ {
-			if col > 0 {
-				sb.WriteString(" ")
-			}
-			pw := generatePassword(length, hyphenated)
-			sb.WriteString(pw)
-		}
+	for i := 0; i < 8; i++ {
+		pw := generatePassword(length, hyphenated)
+		sb.WriteString(fmt.Sprintf("\n>   %d. %s", i+1, pw))
 	}
 
 	return sb.String(), true

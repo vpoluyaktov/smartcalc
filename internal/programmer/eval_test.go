@@ -238,28 +238,30 @@ func TestPasswordGenerator(t *testing.T) {
 				t.Errorf("EvalProgrammer(%q) error: %v", tt.expr, err)
 				return
 			}
-			// Should have 5 lines of output (each starting with "\n> ")
-			lines := strings.Split(result, "\n> ")
-			if len(lines) != 6 { // first split is empty, then 5 lines
-				t.Errorf("EvalProgrammer(%q) expected 5 output lines, got %d", tt.expr, len(lines)-1)
+			// Should have 8 lines of output (each starting with "\n>   N. ")
+			lines := strings.Split(result, "\n>")
+			if len(lines) != 9 { // first split is empty, then 8 lines
+				t.Errorf("EvalProgrammer(%q) expected 8 output lines, got %d", tt.expr, len(lines)-1)
 			}
-			// Each line should have 4 passwords
+			// Each line should have format "   N. <password>"
 			for i, line := range lines[1:] {
-				passwords := strings.Fields(line)
-				if len(passwords) != 4 {
-					t.Errorf("EvalProgrammer(%q) line %d: expected 4 passwords, got %d", tt.expr, i+1, len(passwords))
+				line = strings.TrimSpace(line)
+				// Format: "N. password"
+				parts := strings.SplitN(line, ". ", 2)
+				if len(parts) != 2 {
+					t.Errorf("EvalProgrammer(%q) line %d: unexpected format %q", tt.expr, i+1, line)
+					continue
 				}
+				pw := parts[1]
 				// Check password length
-				for _, pw := range passwords {
-					if tt.hyphenated {
-						// Hyphenated passwords have hyphens, check total length
-						if len(pw) > tt.pwLength+5 { // allow some slack for hyphens
-							t.Errorf("EvalProgrammer(%q) password %q too long", tt.expr, pw)
-						}
-					} else {
-						if len(pw) != tt.pwLength {
-							t.Errorf("EvalProgrammer(%q) password %q length = %d, want %d", tt.expr, pw, len(pw), tt.pwLength)
-						}
+				if tt.hyphenated {
+					// Hyphenated passwords have hyphens, check total length
+					if len(pw) > tt.pwLength+5 { // allow some slack for hyphens
+						t.Errorf("EvalProgrammer(%q) password %q too long", tt.expr, pw)
+					}
+				} else {
+					if len(pw) != tt.pwLength {
+						t.Errorf("EvalProgrammer(%q) password %q length = %d, want %d", tt.expr, pw, len(pw), tt.pwLength)
 					}
 				}
 			}
