@@ -22,9 +22,23 @@ func TestIsCertExpression(t *testing.T) {
 		{"ssl decode google.com", true},
 		{"SSL DECODE https://example.com", true},
 
+		// cert test prefix
+		{"cert test https://google.com", true},
+		{"cert test google.com", true},
+		{"CERT TEST https://example.com", true},
+
+		// ssl test prefix
+		{"ssl test https://google.com", true},
+		{"ssl test google.com", true},
+		{"SSL TEST https://example.com", true},
+
 		// decode cert/ssl prefix
 		{"decode cert https://google.com", true},
 		{"decode ssl https://google.com", true},
+
+		// test cert/ssl prefix
+		{"test cert https://google.com", true},
+		{"test ssl https://google.com", true},
 
 		// cert/ssl with URL directly
 		{"cert https://google.com", true},
@@ -84,6 +98,10 @@ func TestEvalCert_DifferentFormats(t *testing.T) {
 	}{
 		{"cert decode prefix", "cert decode https://google.com"},
 		{"ssl decode prefix", "ssl decode https://google.com"},
+		{"cert test prefix", "cert test https://google.com"},
+		{"ssl test prefix", "ssl test https://google.com"},
+		{"test cert prefix", "test cert https://google.com"},
+		{"test ssl prefix", "test ssl https://google.com"},
 		{"cert prefix", "cert https://google.com"},
 		{"ssl prefix", "ssl https://google.com"},
 		{"without scheme", "cert decode google.com"},
