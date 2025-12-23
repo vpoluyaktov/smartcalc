@@ -207,6 +207,84 @@ func TestAdjustReferences(t *testing.T) {
 			newText:  "100 =\n\n50 =\n\\2 + 5 =",
 			expected: "100 =\n\n50 =\n\\3 + 5 =",
 		},
+		{
+			name:     "delete line shifts refs down",
+			oldText:  "100 =\n50 =\n\\2 + 5 =",
+			newText:  "100 =\n\\2 + 5 =",
+			expected: "100 =\n\\2 + 5 =", // ref to deleted line stays (will error)
+		},
+		{
+			name:     "delete line shifts refs after deleted range",
+			oldText:  "100 =\n50 =\n200 =\n\\3 + 5 =",
+			newText:  "100 =\n200 =\n\\3 + 5 =",
+			expected: "100 =\n200 =\n\\2 + 5 =", // ref to line 3 becomes line 2
+		},
+		{
+			name:     "insert at beginning shifts all refs",
+			oldText:  "100 =\n\\1 * 2 =",
+			newText:  "\n100 =\n\\1 * 2 =",
+			expected: "\n100 =\n\\2 * 2 =",
+		},
+		{
+			name:     "delete at beginning shifts all refs",
+			oldText:  "\n100 =\n\\2 * 2 =",
+			newText:  "100 =\n\\2 * 2 =",
+			expected: "100 =\n\\1 * 2 =",
+		},
+		{
+			name:     "insert multiple lines",
+			oldText:  "100 =\n\\1 * 2 =",
+			newText:  "100 =\n\n\n\\1 * 2 =",
+			expected: "100 =\n\n\n\\1 * 2 =", // ref to line 1 stays
+		},
+		{
+			name:     "insert between ref and target",
+			oldText:  "100 =\n200 =\n\\1 + \\2 =",
+			newText:  "100 =\n\n200 =\n\\1 + \\2 =",
+			expected: "100 =\n\n200 =\n\\1 + \\3 =",
+		},
+		{
+			name:     "delete multiple lines",
+			oldText:  "100 =\n\n\n\\1 * 2 =",
+			newText:  "100 =\n\\1 * 2 =",
+			expected: "100 =\n\\1 * 2 =", // ref to line 1 stays
+		},
+		{
+			name:     "complex chain insert",
+			oldText:  "100 =\n\\1 * 2 =\n\\2 + 10 =",
+			newText:  "100 =\n\n\\1 * 2 =\n\\2 + 10 =",
+			expected: "100 =\n\n\\1 * 2 =\n\\3 + 10 =",
+		},
+		{
+			name:     "complex chain delete",
+			oldText:  "100 =\n\n\\1 * 2 =\n\\3 + 10 =",
+			newText:  "100 =\n\\1 * 2 =\n\\3 + 10 =",
+			expected: "100 =\n\\1 * 2 =\n\\2 + 10 =",
+		},
+		{
+			name:     "with results - insert",
+			oldText:  "100 = 100\n\\1 * 2 = 200",
+			newText:  "100 = 100\n\n\\1 * 2 = 200",
+			expected: "100 = 100\n\n\\1 * 2 = 200",
+		},
+		{
+			name:     "with results - delete",
+			oldText:  "100 = 100\n\n\\1 * 2 = 200",
+			newText:  "100 = 100\n\\1 * 2 = 200",
+			expected: "100 = 100\n\\1 * 2 = 200",
+		},
+		{
+			name:     "ref on same line as change",
+			oldText:  "100 =\n200 =",
+			newText:  "100 =\n\\1 + 50 =\n200 =",
+			expected: "100 =\n\\1 + 50 =\n200 =",
+		},
+		{
+			name:     "insert empty line before refs - user scenario",
+			oldText:  "# line1\n# line2\n# line3\n\n\n2 + 2 = 4\n\n\\6 x 4 = 16\n\n\\8 / 2 = 8\n\n",
+			newText:  "# line1\n# line2\n# line3\n\n\n\n2 + 2 = 4\n\n\\6 x 4 = 16\n\n\\8 / 2 = 8\n\n",
+			expected: "# line1\n# line2\n# line3\n\n\n\n2 + 2 = 4\n\n\\7 x 4 = 16\n\n\\9 / 2 = 8\n\n",
+		},
 	}
 
 	for _, tt := range tests {

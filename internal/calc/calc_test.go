@@ -46,6 +46,20 @@ func TestEvalLinesBasic(t *testing.T) {
 				{Output: "100 - 20% = 80", Value: 80, HasResult: true, IsCurrency: false},
 			},
 		},
+		{
+			name:  "large number with thousands separator",
+			lines: []string{"1000000 + 234567 ="},
+			expected: []LineResult{
+				{Output: "1000000 + 234567 = 1,234,567", Value: 1234567, HasResult: true, IsCurrency: false},
+			},
+		},
+		{
+			name:  "large currency with thousands separator",
+			lines: []string{"$50000 + $25000 ="},
+			expected: []LineResult{
+				{Output: "$50000 + $25000 = $75,000.00", Value: 75000, HasResult: true, IsCurrency: true},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -522,4 +536,176 @@ func TestFindResultEquals(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStripResult(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"2 + 3 = 5", "2 + 3 ="},
+		{"2 + 3 = 5 # my note", "2 + 3 = # my note"},
+		{"2 + 3 =", "2 + 3 ="},
+		{"2 + 3 = # comment", "2 + 3 = # comment"},
+		{"no equals here", "no equals here"},
+		{"$100 + $50 = $150.00", "$100 + $50 ="},
+		{"100 >= 50 = true", "100 >= 50 ="},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := StripResult(tt.input)
+			if result != tt.expected {
+				t.Errorf("StripResult(%q) = %q, want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestHasResult(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"2 + 3 = 5", true},
+		{"2 + 3 =", false},
+		{"2 + 3 = # comment", false},
+		{"2 + 3 = 5 # note", true},
+		{"no equals", false},
+		{"$100 = $100.00", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := HasResult(tt.input)
+			if result != tt.expected {
+				t.Errorf("HasResult(%q) = %v, want %v", tt.input, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFindDependentLines(t *testing.T) {
+	tests := []struct {
+		name        string
+		lines       []string
+		changedLine int
+		expected    []int
+	}{
+		{
+			name: "simple dependency",
+			lines: []string{
+				"100 =",
+				"\\1 * 2 =",
+			},
+			changedLine: 1,
+			expected:    []int{2},
+		},
+		{
+			name: "no dependencies",
+			lines: []string{
+				"100 =",
+				"200 =",
+			},
+			changedLine: 1,
+			expected:    []int{},
+		},
+		{
+			name: "chain dependency",
+			lines: []string{
+				"100 =",
+				"\\1 * 2 =",
+				"\\2 + 50 =",
+			},
+			changedLine: 1,
+			expected:    []int{2, 3},
+		},
+		{
+			name: "multiple references to same line",
+			lines: []string{
+				"100 =",
+				"\\1 + \\1 =",
+				"\\1 * 3 =",
+			},
+			changedLine: 1,
+			expected:    []int{2, 3},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FindDependentLines(tt.lines, tt.changedLine)
+			if len(result) != len(tt.expected) {
+				t.Errorf("FindDependentLines() returned %d results, want %d: got %v", len(result), len(tt.expected), result)
+				return
+			}
+			for i, exp := range tt.expected {
+				if result[i] != exp {
+					t.Errorf("FindDependentLines()[%d] = %d, want %d", i, result[i], exp)
+				}
+			}
+		})
+	}
+}
+
+func TestBase64EncodeNoDoubleEvaluation(t *testing.T) {
+	// This test verifies that base64 encoding doesn't get evaluated twice.
+	// The bug: base64 results end with '=' (padding), which could be mistakenly
+	// interpreted as the result delimiter, causing double evaluation.
+	//
+	// "base64 encode hello world" should produce "aGVsbG8gd29ybGQ=" (with trailing =)
+	// The trailing = is base64 padding, NOT a result delimiter.
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+		notContain string
+	}{
+		{
+			name:     "base64 encode without padding",
+			input:    "base64 encode abc =",
+			expected: "base64 encode abc = YWJj",
+			notContain: "",
+		},
+		{
+			name:     "base64 encode with single padding",
+			input:    "base64 encode hello world =",
+			expected: "base64 encode hello world = aGVsbG8gd29ybGQ=",
+			notContain: "aGVsbG8gd29ybGQgPSBhR1ZzYkc4Z2QyOXliR1E=", // double-encoded result
+		},
+		{
+			name:     "base64 encode with double padding",
+			input:    "base64 encode test =",
+			expected: "base64 encode test = dGVzdA==",
+			notContain: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{tt.input}
+			results := EvalLines(lines, 0)
+			
+			if results[0].Output != tt.expected {
+				t.Errorf("EvalLines(%q) = %q, want %q", tt.input, results[0].Output, tt.expected)
+			}
+			
+			if tt.notContain != "" && contains(results[0].Output, tt.notContain) {
+				t.Errorf("EvalLines(%q) contains %q (double evaluation bug!)", tt.input, tt.notContain)
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(substr) > 0 && len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsMiddle(s, substr)))
+}
+
+func containsMiddle(s, substr string) bool {
+	for i := 1; i < len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

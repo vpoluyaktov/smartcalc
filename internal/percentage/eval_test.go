@@ -61,7 +61,7 @@ func TestIncreaseByPercent(t *testing.T) {
 		expected string
 	}{
 		{"increase 100 by 20%", "120"},
-		{"increase 50 by 10%", "55.00"},
+		{"increase 50 by 10%", "55"},
 		{"200 increased by 25%", "250"},
 	}
 

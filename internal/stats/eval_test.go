@@ -12,7 +12,7 @@ func TestAverage(t *testing.T) {
 		{"avg(10, 20, 30, 40)", "25"},
 		{"average(1, 2, 3, 4, 5)", "3"},
 		{"mean(100, 200)", "150"},
-		{"avg(1.5, 2.5, 3.5)", "2.50"},
+		{"avg(1.5, 2.5, 3.5)", "2.5"},
 	}
 
 	for _, tt := range tests {
@@ -35,7 +35,7 @@ func TestMedian(t *testing.T) {
 		expected string
 	}{
 		{"median(1, 2, 3, 4, 5)", "3"},
-		{"median(1, 2, 3, 4)", "2.50"},
+		{"median(1, 2, 3, 4)", "2.5"},
 		{"median(1, 2, 3, 4, 100)", "3"},
 		{"median(10, 20, 30)", "20"},
 	}

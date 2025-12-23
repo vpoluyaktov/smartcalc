@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, StripLineResult, HasLineResult, EvaluateLines, StripAndEvalReferencingLines } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -16,6 +16,8 @@ let previousText = '';
 let previousLineCount = 0;
 let isUpdatingEditor = false; // Flag to prevent re-entry during programmatic updates
 let savedContent = ''; // Content at last save, to detect unsaved changes
+let lastActiveLine = 1; // Track the last active line number (1-based)
+let pendingEvaluation = false; // Track if we need to evaluate when leaving line
 const AUTOSAVE_DELAY = 2000; // 2 seconds after last change
 
 // Dark theme (Tokyo Night inspired)
@@ -255,38 +257,114 @@ const syntaxHighlighter = ViewPlugin.fromClass(class {
     decorations: v => v.decorations
 });
 
-// Custom Enter key handler - auto-append '=' if needed
+// Find the position of the result '=' in a line (not comparison operators)
+function findResultEqualsPos(lineText) {
+    for (let i = lineText.length - 1; i >= 0; i--) {
+        if (lineText[i] === '=') {
+            // Check if this '=' is part of >=, <=, ==, or !=
+            if (i > 0) {
+                const prev = lineText[i - 1];
+                if (prev === '>' || prev === '<' || prev === '=' || prev === '!') {
+                    continue; // Skip this '=', it's part of a comparison operator
+                }
+            }
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Custom Enter key handler - handles evaluation and line splitting
+// Must be synchronous for CodeMirror keymap to work correctly
 function handleEnterKey(view) {
     const state = view.state;
     const pos = state.selection.main.head;
     const line = state.doc.lineAt(pos);
     const lineText = line.text;
-    const cursorAtEnd = pos === line.to;
+    const lineNumber = line.number;
+    const cursorColumn = pos - line.from;
     
-    // Check conditions:
-    // 1. Cursor is at end of line
-    // 2. Line is not empty
-    // 3. Line is not a comment (starting with #)
-    // 4. Line doesn't already end with '='
-    // 5. Line doesn't contain an inline comment (# after =)
-    const hasInlineComment = lineText.includes('=') && lineText.indexOf('#') > lineText.indexOf('=');
-    if (cursorAtEnd && 
-        lineText.trim().length > 0 && 
-        !lineText.trim().startsWith('#') && 
-        !lineText.trim().startsWith('//') &&
-        !lineText.trimEnd().endsWith('=') &&
-        !hasInlineComment) {
-        
-        // Insert ' =' at cursor, then newline
+    // Skip empty lines and comments - just insert newline
+    if (lineText.trim().length === 0 || 
+        lineText.trim().startsWith('#') || 
+        lineText.trim().startsWith('//')) {
+        return false; // Let default handler insert newline
+    }
+    
+    const eqPos = findResultEqualsPos(lineText);
+    
+    // Case 1: No '=' in line - add '=' and evaluate, then add newline
+    if (eqPos < 0) {
+        // Add ' =' at end first
         view.dispatch({
-            changes: { from: pos, insert: ' =\n' },
-            selection: { anchor: pos + 3 },
+            changes: { from: line.to, insert: ' =' },
         });
+        
+        // Then evaluate and add newline asynchronously
+        handleEnterKeyAsync(view, lineNumber, true);
         return true;
     }
     
-    // Default behavior: just insert newline
-    return false;
+    // Case 2: Cursor is before or at '=' - split the line
+    if (cursorColumn <= eqPos) {
+        // Split line at cursor position like a regular text editor
+        return false; // Let default handler do the split
+    }
+    
+    // Case 3: Cursor is after '=' - evaluate current line and go to new line
+    handleEnterKeyAsync(view, lineNumber, false);
+    return true;
+}
+
+// Async helper for Enter key - evaluates and adds newline
+async function handleEnterKeyAsync(view, lineNumber, alreadyAddedEquals) {
+    isUpdatingEditor = true;
+    try {
+        // Evaluate the line
+        await evaluateAndUpdate(lineNumber);
+        
+        // Insert newline after the updated line
+        const newDoc = view.state.doc;
+        const updatedLine = newDoc.line(lineNumber);
+        view.dispatch({
+            changes: { from: updatedLine.to, insert: '\n' },
+            selection: { anchor: updatedLine.to + 1 },
+        });
+    } finally {
+        isUpdatingEditor = false;
+    }
+}
+
+// Evaluate a specific line and update the editor
+async function evaluateAndUpdate(lineNumber) {
+    const text = editor.state.doc.toString();
+    try {
+        const results = await EvaluateLines(text, lineNumber);
+        
+        // Build new content from results
+        const newLines = results.map(r => r.output);
+        const newText = newLines.join('\n');
+        
+        if (newText !== text) {
+            const scrollTop = editor.scrollDOM.scrollTop;
+            const scrollLeft = editor.scrollDOM.scrollLeft;
+            
+            editor.dispatch({
+                changes: { from: 0, to: editor.state.doc.length, insert: newText },
+            });
+            
+            // Restore scroll
+            requestAnimationFrame(() => {
+                editor.scrollDOM.scrollTop = scrollTop;
+                editor.scrollDOM.scrollLeft = scrollLeft;
+            });
+            
+            previousText = newText;
+            previousLineCount = newText.split('\n').length;
+        }
+    } catch (err) {
+        console.error('Evaluation error:', err);
+    }
 }
 
 // Custom keymap for Enter key
@@ -315,6 +393,9 @@ function initEditor() {
             EditorView.updateListener.of((update) => {
                 if (update.docChanged) {
                     onTextChanged();
+                } else if (update.selectionSet) {
+                    // Selection changed without doc change (cursor movement, mouse click)
+                    onSelectionChanged();
                 }
             }),
             EditorView.lineWrapping,
@@ -356,6 +437,8 @@ function initEditor() {
                 EditorView.updateListener.of((update) => {
                     if (update.docChanged) {
                         onTextChanged();
+                    } else if (update.selectionSet) {
+                        onSelectionChanged();
                     }
                 }),
                 EditorView.lineWrapping,
@@ -374,6 +457,27 @@ function initEditor() {
     });
 }
 
+// Handle selection changes (cursor movement without text change)
+function onSelectionChanged() {
+    if (isUpdatingEditor) {
+        return;
+    }
+    
+    const cursorPos = editor.state.selection.main.head;
+    const currentLine = editor.state.doc.lineAt(cursorPos);
+    const currentLineNum = currentLine.number;
+    
+    // Check if we moved to a different line
+    if (currentLineNum !== lastActiveLine) {
+        // Evaluate the previous line if it has pending changes
+        if (pendingEvaluation && lastActiveLine > 0) {
+            evaluateLineAndDependents(lastActiveLine);
+        }
+        lastActiveLine = currentLineNum;
+        pendingEvaluation = false;
+    }
+}
+
 // Handle text changes with debounce
 function onTextChanged() {
     // Skip if we're programmatically updating the editor
@@ -381,55 +485,201 @@ function onTextChanged() {
         return;
     }
     
-    // Immediately capture current state to prevent stale comparisons
-    const currentText = editor.state.doc.toString();
-    const currentLineCount = currentText.split('\n').length;
+    // Capture the "before" state immediately, before any async operations
+    // This is critical for reference adjustment to work correctly
+    const snapshotPreviousText = previousText;
+    
+    // Get current cursor position and line
+    const cursorPos = editor.state.selection.main.head;
+    const currentLine = editor.state.doc.lineAt(cursorPos);
+    const currentLineNum = currentLine.number;
+    
+    // Check if we changed lines
+    if (currentLineNum !== lastActiveLine) {
+        // Line changed - evaluate the previous line if it has pending changes
+        if (pendingEvaluation && lastActiveLine > 0) {
+            evaluateLineAndDependents(lastActiveLine);
+        }
+        lastActiveLine = currentLineNum;
+        pendingEvaluation = false;
+    }
+    
+    // Mark that we have pending changes on current line
+    pendingEvaluation = true;
+    
+    // Strip result from current line if it has one (while user is editing)
+    stripCurrentLineResult();
     
     if (debounceTimer) {
         clearTimeout(debounceTimer);
     }
     debounceTimer = setTimeout(() => {
-        checkAndAdjustReferences(currentText, currentLineCount);
+        // Capture current text AFTER debounce to get the latest state (after any stripping)
+        const currentText = editor.state.doc.toString();
+        const currentLineCount = currentText.split('\n').length;
+        // Pass the snapshot of previousText captured at the moment of change
+        checkAndAdjustReferences(currentText, currentLineCount, snapshotPreviousText);
     }, 150);
     
     // Schedule autosave
     scheduleAutosave();
 }
 
-// Count non-output lines (lines that don't start with ">")
-// This is used to detect actual user edits vs evaluation output changes
-function countNonOutputLines(text) {
-    return text.split('\n').filter(line => !line.startsWith('>')).length;
+// Strip the result from the current line and all dependent lines while editing
+async function stripCurrentLineResult() {
+    const cursorPos = editor.state.selection.main.head;
+    const line = editor.state.doc.lineAt(cursorPos);
+    const lineText = line.text;
+    const lineNumber = line.number;
+    
+    // Check if line has a result to strip
+    const hasResult = await HasLineResult(lineText);
+    if (!hasResult) {
+        return;
+    }
+    
+    // Strip the result from current line
+    const strippedLine = await StripLineResult(lineText);
+    if (strippedLine === lineText) {
+        return;
+    }
+    
+    // Calculate new cursor position
+    const cursorColumn = cursorPos - line.from;
+    const eqPos = findResultEqualsPos(lineText);
+    
+    // If cursor was in the result area, move it to after '='
+    let newCursorColumn = cursorColumn;
+    if (eqPos >= 0 && cursorColumn > eqPos + 1) {
+        // Cursor was after the result, put it right after '='
+        newCursorColumn = eqPos + 1;
+    }
+    
+    // Find all dependent lines and strip their results too
+    const text = editor.state.doc.toString();
+    const dependentLines = await FindDependentLines(text, lineNumber);
+    
+    // Build changes array - current line first, then dependents
+    const changes = [];
+    changes.push({ from: line.from, to: line.to, insert: strippedLine });
+    
+    // Strip results from dependent lines (process in reverse order to maintain positions)
+    const doc = editor.state.doc;
+    for (let i = dependentLines.length - 1; i >= 0; i--) {
+        const depLineNum = dependentLines[i];
+        if (depLineNum <= doc.lines) {
+            const depLine = doc.line(depLineNum);
+            const depHasResult = await HasLineResult(depLine.text);
+            if (depHasResult) {
+                const strippedDepLine = await StripLineResult(depLine.text);
+                if (strippedDepLine !== depLine.text) {
+                    changes.push({ from: depLine.from, to: depLine.to, insert: strippedDepLine });
+                }
+            }
+        }
+    }
+    
+    isUpdatingEditor = true;
+    try {
+        editor.dispatch({
+            changes: changes,
+            selection: { anchor: line.from + Math.min(newCursorColumn, strippedLine.length) },
+        });
+    } finally {
+        isUpdatingEditor = false;
+    }
+}
+
+// Evaluate a line and all lines that depend on it
+async function evaluateLineAndDependents(lineNumber) {
+    const text = editor.state.doc.toString();
+    try {
+        const results = await EvaluateLines(text, lineNumber);
+        
+        // Build new content from results
+        const newLines = results.map(r => r.output);
+        const newText = newLines.join('\n');
+        
+        if (newText !== text) {
+            const scrollTop = editor.scrollDOM.scrollTop;
+            const scrollLeft = editor.scrollDOM.scrollLeft;
+            const cursorPos = editor.state.selection.main.head;
+            const cursorLine = editor.state.doc.lineAt(cursorPos);
+            const lineNumber = cursorLine.number;
+            const columnOffset = cursorPos - cursorLine.from;
+            
+            isUpdatingEditor = true;
+            try {
+                editor.dispatch({
+                    changes: { from: 0, to: editor.state.doc.length, insert: newText },
+                });
+                
+                // Restore cursor position
+                const newDoc = editor.state.doc;
+                if (lineNumber <= newDoc.lines) {
+                    const newLine = newDoc.line(lineNumber);
+                    const newPos = newLine.from + Math.min(columnOffset, newLine.length);
+                    editor.dispatch({
+                        selection: { anchor: newPos },
+                    });
+                }
+                
+                // Restore scroll
+                requestAnimationFrame(() => {
+                    editor.scrollDOM.scrollTop = scrollTop;
+                    editor.scrollDOM.scrollLeft = scrollLeft;
+                });
+                
+                previousText = newText;
+                previousLineCount = newText.split('\n').length;
+            } finally {
+                isUpdatingEditor = false;
+            }
+        }
+    } catch (err) {
+        console.error('Evaluation error:', err);
+    }
 }
 
 // Check if line count changed and adjust references
-// snapshotText/snapshotLineCount are the state captured when the change was detected
-async function checkAndAdjustReferences(snapshotText, snapshotLineCount) {
+// currentText/currentLineCount are the current state
+// snapshotPreviousText is the state BEFORE the change (captured at moment of change)
+async function checkAndAdjustReferences(currentText, currentLineCount, snapshotPreviousText) {
     // Prevent re-entry when we dispatch programmatically
     if (isUpdatingEditor) {
         return;
     }
     
-    // Use snapshot if provided, otherwise get current state
-    const currentText = snapshotText || editor.state.doc.toString();
-    const currentLineCount = snapshotLineCount || currentText.split('\n').length;
-    
     // Skip if the editor content has changed since the snapshot was taken
     // This prevents processing stale snapshots after evaluation has already updated the content
-    if (snapshotText && editor.state.doc.toString() !== snapshotText) {
+    if (editor.state.doc.toString() !== currentText) {
         return;
     }
     
-    // Count non-output lines to detect actual user edits
-    // Output lines (starting with ">") shouldn't trigger reference adjustment
-    const prevNonOutputLines = countNonOutputLines(previousText);
-    const currNonOutputLines = countNonOutputLines(currentText);
+    // Use the snapshot of previousText if provided, otherwise use global previousText
+    const oldText = snapshotPreviousText !== undefined ? snapshotPreviousText : previousText;
     
-    // If non-output line count changed, adjust references
-    if (prevNonOutputLines > 0 && currNonOutputLines !== prevNonOutputLines && previousText !== '') {
+    // Skip if oldText is empty (first change)
+    if (oldText === '') {
+        previousText = currentText;
+        previousLineCount = currentLineCount;
+        updateUnsavedState();
+        return;
+    }
+    
+    // Count total lines for reference adjustment
+    const prevLineCount = oldText.split('\n').length;
+    const currLineCount = currentText.split('\n').length;
+    
+    // If line count changed, adjust references
+    if (prevLineCount !== currLineCount) {
         try {
-            const adjusted = await AdjustReferences(previousText, currentText);
+            const adjusted = await AdjustReferences(oldText, currentText);
             if (adjusted !== currentText) {
+                // After adjusting references, strip results from referencing lines and re-evaluate
+                // This prevents showing ERR temporarily when references are adjusted
+                const reEvaluated = await StripAndEvalReferencingLines(adjusted);
+                
                 // Set flag to prevent re-entry
                 isUpdatingEditor = true;
                 
@@ -438,10 +688,10 @@ async function checkAndAdjustReferences(snapshotText, snapshotLineCount) {
                 const scrollLeft = editor.scrollDOM.scrollLeft;
                 const cursorPos = editor.state.selection.main.head;
                 
-                // Update with adjusted text
+                // Update with re-evaluated text
                 editor.dispatch({
-                    changes: { from: 0, to: editor.state.doc.length, insert: adjusted },
-                    selection: { anchor: Math.min(cursorPos, adjusted.length) },
+                    changes: { from: 0, to: editor.state.doc.length, insert: reEvaluated },
+                    selection: { anchor: Math.min(cursorPos, reEvaluated.length) },
                 });
                 
                 // Restore scroll
@@ -450,14 +700,11 @@ async function checkAndAdjustReferences(snapshotText, snapshotLineCount) {
                     editor.scrollDOM.scrollLeft = scrollLeft;
                 });
                 
-                // Update previous text to adjusted version
-                previousText = adjusted;
-                previousLineCount = adjusted.split('\n').length;
+                // Update previous text to re-evaluated version
+                previousText = reEvaluated;
+                previousLineCount = reEvaluated.split('\n').length;
                 
-                // Evaluate the adjusted content (flag stays set)
-                await evaluateContentInternal();
-                
-                // Clear flag after everything is done
+                // Clear flag after adjustment is done
                 isUpdatingEditor = false;
                 return;
             }
@@ -474,8 +721,7 @@ async function checkAndAdjustReferences(snapshotText, snapshotLineCount) {
     // Update unsaved state
     updateUnsavedState();
     
-    // Evaluate normally
-    evaluateContent();
+    // Note: We no longer evaluate on every change - lazy evaluation happens on line change or Enter
 }
 
 // Update unsaved state and notify backend

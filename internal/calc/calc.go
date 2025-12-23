@@ -87,10 +87,12 @@ func isBaseConversionExpr(expr string) bool {
 }
 
 // findResultEquals finds the position of the trailing '=' that marks the result,
-// skipping '=' characters that are part of comparison operators (>=, <=, ==, !=).
+// skipping '=' characters that are part of comparison operators (>=, <=, ==, !=)
+// or base64 padding (trailing = or == without space before).
 // Returns -1 if no result '=' is found.
 func findResultEquals(s string) int {
-	// Find the last '=' that is not part of a comparison operator
+	// Find the last '=' that is a result delimiter (has space before it)
+	// and is not part of a comparison operator
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] == '=' {
 			// Check if this '=' is part of >=, <=, ==, or !=
@@ -98,6 +100,11 @@ func findResultEquals(s string) int {
 				prev := s[i-1]
 				if prev == '>' || prev == '<' || prev == '=' || prev == '!' {
 					continue // Skip this '=', it's part of a comparison operator
+				}
+				// Result delimiter should have a space before it (e.g., "2 + 2 =")
+				// Skip '=' that doesn't have space before (likely base64 padding)
+				if prev != ' ' {
+					continue
 				}
 			}
 			return i
@@ -432,4 +439,132 @@ func ReplaceRefsWithValues(text string) string {
 	lines := strings.Split(text, "\n")
 	values := GetLineValues(lines)
 	return eval.ReplaceReferencesWithValues(text, values)
+}
+
+// FindDependentLines returns a list of line numbers (1-based) that reference the given line.
+// It recursively finds all lines that depend on the changed line.
+func FindDependentLines(lines []string, changedLine int) []int {
+	dependents := make(map[int]bool)
+	findDependentsRecursive(lines, changedLine, dependents)
+
+	// Convert map to sorted slice
+	result := make([]int, 0, len(dependents))
+	for lineNum := range dependents {
+		result = append(result, lineNum)
+	}
+	// Sort to ensure consistent order
+	for i := 0; i < len(result)-1; i++ {
+		for j := i + 1; j < len(result); j++ {
+			if result[i] > result[j] {
+				result[i], result[j] = result[j], result[i]
+			}
+		}
+	}
+	return result
+}
+
+// findDependentsRecursive finds all lines that reference targetLine and adds them to dependents map
+func findDependentsRecursive(lines []string, targetLine int, dependents map[int]bool) {
+	refPattern := regexp.MustCompile(`\\(\d+)`)
+
+	for i, line := range lines {
+		lineNum := i + 1 // 1-based
+		if dependents[lineNum] {
+			continue // Already processed
+		}
+
+		// Find all references in this line
+		matches := refPattern.FindAllStringSubmatch(line, -1)
+		for _, match := range matches {
+			refNum, _ := strconv.Atoi(match[1])
+			if refNum == targetLine {
+				// This line references the target line
+				dependents[lineNum] = true
+				// Recursively find lines that depend on this line
+				findDependentsRecursive(lines, lineNum, dependents)
+				break
+			}
+		}
+	}
+}
+
+// StripResult removes the result from a line, keeping the expression, '=' sign, and any inline comment.
+// Example: "2 + 3 = 5 # my note" -> "2 + 3 = # my note"
+// Example: "2 + 3 = 5" -> "2 + 3 ="
+func StripResult(line string) string {
+	eq := findResultEquals(line)
+	if eq < 0 {
+		return line // No '=' found, return as-is
+	}
+
+	// Get the part before and including '='
+	beforeEq := line[:eq+1]
+
+	// Check for inline comment after '='
+	afterEq := line[eq+1:]
+	hashIdx := strings.Index(afterEq, "#")
+	if hashIdx >= 0 {
+		// Has inline comment - keep it
+		return beforeEq + " " + strings.TrimLeft(afterEq[hashIdx:], " ")
+	}
+
+	// No inline comment
+	return beforeEq
+}
+
+// HasResult checks if a line has a result (something after '=' that's not just whitespace or comment)
+func HasResult(line string) bool {
+	eq := findResultEquals(line)
+	if eq < 0 {
+		return false
+	}
+
+	afterEq := strings.TrimSpace(line[eq+1:])
+	// If it starts with # or is empty, no result
+	if afterEq == "" || strings.HasPrefix(afterEq, "#") {
+		return false
+	}
+	return true
+}
+
+// EvalSingleLine evaluates a single line given the context of all lines.
+// Returns the evaluated line and whether it has a result.
+func EvalSingleLine(lines []string, lineNum int) LineResult {
+	results := EvalLines(lines, 0)
+	if lineNum < 1 || lineNum > len(results) {
+		return LineResult{}
+	}
+	return results[lineNum-1]
+}
+
+// EvalLinesSelective evaluates only the specified lines (1-based line numbers).
+// Returns results for ALL lines, but only the specified ones are recalculated.
+func EvalLinesSelective(lines []string, linesToEval []int) []LineResult {
+	// For now, we still need to evaluate all lines to resolve dependencies correctly
+	// But we can optimize by only formatting the specified lines
+	return EvalLines(lines, 0)
+}
+
+// StripAndEvalReferencingLines strips results from all lines that contain references
+// and re-evaluates them. Returns the updated text.
+func StripAndEvalReferencingLines(text string) string {
+	lines := strings.Split(text, "\n")
+	refPattern := regexp.MustCompile(`\\(\d+)`)
+
+	// Find all lines with references and strip their results
+	for i, line := range lines {
+		if refPattern.MatchString(line) && HasResult(line) {
+			lines[i] = StripResult(line)
+		}
+	}
+
+	// Re-evaluate all lines
+	results := EvalLines(lines, 0)
+
+	// Build output
+	output := make([]string, len(results))
+	for i, r := range results {
+		output[i] = r.Output
+	}
+	return strings.Join(output, "\n")
 }
