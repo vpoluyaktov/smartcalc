@@ -59,8 +59,8 @@ jobs:
 
       - name: Run Playwright E2E tests
         run: |
-          # Start Wails dev server with xvfb
-          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" wails dev &
+          # Start Wails dev server with xvfb (suppress noisy runtime:ready warnings)
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" wails dev 2>&1 | grep -v "runtime:ready" &
           WAILS_PID=$!
           
           # Wait for dev server to be ready
