@@ -10,6 +10,7 @@ import (
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
+	"smartcalc/internal/jwt"
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
 	"smartcalc/internal/permissions"
@@ -356,6 +357,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			permResult, err := permissions.EvalPermissions(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + permResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try JWT decoding
+		if jwt.IsJWTExpression(expr) {
+			jwtResult, err := jwt.EvalJWT(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " =\n> " + jwtResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}

@@ -520,6 +520,33 @@ func TestRegexSnippets(t *testing.T) {
 	}
 }
 
+// TestJWTSnippets tests the JWT Decoder category snippets
+func TestJWTSnippets(t *testing.T) {
+	tests := []struct {
+		name  string
+		lines []string
+	}{
+		{
+			name:  "Decode JWT Token",
+			lines: []string{"jwt decode eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c ="},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := calc.EvalLines(tt.lines, 0)
+			for i, result := range results {
+				if strings.HasSuffix(result.Output, "ERR") {
+					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i][:50], result.Output)
+				}
+				if !result.HasResult {
+					t.Errorf("Line %d should have result", i+1)
+				}
+			}
+		})
+	}
+}
+
 // TestUnixPermissionsSnippets tests the Unix Permissions category snippets
 func TestUnixPermissionsSnippets(t *testing.T) {
 	tests := []struct {
@@ -577,6 +604,7 @@ func TestAllSnippetCategoriesExist(t *testing.T) {
 		"Programmer",
 		"Regex Tester",
 		"Unix Permissions",
+		"JWT Decoder",
 	}
 
 	categories := GetSnippetCategories()
