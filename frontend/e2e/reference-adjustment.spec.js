@@ -231,48 +231,47 @@ test.describe('Reference Adjustment', () => {
   });
 
   test('should adjust references when inserting multiple empty lines before refs', async ({ page }) => {
-    // Set up:
+    // Set up with empty lines between values:
     // Line 1: 100 =
-    // Line 2: \1 * 2 =
-    // Line 3: \2 + 10 =
+    // Line 2: (empty)
+    // Line 3: 50 =
+    // Line 4: (empty)
+    // Line 5: \1 + \3 =
     await typeInEditor(page, '100 =');
     await pressEnter(page);
     await waitForEvaluation(page);
     
-    await typeInEditor(page, '\\1 * 2 =');
+    await pressEnter(page); // Empty line 2
+    
+    await typeInEditor(page, '50 =');
     await pressEnter(page);
     await waitForEvaluation(page);
     
-    await typeInEditor(page, '\\2 + 10 =');
+    await pressEnter(page); // Empty line 4
+    
+    await typeInEditor(page, '\\1 + \\3 =');
     await pressEnter(page);
     await waitForEvaluation(page);
     
     // Verify initial state
-    let line2 = await getLineText(page, 2);
-    let line3 = await getLineText(page, 3);
-    expect(line2).toContain('\\1');
-    expect(line2).toContain('200');
-    expect(line3).toContain('\\2');
-    expect(line3).toContain('210');
+    let line5 = await getLineText(page, 5);
+    expect(line5).toContain('\\1');
+    expect(line5).toContain('\\3');
+    expect(line5).toContain('150');
     
-    // Insert 3 empty lines before line 1
+    // Insert 3 empty lines before line 1 using multiple Enter presses
     await goToLine(page, 1);
     await page.keyboard.press('Home');
     await pressEnter(page);
-    await page.keyboard.press('ArrowUp');
     await pressEnter(page);
-    await page.keyboard.press('ArrowUp');
     await pressEnter(page);
-    await page.keyboard.press('ArrowUp');
     await waitForEvaluation(page);
     
     // Now refs should be shifted by 3:
-    // Line 5 should have \4 (was \1)
-    // Line 6 should have \5 (was \2)
-    const line5 = await getLineText(page, 5);
-    const line6 = await getLineText(page, 6);
-    expect(line5).toContain('\\4');
-    expect(line6).toContain('\\5');
+    // Line 8 should have \4 + \6 (was \1 + \3)
+    const line8 = await getLineText(page, 8);
+    expect(line8).toContain('\\4');
+    expect(line8).toContain('\\6');
   });
 
   test('should adjust references when inserting empty lines between refs', async ({ page }) => {
