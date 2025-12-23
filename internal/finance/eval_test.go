@@ -86,8 +86,8 @@ func TestMortgagePayment(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"mortgage $350000 at 7% for 30 years", []string{"Monthly: $2,328", "Total: $", "Interest: $"}},
-		{"mortgage $200000 at 4.5% for 15 years", []string{"Monthly: $1,529", "Total: $"}},
+		{"mortgage $350000 at 7% for 30 years", []string{"Monthly: $2,328", "Total: $", "Interest: $", "Payoff:"}},
+		{"mortgage $200000 at 4.5% for 15 years", []string{"Monthly: $1,529", "Total: $", "Payoff:"}},
 	}
 
 	for _, tt := range tests {
@@ -100,6 +100,81 @@ func TestMortgagePayment(t *testing.T) {
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
 					t.Errorf("EvalFinance(%q) = %q, want to contain %q", tt.expr, result, c)
+				}
+			}
+		})
+	}
+}
+
+func TestMortgagePaySchedule(t *testing.T) {
+	tests := []struct {
+		expr     string
+		contains []string
+	}{
+		{
+			"mortgage $100000 at 5% for 1 year pay schedule",
+			[]string{
+				"Payment Schedule:",
+				"Month", "Payment", "Principal", "Interest", "Balance",
+				"Total Interest:",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalFinance(tt.expr)
+			if err != nil {
+				t.Errorf("EvalFinance(%q) error: %v", tt.expr, err)
+				return
+			}
+			for _, c := range tt.contains {
+				if !strings.Contains(result, c) {
+					t.Errorf("EvalFinance(%q) result missing %q\nGot: %s", tt.expr, c, result)
+				}
+			}
+		})
+	}
+}
+
+func TestMortgageExtraPayment(t *testing.T) {
+	tests := []struct {
+		expr     string
+		contains []string
+	}{
+		{
+			"mortgage $350000 at 7% for 30 years extra payment $500",
+			[]string{
+				"Monthly: $2,328",
+				"extra",
+				"Standard Interest:",
+				"With Extra Payment:",
+				"Interest Savings:",
+				"Standard Payoff:",
+				"New Payoff:",
+				"Time Saved:",
+			},
+		},
+		{
+			"mortgage $200000 at 5% for 30 years extra $200",
+			[]string{
+				"Monthly:",
+				"Interest Savings:",
+				"Time Saved:",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalFinance(tt.expr)
+			if err != nil {
+				t.Errorf("EvalFinance(%q) error: %v", tt.expr, err)
+				return
+			}
+			for _, c := range tt.contains {
+				if !strings.Contains(result, c) {
+					t.Errorf("EvalFinance(%q) result missing %q\nGot: %s", tt.expr, c, result)
 				}
 			}
 		})
