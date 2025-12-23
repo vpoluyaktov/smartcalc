@@ -89,6 +89,13 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Matching parts are highlighted with `«»` markers
 - Captured groups are displayed in multi-line output
 
+### Unix Permissions
+- Chmod octal to symbolic: `chmod 755`, `chmod 644`, `chmod 4755`
+- Chmod symbolic to octal: `chmod rwxr-xr-x`, `chmod rwx r-x r-x`
+- Umask calculator: `umask 022`, `umask 077`
+- Special bits: setuid (`4xxx`), setgid (`2xxx`), sticky (`1xxx`)
+- Permission conversions: `755 to symbolic`, `rwxr-xr-x to octal`
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -183,6 +190,14 @@ regex /(\w+)@(\w+)/ test "user@domain" = match: «user@domain»
 > Groups:
 >   [1]: "user"
 >   [2]: "domain"
+
+# Unix Permissions
+chmod 755 = rwxr-xr-x
+chmod 644 = rw-r--r--
+chmod rwxr-xr-x = 755
+chmod 4755 = rwsr-xr-x (setuid)
+chmod 1777 = rwxrwxrwt (sticky)
+umask 022 = files: 644 (rw-r--r--), directories: 755 (rwxr-xr-x)
 ```
 
 ## Installation

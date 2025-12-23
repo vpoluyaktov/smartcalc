@@ -520,6 +520,49 @@ func TestRegexSnippets(t *testing.T) {
 	}
 }
 
+// TestUnixPermissionsSnippets tests the Unix Permissions category snippets
+func TestUnixPermissionsSnippets(t *testing.T) {
+	tests := []struct {
+		name  string
+		lines []string
+	}{
+		{
+			name:  "Chmod Octal to Symbolic",
+			lines: []string{"chmod 755 =", "chmod 644 =", "chmod 777 =", "chmod 600 ="},
+		},
+		{
+			name:  "Chmod Symbolic to Octal",
+			lines: []string{"chmod rwxr-xr-x =", "chmod rw-r--r-- ="},
+		},
+		{
+			name:  "Special Bits",
+			lines: []string{"chmod 4755 =", "chmod 2755 =", "chmod 1777 ="},
+		},
+		{
+			name:  "Umask Calculator",
+			lines: []string{"umask 022 =", "umask 077 =", "umask 027 ="},
+		},
+		{
+			name:  "Permission Conversions",
+			lines: []string{"755 to symbolic =", "rwxr-xr-x to octal =", "permission 644 ="},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := calc.EvalLines(tt.lines, 0)
+			for i, result := range results {
+				if strings.HasSuffix(result.Output, "ERR") {
+					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
+				}
+				if !result.HasResult {
+					t.Errorf("Line %d (%q) should have result", i+1, tt.lines[i])
+				}
+			}
+		})
+	}
+}
+
 // TestAllSnippetCategoriesExist verifies the expected categories are present
 func TestAllSnippetCategoriesExist(t *testing.T) {
 	expectedCategories := []string{
@@ -533,6 +576,7 @@ func TestAllSnippetCategoriesExist(t *testing.T) {
 		"Statistics",
 		"Programmer",
 		"Regex Tester",
+		"Unix Permissions",
 	}
 
 	categories := GetSnippetCategories()
