@@ -469,6 +469,57 @@ func TestProgrammerSnippets(t *testing.T) {
 	}
 }
 
+// TestRegexSnippets tests the Regex Tester category snippets
+func TestRegexSnippets(t *testing.T) {
+	tests := []struct {
+		name  string
+		lines []string
+	}{
+		{
+			name:  "Basic Match",
+			lines: []string{`regex /hello/ test "hello world" =`, `regex /\d+/ test "abc123def" =`},
+		},
+		{
+			name:  "No Match",
+			lines: []string{`regex /xyz/ test "hello world" =`},
+		},
+		{
+			name:  "Multiple Matches",
+			lines: []string{`regex /\d+/ test "a1b2c3d4" =`},
+		},
+		{
+			name:  "Capture Groups",
+			lines: []string{`regex /(\w+)@(\w+)\.(\w+)/ test "email: user@example.com" =`},
+		},
+		{
+			name:  "Word Boundary",
+			lines: []string{`regex /\bword\b/ test "a word here" =`},
+		},
+		{
+			name:  "Case Insensitive",
+			lines: []string{`regex /(?i)hello/ test "HELLO World" =`},
+		},
+		{
+			name:  "Phone Number",
+			lines: []string{`regex /(\d{3})-(\d{3})-(\d{4})/ test "Call 555-123-4567 today" =`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := calc.EvalLines(tt.lines, 0)
+			for i, result := range results {
+				if strings.HasSuffix(result.Output, "ERR") {
+					t.Errorf("Line %d (%q) produced error: %s", i+1, tt.lines[i], result.Output)
+				}
+				if !result.HasResult {
+					t.Errorf("Line %d (%q) should have result", i+1, tt.lines[i])
+				}
+			}
+		})
+	}
+}
+
 // TestAllSnippetCategoriesExist verifies the expected categories are present
 func TestAllSnippetCategoriesExist(t *testing.T) {
 	expectedCategories := []string{
@@ -481,6 +532,7 @@ func TestAllSnippetCategoriesExist(t *testing.T) {
 		"Financial",
 		"Statistics",
 		"Programmer",
+		"Regex Tester",
 	}
 
 	categories := GetSnippetCategories()

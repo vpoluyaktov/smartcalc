@@ -102,6 +102,36 @@ const datetimeMark = Decoration.mark({ class: 'cm-datetime' });
 const networkMark = Decoration.mark({ class: 'cm-network' });
 const commentMark = Decoration.mark({ class: 'cm-comment' });
 const outputPrefixMark = Decoration.mark({ class: 'cm-output-prefix' });
+const regexMatchMark = Decoration.mark({ class: 'cm-regex-match' });
+const regexMarkerMark = Decoration.mark({ class: 'cm-regex-marker' });
+
+// Helper function to highlight regex matches marked with «» in output lines
+function highlightRegexMatches(builder, text, from) {
+    let pos = 0;
+    let inMatch = false;
+    let matchStart = 0;
+    
+    while (pos < text.length) {
+        if (text[pos] === '«') {
+            // Mark the « character
+            builder.add(from + pos, from + pos + 1, regexMarkerMark);
+            inMatch = true;
+            matchStart = pos + 1;
+            pos++;
+        } else if (text[pos] === '»' && inMatch) {
+            // Highlight the match content
+            if (matchStart < pos) {
+                builder.add(from + matchStart, from + pos, regexMatchMark);
+            }
+            // Mark the » character
+            builder.add(from + pos, from + pos + 1, regexMarkerMark);
+            inMatch = false;
+            pos++;
+        } else {
+            pos++;
+        }
+    }
+}
 
 function buildDecorations(view) {
     const builder = new RangeSetBuilder();
@@ -119,7 +149,12 @@ function buildDecorations(view) {
             if (text.includes('ERR:') || text.includes('error')) {
                 builder.add(from + 2, line.to, errorMark);
             } else if (text.length > 2) {
-                builder.add(from + 2, line.to, resultMark);
+                // Check for regex match markers «» and highlight them
+                if (text.includes('«') && text.includes('»')) {
+                    highlightRegexMatches(builder, text, from);
+                } else {
+                    builder.add(from + 2, line.to, resultMark);
+                }
             }
             continue;
         }
@@ -141,6 +176,25 @@ function buildDecorations(view) {
         while (pos < tokenEnd) {
             const remaining = text.slice(pos, tokenEnd);
             let matched = false;
+            
+            // Regex match markers «» for highlighting
+            if (remaining[0] === '«') {
+                builder.add(from + pos, from + pos + 1, regexMarkerMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            if (remaining[0] === '»') {
+                builder.add(from + pos, from + pos + 1, regexMarkerMark);
+                pos += 1;
+                matched = true;
+                continue;
+            }
+            
+            // Check if we're inside a regex match (between « and »)
+            const openMarker = text.lastIndexOf('«', pos);
+            const closeMarker = text.lastIndexOf('»', pos);
+            const inRegexMatch = openMarker >= 0 && (closeMarker < openMarker);
             
             // Line references \1, \2, etc.
             const refMatch = remaining.match(/^\\[0-9]+/);
@@ -213,7 +267,7 @@ function buildDecorations(view) {
             }
             
             // Keywords
-            const kwMatch = remaining.match(/^(now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast|what|percent|percentage|increase|decrease|tip|loan|mortgage|compound|simple|interest|invest|avg|average|mean|median|sum|stddev|stdev|variance|count|range|ascii|char|uuid|md5|sha1|sha256|base64|encode|decode|random|and|or|xor|not|speed\s+of\s+light|gravity|pi|avogadro|planck|golden\s+ratio|value\s+of)\b/i);
+            const kwMatch = remaining.match(/^(regex|test|match|against|now|today|yesterday|tomorrow|in|to|till|from|split|subnets?|networks?|hosts?|mask|wildcard|how\s+many|is|Range|Broadcast|what|percent|percentage|increase|decrease|tip|loan|mortgage|compound|simple|interest|invest|avg|average|mean|median|sum|stddev|stdev|variance|count|range|ascii|char|uuid|md5|sha1|sha256|base64|encode|decode|random|and|or|xor|not|speed\s+of\s+light|gravity|pi|avogadro|planck|golden\s+ratio|value\s+of)\b/i);
             if (kwMatch) {
                 builder.add(from + pos, from + pos + kwMatch[0].length, keywordMark);
                 pos += kwMatch[0].length;
