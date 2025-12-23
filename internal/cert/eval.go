@@ -229,19 +229,6 @@ func formatCertificates(certs []*x509.Certificate, host string) (string, error) 
 			c := certs[i]
 			depth := len(certs) - 1 - i
 
-			// Build tree prefix
-			var prefix string
-			if depth == 0 {
-				prefix = ">"
-			} else {
-				prefix = ">" + strings.Repeat("    ", depth-1)
-				if i == 0 {
-					prefix += "    └── "
-				} else {
-					prefix += "    ├── "
-				}
-			}
-
 			// Determine certificate type label
 			var label string
 			if i == 0 {
@@ -259,10 +246,20 @@ func formatCertificates(certs []*x509.Certificate, host string) (string, error) 
 				name = c.Subject.Organization[0]
 			}
 
+			// Build tree line
 			if depth == 0 {
-				result.WriteString(fmt.Sprintf("%s 🔐 %s %s\n", prefix, name, label))
+				// Root certificate
+				result.WriteString(fmt.Sprintf("> 🔐 %s %s\n", name, label))
 			} else {
-				result.WriteString(fmt.Sprintf("%s%s %s\n", prefix, name, label))
+				// Child certificates with tree branches
+				indent := strings.Repeat("   ", depth-1)
+				if i == 0 {
+					// Last certificate (leaf)
+					result.WriteString(fmt.Sprintf(">    %s└── %s %s\n", indent, name, label))
+				} else {
+					// Intermediate certificate
+					result.WriteString(fmt.Sprintf(">    %s├── %s %s\n", indent, name, label))
+				}
 			}
 		}
 	}
