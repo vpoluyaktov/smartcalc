@@ -221,16 +221,48 @@ func formatCertificates(certs []*x509.Certificate, host string) (string, error) 
 		result.WriteString("\n")
 	}
 
-	// Certificate chain info
+	// Certificate chain info as ASCII tree
 	if len(certs) > 1 {
 		result.WriteString(fmt.Sprintf("> Certificate Chain: %d certificates\n", len(certs)))
-		for i, c := range certs {
-			if i == 0 {
-				result.WriteString(fmt.Sprintf(">   %d. %s (leaf)\n", i+1, c.Subject.CommonName))
-			} else if c.IsCA {
-				result.WriteString(fmt.Sprintf(">   %d. %s (CA)\n", i+1, c.Subject.CommonName))
+		// Display chain in reverse order (root at top, leaf at bottom)
+		for i := len(certs) - 1; i >= 0; i-- {
+			c := certs[i]
+			depth := len(certs) - 1 - i
+
+			// Build tree prefix
+			var prefix string
+			if depth == 0 {
+				prefix = ">"
 			} else {
-				result.WriteString(fmt.Sprintf(">   %d. %s\n", i+1, c.Subject.CommonName))
+				prefix = ">" + strings.Repeat("    ", depth-1)
+				if i == 0 {
+					prefix += "    └── "
+				} else {
+					prefix += "    ├── "
+				}
+			}
+
+			// Determine certificate type label
+			var label string
+			if i == 0 {
+				label = "(leaf)"
+			} else if c.IsCA {
+				if i == len(certs)-1 {
+					label = "(root)"
+				} else {
+					label = "(intermediate)"
+				}
+			}
+
+			name := c.Subject.CommonName
+			if name == "" && len(c.Subject.Organization) > 0 {
+				name = c.Subject.Organization[0]
+			}
+
+			if depth == 0 {
+				result.WriteString(fmt.Sprintf("%s 🔐 %s %s\n", prefix, name, label))
+			} else {
+				result.WriteString(fmt.Sprintf("%s%s %s\n", prefix, name, label))
 			}
 		}
 	}
