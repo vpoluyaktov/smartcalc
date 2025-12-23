@@ -138,6 +138,11 @@ run_e2e_tests() {
         cd frontend && npm install -D @playwright/test && npx playwright install chromium && cd ..
     fi
     
+    # Ensure correct Chromium browser version is installed
+    # Browser cache may have wrong version after Playwright updates
+    print_info "Ensuring Chromium browser is installed..."
+    cd frontend && npx playwright install chromium && cd ..
+    
     # Check if wails is available
     if ! command -v wails &> /dev/null; then
         # Try to find wails in go/bin

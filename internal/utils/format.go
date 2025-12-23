@@ -45,7 +45,8 @@ func formatNumberWithThousands(v float64) string {
 	return addThousandsSeparators(intPart) + fracPart
 }
 
-func formatCurrency(v float64) string {
+// FormatCurrency formats a float as currency with thousands separators (e.g., $1,234.56)
+func FormatCurrency(v float64) string {
 	abs := math.Abs(v)
 	whole := int64(abs)
 	frac := int64(math.Round((abs - float64(whole)) * 100))
@@ -65,7 +66,7 @@ func FormatResult(isCurrency bool, v float64) string {
 		return "NaN"
 	}
 	if isCurrency {
-		return formatCurrency(v)
+		return FormatCurrency(v)
 	}
 	return formatNumberWithThousands(v)
 }

@@ -10,7 +10,7 @@ func TestLoanPayment(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"loan $250000 at 6.5% for 30 years", []string{"Monthly: $1580", "Total: $", "Interest: $"}},
+		{"loan $250000 at 6.5% for 30 years", []string{"Monthly: $1,580", "Total: $", "Interest: $"}},
 		{"loan 100000 at 5% for 15 years", []string{"Monthly: $790", "Total: $"}},
 		{"loan $50000 at 4% for 5 years", []string{"Monthly: $920", "Total: $"}},
 	}
@@ -36,8 +36,8 @@ func TestCompoundInterest(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"$10000 at 5% for 10 years compounded monthly", []string{"Final: $16470", "Interest earned: $6470"}},
-		{"compound interest $5000 at 7% for 5 years", []string{"Final: $7012", "Interest earned: $2012"}},
+		{"$10000 at 5% for 10 years compounded monthly", []string{"Final: $16,470", "Interest earned: $6,470"}},
+		{"compound interest $5000 at 7% for 5 years", []string{"Final: $7,012", "Interest earned: $2,012"}},
 	}
 
 	for _, tt := range tests {
@@ -61,8 +61,8 @@ func TestSimpleInterest(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"simple interest $5000 at 3% for 2 years", []string{"Interest: $300", "Total: $5300"}},
-		{"simple interest $10000 at 5% for 5 years", []string{"Interest: $2500", "Total: $12500"}},
+		{"simple interest $5000 at 3% for 2 years", []string{"Interest: $300", "Total: $5,300"}},
+		{"simple interest $10000 at 5% for 5 years", []string{"Interest: $2,500", "Total: $12,500"}},
 	}
 
 	for _, tt := range tests {
@@ -86,8 +86,8 @@ func TestMortgagePayment(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"mortgage $350000 at 7% for 30 years", []string{"Monthly: $2328", "Total: $", "Interest: $"}},
-		{"mortgage $200000 at 4.5% for 15 years", []string{"Monthly: $1529", "Total: $"}},
+		{"mortgage $350000 at 7% for 30 years", []string{"Monthly: $2,328", "Total: $", "Interest: $"}},
+		{"mortgage $200000 at 4.5% for 15 years", []string{"Monthly: $1,529", "Total: $"}},
 	}
 
 	for _, tt := range tests {
@@ -111,8 +111,8 @@ func TestInvestmentGrowth(t *testing.T) {
 		expr     string
 		contains []string
 	}{
-		{"invest $1000 at 7% for 20 years", []string{"Final: $3869", "Growth: $2869"}},
-		{"invest $5000 at 10% for 10 years", []string{"Final: $12968", "Growth: $7968"}},
+		{"invest $1000 at 7% for 20 years", []string{"Final: $3,869", "Growth: $2,869"}},
+		{"invest $5000 at 10% for 10 years", []string{"Final: $12,968", "Growth: $7,968"}},
 	}
 
 	for _, tt := range tests {

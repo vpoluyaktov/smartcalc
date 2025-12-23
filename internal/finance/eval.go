@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"smartcalc/internal/utils"
 )
 
 // Handler defines the interface for financial calculation handlers.
@@ -96,8 +98,8 @@ func handleLoanPayment(expr, exprLower string) (string, bool) {
 	totalPayment := monthlyPayment * float64(numPayments)
 	totalInterest := totalPayment - principal
 
-	return fmt.Sprintf("\n> Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
-		monthlyPayment, totalPayment, totalInterest), true
+	return fmt.Sprintf("\n> Monthly: %s\n> Total: %s\n> Interest: %s",
+		utils.FormatCurrency(monthlyPayment), utils.FormatCurrency(totalPayment), utils.FormatCurrency(totalInterest)), true
 }
 
 func handleCompoundInterest(expr, exprLower string) (string, bool) {
@@ -129,7 +131,7 @@ func handleCompoundInterest(expr, exprLower string) (string, bool) {
 	amount := principal * math.Pow(1+annualRate/float64(n), float64(n*years))
 	interest := amount - principal
 
-	return fmt.Sprintf("\n> Final: $%.2f\n> Interest earned: $%.2f", amount, interest), true
+	return fmt.Sprintf("\n> Final: %s\n> Interest earned: %s", utils.FormatCurrency(amount), utils.FormatCurrency(interest)), true
 }
 
 func handleSimpleInterest(expr, exprLower string) (string, bool) {
@@ -151,7 +153,7 @@ func handleSimpleInterest(expr, exprLower string) (string, bool) {
 	interest := principal * rate * float64(years)
 	total := principal + interest
 
-	return fmt.Sprintf("\n> Interest: $%.2f\n> Total: $%.2f", interest, total), true
+	return fmt.Sprintf("\n> Interest: %s\n> Total: %s", utils.FormatCurrency(interest), utils.FormatCurrency(total)), true
 }
 
 func handleMortgagePayment(expr, exprLower string) (string, bool) {
@@ -184,8 +186,8 @@ func handleMortgagePayment(expr, exprLower string) (string, bool) {
 	totalPayment := monthlyPayment * float64(numPayments)
 	totalInterest := totalPayment - principal
 
-	return fmt.Sprintf("\n> Monthly: $%.2f\n> Total: $%.2f\n> Interest: $%.2f",
-		monthlyPayment, totalPayment, totalInterest), true
+	return fmt.Sprintf("\n> Monthly: %s\n> Total: %s\n> Interest: %s",
+		utils.FormatCurrency(monthlyPayment), utils.FormatCurrency(totalPayment), utils.FormatCurrency(totalInterest)), true
 }
 
 func handleInvestmentGrowth(expr, exprLower string) (string, bool) {
@@ -209,7 +211,7 @@ func handleInvestmentGrowth(expr, exprLower string) (string, bool) {
 	growth := amount - principal
 	growthPercent := (growth / principal) * 100
 
-	return fmt.Sprintf("\n> Final: $%.2f\n> Growth: $%.2f (+%.1f%%)", amount, growth, growthPercent), true
+	return fmt.Sprintf("\n> Final: %s\n> Growth: %s (+%.1f%%)", utils.FormatCurrency(amount), utils.FormatCurrency(growth), growthPercent), true
 }
 
 func parseAmount(s string) float64 {
