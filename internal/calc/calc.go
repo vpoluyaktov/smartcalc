@@ -363,10 +363,11 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 		}
 
 		// Try JWT decoding
+		// Note: Don't use maybeFormat for JWT expressions as it corrupts base64url tokens
 		if jwt.IsJWTExpression(expr) {
 			jwtResult, err := jwt.EvalJWT(expr)
 			if err == nil {
-				results[i].Output = maybeFormat(i, expr) + " =\n> " + jwtResult + inlineComment
+				results[i].Output = expr + " =\n> " + jwtResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
