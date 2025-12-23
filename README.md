@@ -80,6 +80,15 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Base64 encoding: `base64 encode hello world`, `base64 decode SGVsbG8gd29ybGQ=`
 - Password generator: `pwgen`, `pwgen -c 20` (custom length), `pwgen -h` (hyphenated)
 
+### Regex Tester
+- Basic match: `regex /hello/ test "hello world"`
+- Multiple matches: `regex /\d+/ test "a1b2c3"`
+- Capture groups: `regex /(\w+)@(\w+)\.(\w+)/ test "user@example.com"`
+- Case insensitive: `regex /(?i)hello/ test "HELLO World"`
+- Word boundary: `regex /\bword\b/ test "a word here"`
+- Matching parts are highlighted with `«»` markers
+- Captured groups are displayed in multi-line output
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -166,6 +175,14 @@ base64 decode SGVsbG8gd29ybGQ= = hello world
 pi = 3.141592654
 speed of light = 2.99792458e+08 m/s
 gravity = 9.80665 m/s²
+
+# Regex Tester
+regex /hello/ test "hello world" = match: «hello» world
+regex /\d+/ test "a1b2c3" = 3 matches: a«1»b«2»c«3»
+regex /(\w+)@(\w+)/ test "user@domain" = match: «user@domain»
+> Groups:
+>   [1]: "user"
+>   [2]: "domain"
 ```
 
 ## Installation

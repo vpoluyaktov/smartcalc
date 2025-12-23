@@ -119,5 +119,18 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Password Generator", "pwgen =\n\npwgen -c 20 =\n\npwgen -h =\n\npwgen -c 12 -h =\n\n"},
 			},
 		},
+		{
+			Name: "Regex Tester",
+			Snippets: []Snippet{
+				{"Basic Match", "regex /hello/ test \"hello world\" =\n\nregex /\\d+/ test \"abc123def\" =\n\n"},
+				{"No Match", "regex /xyz/ test \"hello world\" =\n\n"},
+				{"Multiple Matches", "regex /\\d+/ test \"a1b2c3d4\" =\n\n"},
+				{"Capture Groups", "regex /(\\w+)@(\\w+)\\.(\\w+)/ test \"email: user@example.com\" =\n\n"},
+				{"Word Boundary", "regex /\\bword\\b/ test \"a word here\" =\n\n"},
+				{"Case Insensitive", "regex /(?i)hello/ test \"HELLO World\" =\n\n"},
+				{"Phone Number", "regex /(\\d{3})-(\\d{3})-(\\d{4})/ test \"Call 555-123-4567 today\" =\n\n"},
+				{"URL Pattern", "regex /https?:\\/\\/[\\w.-]+/ test \"Visit https://example.com for more\" =\n\n"},
+			},
+		},
 	}
 }

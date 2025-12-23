@@ -122,6 +122,8 @@ html, body {
 .cm-network { color: #73daca; }
 .cm-comment { color: #565f89; font-style: italic; }
 .cm-output-prefix { color: #565f89; }
+.cm-regex-match { background-color: rgba(158, 206, 106, 0.3); color: #9ece6a; font-weight: 600; border-radius: 2px; }
+.cm-regex-marker { color: #565f89; font-size: 0.85em; }
 
 /* ==================== LIGHT THEME ==================== */
 @media (prefers-color-scheme: light) {
@@ -177,6 +179,8 @@ html, body {
     .cm-network { color: #00695c; }
     .cm-comment { color: #78909c; font-style: italic; }
     .cm-output-prefix { color: #90a4ae; }
+    .cm-regex-match { background-color: rgba(46, 125, 50, 0.2); color: #2e7d32; font-weight: 600; border-radius: 2px; }
+    .cm-regex-marker { color: #90a4ae; font-size: 0.85em; }
 }
 
 /* ==================== MODAL DIALOG ==================== */

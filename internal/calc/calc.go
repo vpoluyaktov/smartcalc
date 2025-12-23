@@ -13,6 +13,7 @@ import (
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
 	"smartcalc/internal/programmer"
+	"smartcalc/internal/regex"
 	"smartcalc/internal/stats"
 	"smartcalc/internal/units"
 	"smartcalc/internal/utils"
@@ -334,6 +335,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			progResult, err := programmer.EvalProgrammer(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + progResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try regex testing
+		if regex.IsRegexExpression(expr) {
+			regexResult, err := regex.EvalRegex(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + regexResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
