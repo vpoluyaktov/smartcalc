@@ -1354,9 +1354,111 @@ async function loadLastFile() {
     }
 }
 
+// Context menu functionality
+function setupContextMenu() {
+    const contextMenu = document.getElementById('context-menu');
+    const editorContainer = document.getElementById('editor-container');
+
+    // Show context menu on right-click
+    editorContainer.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        
+        // Position the menu at click location
+        const x = e.clientX;
+        const y = e.clientY;
+        
+        // Ensure menu doesn't go off screen
+        const menuWidth = 180;
+        const menuHeight = 160;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        const posX = x + menuWidth > windowWidth ? windowWidth - menuWidth - 10 : x;
+        const posY = y + menuHeight > windowHeight ? windowHeight - menuHeight - 10 : y;
+        
+        contextMenu.style.left = posX + 'px';
+        contextMenu.style.top = posY + 'px';
+        contextMenu.classList.remove('hidden');
+    });
+
+    // Hide context menu on click elsewhere
+    document.addEventListener('click', (e) => {
+        if (!contextMenu.contains(e.target)) {
+            contextMenu.classList.add('hidden');
+        }
+    });
+
+    // Hide context menu on scroll
+    document.addEventListener('scroll', () => {
+        contextMenu.classList.add('hidden');
+    }, true);
+
+    // Hide context menu on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            contextMenu.classList.add('hidden');
+        }
+    });
+
+    // Handle context menu item clicks
+    contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const action = item.dataset.action;
+            contextMenu.classList.add('hidden');
+            
+            // Focus editor before executing action
+            editor.focus();
+            
+            switch (action) {
+                case 'cut':
+                    await performCut();
+                    break;
+                case 'copy':
+                    await smartCopy();
+                    break;
+                case 'paste':
+                    await smartPaste();
+                    break;
+                case 'selectall':
+                    selectAll();
+                    break;
+            }
+        });
+    });
+}
+
+// Perform cut operation
+async function performCut() {
+    const selection = editor.state.selection.main;
+    if (selection.empty) return;
+    
+    const selectedText = editor.state.sliceDoc(selection.from, selection.to);
+    
+    try {
+        await ClipboardSetText(selectedText);
+        
+        // Delete the selected text
+        editor.dispatch({
+            changes: { from: selection.from, to: selection.to, insert: '' },
+            selection: { anchor: selection.from }
+        });
+    } catch (err) {
+        console.error('Cut error:', err);
+    }
+}
+
+// Select all text in editor
+function selectAll() {
+    const docLength = editor.state.doc.length;
+    editor.dispatch({
+        selection: { anchor: 0, head: docLength }
+    });
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     initEditor();
     setupMenuEvents();
+    setupContextMenu();
     loadLastFile();
 });
