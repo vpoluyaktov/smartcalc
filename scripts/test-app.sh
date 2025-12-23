@@ -135,13 +135,13 @@ run_e2e_tests() {
     # Check if Playwright is installed
     if [ ! -d "frontend/node_modules/@playwright" ]; then
         print_info "Installing Playwright..."
-        cd frontend && npm install -D @playwright/test && npx playwright install chromium && cd ..
+        cd frontend && npm install -D @playwright/test && npx playwright install chromium --force && cd ..
     fi
     
     # Ensure correct Chromium browser version is installed
     # Browser cache may have wrong version after Playwright updates
     print_info "Ensuring Chromium browser is installed..."
-    cd frontend && npx playwright install chromium && cd ..
+    cd frontend && npx playwright install chromium --force && cd ..
     
     # Check if wails is available
     if ! command -v wails &> /dev/null; then
