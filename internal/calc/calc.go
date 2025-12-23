@@ -224,11 +224,12 @@ func cleanOutputLines(lines []string) []string {
 }
 
 // EvalLines evaluates all lines and returns the processed output lines.
-// activeLineNum is 1-based line number of the line currently being edited (skip formatting for this line).
-// Pass 0 or negative to format all lines.
+// activeLineNum is 1-based line number of the line currently being edited.
+// When activeLineNum > 0, only that line and its dependents are re-evaluated.
+// Pass 0 or negative to evaluate all lines (used for initial load).
 func EvalLines(lines []string, activeLineNum int) []LineResult {
 	// Build a map of expression lines that have multi-line output (lines starting with ">")
-	// This is used to skip re-evaluation of expensive operations like cert decode
+	// This is used to preserve existing multi-line output for lines that aren't re-evaluated
 	hasMultiLineOutput := make(map[int][]string) // maps cleaned line index to its output lines
 	cleanedIdx := 0
 	for i := 0; i < len(lines); i++ {
@@ -249,6 +250,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 	// First pass: remove stale output lines ("> " lines that follow an expression)
 	cleanedLines := cleanOutputLines(lines)
 
+	// Determine which lines need evaluation
+	// If activeLineNum > 0, only evaluate that line and its dependents
+	linesToEvaluate := make(map[int]bool)
+	if activeLineNum > 0 {
+		linesToEvaluate[activeLineNum] = true
+		dependents := FindDependentLines(cleanedLines, activeLineNum)
+		for _, dep := range dependents {
+			linesToEvaluate[dep] = true
+		}
+	}
+
 	results := make([]LineResult, len(cleanedLines))
 	values := make([]float64, len(cleanedLines))
 	haveRes := make([]bool, len(cleanedLines))
@@ -265,6 +277,8 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 
 	for i, line := range cleanedLines {
 		results[i].Output = line
+		lineNum := i + 1 // 1-based line number
+
 		// Skip empty lines
 		if line == "" {
 			continue
@@ -287,6 +301,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 		}
 		expr := strings.TrimSpace(workingLine[:eq])
 		if expr == "" {
+			continue
+		}
+
+		// Skip evaluation for lines that don't need it (not active line or dependent)
+		// Preserve existing results for these lines
+		if activeLineNum > 0 && !linesToEvaluate[lineNum] {
+			// Preserve existing multi-line output if present
+			if outputLines, ok := hasMultiLineOutput[i]; ok {
+				results[i].Output = line + "\n" + strings.Join(outputLines, "\n")
+			}
+			// Keep the line as-is (with its existing result)
 			continue
 		}
 
