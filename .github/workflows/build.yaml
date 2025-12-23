@@ -8,7 +8,84 @@ on:
     branches: [ "main" ]
 
 jobs:
+  # Run all tests (Go backend + Playwright E2E) on Linux first
+  # This fails fast before attempting multi-platform builds
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libgtk-3-dev libwebkit2gtk-4.1-dev build-essential pkg-config \
+            xvfb
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          npx playwright install chromium
+
+      - name: Run Go backend tests
+        run: go test -v ./...
+
+      - name: Run Playwright E2E tests
+        run: |
+          # Start Wails dev server with xvfb
+          xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" wails dev &
+          WAILS_PID=$!
+          
+          # Wait for dev server to be ready
+          echo "Waiting for Wails dev server..."
+          for i in {1..60}; do
+            if curl -s http://localhost:34115 > /dev/null 2>&1; then
+              echo "Wails dev server is ready"
+              break
+            fi
+            sleep 2
+          done
+          
+          # Run Playwright tests
+          cd frontend
+          PLAYWRIGHT_HTML_OPEN=never npx playwright test --reporter=list
+          TEST_EXIT_CODE=$?
+          
+          # Cleanup
+          kill $WAILS_PID 2>/dev/null || true
+          
+          exit $TEST_EXIT_CODE
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+  # Build for all platforms after tests pass
   build:
+    name: Build
+    needs: test
     runs-on: ${{ matrix.os }}
     env:
       VERSION: ''
@@ -57,7 +134,7 @@ jobs:
       - name: Build frontend
         run: |
           cd frontend
-          npm install
+          npm ci
           npm run build
 
       - name: Ensure CGO is enabled
@@ -84,9 +161,6 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           VERSION: ${{ env.VERSION }}
-
-      - name: Test
-        run: go test -v ./...
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
