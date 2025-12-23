@@ -96,6 +96,13 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Special bits: setuid (`4xxx`), setgid (`2xxx`), sticky (`1xxx`)
 - Permission conversions: `755 to symbolic`, `rwxr-xr-x to octal`
 
+### JWT Decoder
+- Decode JWT tokens: `jwt decode <token>` or `jwt <token>`
+- Shows header (algorithm, type)
+- Shows payload with all claims
+- Converts timestamps (exp, iat, nbf) to human-readable format
+- Shows token expiration status (valid/expired)
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -198,6 +205,14 @@ chmod rwxr-xr-x = 755
 chmod 4755 = rwsr-xr-x (setuid)
 chmod 1777 = rwxrwxrwt (sticky)
 umask 022 = files: 644 (rw-r--r--), directories: 755 (rwxr-xr-x)
+
+# JWT Decoder
+jwt decode eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.sig =
+> Header:
+>   {"alg": "HS256"}
+> Payload:
+>   {"sub": "1234567890"}
+> Signature: sig
 ```
 
 ## Installation

@@ -142,5 +142,12 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Permission Conversions", "755 to symbolic =\nrwxr-xr-x to octal =\npermission 644 =\n\n"},
 			},
 		},
+		{
+			Name: "JWT Decoder",
+			Snippets: []Snippet{
+				{"Decode JWT Token", "jwt decode eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c =\n\n"},
+				{"JWT with Expiration", "jwt eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNzM1Njg5NjAwfQ.signature =\n\n"},
+			},
+		},
 	}
 }
