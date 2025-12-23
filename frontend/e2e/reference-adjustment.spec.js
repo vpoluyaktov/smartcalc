@@ -511,10 +511,15 @@ test.describe('Reference Adjustment', () => {
     await goToLine(page, 1);
     await page.keyboard.press('Home');
     await pressEnter(page);
+    await waitForEvaluation(page);
     await page.keyboard.press('ArrowUp');
     await pressEnter(page);
+    await waitForEvaluation(page);
     await page.keyboard.press('ArrowUp');
     await waitForEvaluation(page);
+    
+    // Give extra time for all reference adjustments to propagate
+    await page.waitForTimeout(500);
     
     // Now:
     // Line 5 should have \3 + \4 (was \1 + \2)
