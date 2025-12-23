@@ -66,9 +66,9 @@ func TestFormatCurrency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			result := formatCurrency(tt.input)
+			result := FormatCurrency(tt.input)
 			if result != tt.expected {
-				t.Errorf("formatCurrency(%v) = %q, want %q", tt.input, result, tt.expected)
+				t.Errorf("FormatCurrency(%v) = %q, want %q", tt.input, result, tt.expected)
 			}
 		})
 	}
