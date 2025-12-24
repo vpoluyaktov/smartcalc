@@ -51,7 +51,8 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Weight: `10 kg in lbs`, `5 oz to grams`
 - Temperature: `100 f to c`, `25 celsius to fahrenheit`
 - Volume: `5 gallons in liters`, `2 cups to ml`
-- Data: `500 mb in gb`, `1 tb to bytes`
+- Data (SI, base 1000): `1234567 bytes to mb`, `500 mb in gb`, `1 tb to gb`
+- Data (IEC, base 1024): `1234567 bytes to mib`, `1024 mib to gib`, `1 tib to gib`
 - Speed: `60 mph to kph`
 - Area: `1 acre to sqft`, `100 sqm to sqft`
 

@@ -119,11 +119,22 @@ func TestEvalDataConversion(t *testing.T) {
 		expr     string
 		contains string
 	}{
-		{"500 mb in gb", "0.48"},
-		{"1 tb to gb", "1024"},
-		{"1 gb to mb", "1024"},
-		{"1024 kb to mb", "1 MB"},
-		{"1 pb to tb", "1024"},
+		// SI units (base 1000)
+		{"500 mb in gb", "0.5"},
+		{"1 tb to gb", "1000"},
+		{"1 gb to mb", "1000"},
+		{"1000 kb to mb", "1 MB"},
+		{"1 pb to tb", "1000"},
+		// IEC units (base 1024)
+		{"1 gib to mib", "1024"},
+		{"1024 mib to gib", "1 GIB"},
+		{"1 tib to gib", "1024"},
+		// Cross conversions (SI to IEC)
+		{"1000 mb to mib", "953.67"},
+		{"1024 mib to mb", "1073.74"},
+		// Bytes conversions
+		{"1234567 bytes to mb", "1.23"},
+		{"1234567 bytes to mib", "1.17"},
 	}
 
 	for _, tt := range tests {
