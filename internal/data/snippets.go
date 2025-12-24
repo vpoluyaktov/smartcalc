@@ -170,5 +170,16 @@ func GetSnippetCategories() []SnippetCategory {
 				{"IP Geolocation", "# IP geolocation (aliases: geoip, ip location, ip lookup, locate ip, where is)\ngeoip 8.8.8.8 =\n\nip lookup 1.1.1.1 =\n\n"},
 			},
 		},
+		{
+			Name: "Color Conversions",
+			Snippets: []Snippet{
+				{"Hex to RGB", "#FF5733 to rgb =\n#FFF to rgb =\n\n"},
+				{"Hex to HSL", "#FF5733 to hsl =\n#00FF00 to hsl =\n\n"},
+				{"RGB to Hex", "rgb(255, 87, 51) to hex =\nrgb(0, 128, 255) to hex =\n\n"},
+				{"RGB to HSL", "rgb(255, 0, 0) to hsl =\nrgb(0, 255, 0) to hsl =\n\n"},
+				{"HSL to RGB", "hsl(0, 100%, 50%) to rgb =\nhsl(120, 100%, 50%) to rgb =\n\n"},
+				{"HSL to Hex", "hsl(240, 100%, 50%) to hex =\nhsl(60, 100%, 50%) to hex =\n\n"},
+			},
+		},
 	}
 }
