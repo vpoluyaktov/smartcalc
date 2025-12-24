@@ -50,8 +50,19 @@ async function setEditorText(page, text) {
 async function clearEditor(page) {
   const editor = await getEditorContent(page);
   await editor.click();
+  await page.waitForTimeout(50); // Ensure focus
+  
+  // Select all content and delete - repeat to ensure all content is cleared
+  // (sometimes multi-line output content needs multiple attempts)
+  await page.keyboard.press('Control+a');
+  await page.waitForTimeout(50);
+  await page.keyboard.press('Backspace');
+  await page.waitForTimeout(50);
+  
+  // Verify and retry if needed
   await page.keyboard.press('Control+a');
   await page.keyboard.press('Backspace');
+  await page.waitForTimeout(50);
 }
 
 /**
