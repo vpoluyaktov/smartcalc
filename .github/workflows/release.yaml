@@ -173,11 +173,8 @@ jobs:
         id: version
         shell: bash
         run: |
-          BASE_VERSION=$(cat VERSION)
-          COMMIT_COUNT=$(git rev-list --all --count HEAD)
-          # Extract MAJOR.MINOR from base version and use commit count as PATCH
-          MAJOR_MINOR=$(echo $BASE_VERSION | cut -d. -f1,2)
-          VERSION="$MAJOR_MINOR.$COMMIT_COUNT"
+          # Use the release tag as the version (strip 'v' prefix if present)
+          VERSION="${GITHUB_REF_NAME#v}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Building version: $VERSION"
 
