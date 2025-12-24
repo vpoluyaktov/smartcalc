@@ -38,7 +38,7 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - IP range check: `is 10.100.0.50 in 10.100.0.0/24`
 - DNS lookup: `dig google.com`, `nslookup github.com` (shows CNAME chain, A/AAAA, MX, NS, TXT records)
 - WHOIS lookup: `whois google.com` (shows registrar, dates, name servers)
-- IP geolocation: `geoip 8.8.8.8` (shows location, ISP, coordinates, timezone)
+- IP geolocation: `geoip 8.8.8.8`, `ip lookup 8.8.8.8` (shows location, ISP, coordinates, timezone)
 
 ### SSL Certificate Decoder
 - Decode certificates: `cert decode https://google.com` or `ssl decode example.com`
