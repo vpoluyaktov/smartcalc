@@ -254,8 +254,8 @@ func TestFormatResult(t *testing.T) {
 		},
 	}
 	formatted = FormatResult(result)
-	if !strings.HasPrefix(formatted, "match [0-5]:") {
-		t.Errorf("Expected to start with 'match [0-5]:', got '%s'", formatted)
+	if !strings.Contains(formatted, "> match [0-5]:") {
+		t.Errorf("Expected to contain '> match [0-5]:', got '%s'", formatted)
 	}
 
 	// Test multiple matches
@@ -269,8 +269,8 @@ func TestFormatResult(t *testing.T) {
 		},
 	}
 	formatted = FormatResult(result)
-	if !strings.HasPrefix(formatted, "2 matches:") {
-		t.Errorf("Expected to start with '2 matches:', got '%s'", formatted)
+	if !strings.Contains(formatted, "> 2 matches:") {
+		t.Errorf("Expected to contain '> 2 matches:', got '%s'", formatted)
 	}
 }
 

@@ -411,7 +411,7 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 		if regex.IsRegexExpression(expr) {
 			regexResult, err := regex.EvalRegex(expr)
 			if err == nil {
-				results[i].Output = maybeFormat(i, expr) + " = " + regexResult + inlineComment
+				results[i].Output = maybeFormat(i, expr) + " =" + regexResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}

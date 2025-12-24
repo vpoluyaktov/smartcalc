@@ -263,12 +263,12 @@ func FormatResult(result RegexResult) string {
 
 	var sb strings.Builder
 
-	// First line: match status with highlighted string
+	// First line: match status with highlighted string (on new line with > prefix)
 	if result.MatchCount == 1 {
 		r := result.Results[0]
-		sb.WriteString(fmt.Sprintf("match [%d-%d]: %s", r.Start, r.End, result.Highlighted))
+		sb.WriteString(fmt.Sprintf("\n> match [%d-%d]: %s", r.Start, r.End, result.Highlighted))
 	} else {
-		sb.WriteString(fmt.Sprintf("%d matches: %s", result.MatchCount, result.Highlighted))
+		sb.WriteString(fmt.Sprintf("\n> %d matches: %s", result.MatchCount, result.Highlighted))
 	}
 
 	// Add captured groups if any (beyond the full match)
