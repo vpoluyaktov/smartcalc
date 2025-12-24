@@ -1,7 +1,10 @@
 package network
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -9,11 +12,11 @@ import (
 	"github.com/miekg/dns"
 )
 
-// Default DNS servers to use for lookups (public DNS)
-var dnsServers = []string{
-	"8.8.8.8:53", // Google
-	"1.1.1.1:53", // Cloudflare
-	"9.9.9.9:53", // Quad9
+// DNS-over-HTTPS servers (bypasses network-level DNS interception)
+var dohServers = []string{
+	"https://cloudflare-dns.com/dns-query",
+	"https://dns.google/dns-query",
+	"https://dns.quad9.net/dns-query",
 }
 
 // IsDNSExpression checks if an expression is a DNS lookup expression
@@ -73,26 +76,59 @@ func EvalDNS(expr string) (string, error) {
 	return lookupDomain(domain)
 }
 
-// queryDNS sends a DNS query to a public DNS server
+// queryDNS sends a DNS query using DNS-over-HTTPS to bypass network interception
 func queryDNS(domain string, qtype uint16) (*dns.Msg, error) {
-	c := new(dns.Client)
-	c.Timeout = 5 * time.Second
-
 	m := new(dns.Msg)
 	m.SetQuestion(dns.Fqdn(domain), qtype)
 	m.RecursionDesired = true
 
+	// Pack the DNS message
+	dnsData, err := m.Pack()
+	if err != nil {
+		return nil, fmt.Errorf("failed to pack DNS message: %w", err)
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
 	var lastErr error
-	for _, server := range dnsServers {
-		r, _, err := c.Exchange(m, server)
+	for _, server := range dohServers {
+		req, err := http.NewRequest("POST", server, bytes.NewReader(dnsData))
 		if err != nil {
 			lastErr = err
 			continue
 		}
+		req.Header.Set("Content-Type", "application/dns-message")
+		req.Header.Set("Accept", "application/dns-message")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			lastErr = fmt.Errorf("DoH server returned status %d", resp.StatusCode)
+			continue
+		}
+
+		r := new(dns.Msg)
+		if err := r.Unpack(body); err != nil {
+			lastErr = err
+			continue
+		}
+
 		if r.Rcode != dns.RcodeSuccess {
 			lastErr = fmt.Errorf("DNS query failed with rcode: %d", r.Rcode)
 			continue
 		}
+
 		return r, nil
 	}
 	return nil, lastErr
