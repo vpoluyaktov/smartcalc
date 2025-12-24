@@ -19,6 +19,8 @@ func (e *FinanceExpr) Evaluate() (string, error) {
 		return e.Mortgage.Evaluate()
 	case e.CompoundInterest != nil:
 		return e.CompoundInterest.Evaluate()
+	case e.CompoundInterestShort != nil:
+		return e.CompoundInterestShort.Evaluate()
 	case e.SimpleInterest != nil:
 		return e.SimpleInterest.Evaluate()
 	case e.Investment != nil:
@@ -234,6 +236,25 @@ func (c *CompoundInterestExpr) Evaluate() (string, error) {
 	}
 
 	n := getCompoundingFrequency(frequency)
+	amount := principal * math.Pow(1+annualRate/float64(n), float64(n)*years)
+	interest := amount - principal
+
+	return fmt.Sprintf("\n> Final: %s\n> Interest earned: %s",
+		utils.FormatCurrency(amount),
+		utils.FormatCurrency(interest)), nil
+}
+
+// Evaluate calculates compound interest (short form without "compound interest" prefix).
+func (c *CompoundInterestShortExpr) Evaluate() (string, error) {
+	principal := c.Principal.Float64()
+	annualRate := c.Rate.Float64() / 100
+	years := c.Term.Years()
+
+	if principal == 0 || years == 0 {
+		return "", fmt.Errorf("invalid compound interest parameters")
+	}
+
+	n := getCompoundingFrequency(c.Frequency)
 	amount := principal * math.Pow(1+annualRate/float64(n), float64(n)*years)
 	interest := amount - principal
 

@@ -1,3 +1,7 @@
+// Package finance provides financial expression parsing and evaluation.
+// This file uses the participle library for grammar-based parsing.
+// The struct tags use participle's custom DSL syntax (not standard Go struct tags),
+// which causes go vet warnings that can be safely ignored.
 package finance
 
 import (
@@ -8,11 +12,12 @@ import (
 // FinanceExpr is the top-level union of all financial expression types.
 // The parser tries each alternative in order until one matches.
 type FinanceExpr struct {
-	Loan             *LoanExpr             `  @@`
-	Mortgage         *MortgageExpr         `| @@`
-	CompoundInterest *CompoundInterestExpr `| @@`
-	SimpleInterest   *SimpleInterestExpr   `| @@`
-	Investment       *InvestmentExpr       `| @@`
+	Loan                  *LoanExpr                  `  @@`
+	Mortgage              *MortgageExpr              `| @@`
+	CompoundInterest      *CompoundInterestExpr      `| @@`
+	CompoundInterestShort *CompoundInterestShortExpr `| @@`
+	SimpleInterest        *SimpleInterestExpr        `| @@`
+	Investment            *InvestmentExpr            `| @@`
 }
 
 // LoanExpr parses: "loan $250000 at 6.5% for 30 years"
@@ -37,18 +42,26 @@ type MortgageExpr struct {
 	PaySchedule  bool    `@( "pay" "schedule" )?`
 }
 
-// CompoundInterestExpr parses:
-// - "compound interest $10000 at 5% for 10 years"
-// - "$10000 at 5% for 10 years compounded monthly"
+// CompoundInterestExpr parses: "compound interest $10000 at 5% for 10 years [compounded monthly]"
 type CompoundInterestExpr struct {
-	// Variant 1: "compound interest $10000 at 5% for 10 years [compounded monthly]"
-	Keyword   string  `( @"compound" "interest" )`
+	Keyword   string  `@"compound" "interest"`
 	Principal *Amount `@@`
 	At        string  `"at"`
 	Rate      *Rate   `@@`
 	For       string  `"for"`
 	Term      *Term   `@@`
 	Frequency string  `( "compounded" @Ident )?`
+}
+
+// CompoundInterestShortExpr parses: "$10000 at 5% for 10 years compounded monthly"
+// This variant requires "compounded" keyword but no "compound interest" prefix.
+type CompoundInterestShortExpr struct {
+	Principal *Amount `@@`
+	At        string  `"at"`
+	Rate      *Rate   `@@`
+	For       string  `"for"`
+	Term      *Term   `@@`
+	Frequency string  `"compounded" @Ident`
 }
 
 // SimpleInterestExpr parses: "simple interest $5000 at 3% for 2 years"
