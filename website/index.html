@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCalc - Multi-Purpose Calculator</title>
+    <meta name="description" content="A powerful, multi-purpose calculator application with support for mathematical expressions, date/time calculations, network/IP operations, and more.">
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <img src="assets/icon.png" alt="SmartCalc" class="logo-icon">
+                <span>SmartCalc</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="https://github.com/vpoluyaktov/smartcalc" class="nav-github" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a></li>
+            </ul>
+            <button class="nav-toggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>SmartCalc</h1>
+                <p class="hero-subtitle">A powerful, multi-purpose calculator for developers and power users</p>
+                <p class="hero-description">
+                    Math expressions, date/time calculations, network/IP operations, unit conversions, 
+                    programmer utilities, and much more — all in one elegant desktop app.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download
+                    </a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/screenshot.png" alt="SmartCalc Screenshot">
+            </div>
+        </div>
+    </header>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Features</h2>
+            <p class="section-subtitle">Everything you need in a calculator, and more</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h3>Math & Currency</h3>
+                    <p>Standard arithmetic, percentages, scientific functions, and currency formatting with thousands separators.</p>
+                    <code>$100 - 20% = $80.00</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <h3>Date & Time</h3>
+                    <p>Time zones, date arithmetic, duration conversions, and date differences across cities worldwide.</p>
+                    <code>now in Kiev = 2025-12-19 01:04 EET</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                            <line x1="6" y1="6" x2="6.01" y2="6"/>
+                            <line x1="6" y1="18" x2="6.01" y2="18"/>
+                        </svg>
+                    </div>
+                    <h3>Network/IP</h3>
+                    <p>Subnet calculations, DNS lookups, WHOIS queries, IP geolocation, and SSL certificate analysis.</p>
+                    <code>10.100.0.0/24 → 254 hosts</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="16 18 22 12 16 6"/>
+                            <polyline points="8 6 2 12 8 18"/>
+                        </svg>
+                    </div>
+                    <h3>Programmer Tools</h3>
+                    <p>Base conversions, bitwise operations, UUID generation, hashing, Base64, regex testing, and more.</p>
+                    <code>0xFF AND 0x0F = 15 (0xF)</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3>Unit Conversions</h3>
+                    <p>Length, weight, temperature, volume, data sizes, speed, and area conversions.</p>
+                    <code>5 miles in km = 8.05 km</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <h3>Financial</h3>
+                    <p>Loan payments, mortgage calculations, compound interest, and investment growth projections.</p>
+                    <code>loan $250000 at 6.5% for 30y</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v10"/>
+                            <path d="M1 12h6m6 0h10"/>
+                        </svg>
+                    </div>
+                    <h3>Color Conversions</h3>
+                    <p>Convert between HEX, RGB, and HSL color formats with ease.</p>
+                    <code>#FF5733 to rgb → rgb(255, 87, 51)</code>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h3>JWT & Certificates</h3>
+                    <p>Decode JWT tokens, analyze SSL certificates, and view certificate chains.</p>
+                    <code>jwt decode &lt;token&gt;</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="examples" class="examples">
+        <div class="container">
+            <h2 class="section-title">Examples</h2>
+            <p class="section-subtitle">See SmartCalc in action</p>
+
+            <div class="examples-tabs">
+                <button class="tab-btn active" data-tab="math">Math</button>
+                <button class="tab-btn" data-tab="datetime">Date & Time</button>
+                <button class="tab-btn" data-tab="network">Network</button>
+                <button class="tab-btn" data-tab="programmer">Programmer</button>
+                <button class="tab-btn" data-tab="conversions">Conversions</button>
+                <button class="tab-btn" data-tab="financial">Financial</button>
+            </div>
+
+            <div class="examples-content">
+                <div class="tab-content active" id="math">
+                    <pre><code><span class="comment"># Basic Math</span>
+10 + 20 * 3 <span class="result">= 70</span>
+$100 - 20% <span class="result">= $80.00</span>
+sin(45) + cos(30) <span class="result">= 1.57</span>
+
+<span class="comment"># Line References</span>
+100 <span class="result">= 100</span>
+\1 * 2 <span class="result">= 200</span>
+
+<span class="comment"># Comparisons</span>
+25 > 2.5 <span class="result">= true</span>
+100 >= 100 <span class="result">= true</span>
+
+<span class="comment"># Statistics</span>
+avg(10, 20, 30, 40) <span class="result">= 25</span>
+median(1, 2, 3, 4, 100) <span class="result">= 3</span>
+
+<span class="comment"># Financial</span>
+loan $250000 at 6.5% for 30 years <span class="result">= Monthly: $1580.17</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="datetime">
+                    <pre><code><span class="comment"># Current Time</span>
+now <span class="result">= 2025-12-18 15:04:32 PST</span>
+now in Kiev <span class="result">= 2025-12-19 01:04:32 EET</span>
+
+<span class="comment"># Date Arithmetic</span>
+today() + 30 days <span class="result">= 2026-01-17</span>
+19/01/22 - now <span class="result">= 3 years 10 months 4 weeks</span>
+
+<span class="comment"># Time Zone Conversion</span>
+6:00 am Seattle in Kiev <span class="result">= 4:00 pm EET</span>
+12 am PST - 3 hours <span class="result">= 2025-12-17 21:00 PST</span>
+
+<span class="comment"># Duration Conversion</span>
+861.5 hours in days <span class="result">= 35.9 days</span>
+
+<span class="comment"># Date Ranges</span>
+Dec 6 till March 11 <span class="result">= 95 days</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="network">
+                    <pre><code><span class="comment"># Subnet Information</span>
+10.100.0.0/24 <span class="result">=</span>
+<span class="output">> Network: 10.100.0.0/24</span>
+<span class="output">> Hosts: 254</span>
+<span class="output">> Range: 10.100.0.1 - 10.100.0.254</span>
+<span class="output">> Mask: 255.255.255.0</span>
+
+<span class="comment"># Split Networks</span>
+10.100.0.0/16 / 4 networks <span class="result">=</span>
+<span class="output">> 1: 10.100.0.0/18 (16382 hosts)</span>
+<span class="output">> 2: 10.100.64.0/18 (16382 hosts)</span>
+
+<span class="comment"># DNS & WHOIS</span>
+dig google.com <span class="result">→ A: 142.250.80.46</span>
+whois google.com <span class="result">→ Registrar: MarkMonitor</span>
+
+<span class="comment"># IP Geolocation</span>
+geoip 8.8.8.8 <span class="result">→ Mountain View, CA, US</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="programmer">
+                    <pre><code><span class="comment"># Base Conversions</span>
+255 in hex <span class="result">= 0xFF</span>
+0xFF in dec <span class="result">= 255</span>
+25 in bin <span class="result">= 0b11001</span>
+
+<span class="comment"># Bitwise Operations</span>
+0xFF AND 0x0F <span class="result">= 15 (0xF)</span>
+1 << 8 <span class="result">= 256 (0x100)</span>
+
+<span class="comment"># Utilities</span>
+uuid <span class="result">= a1b2c3d4-e5f6-7890-abcd-ef1234567890</span>
+base64 encode hello <span class="result">= aGVsbG8=</span>
+md5 hello <span class="result">= 5d41402abc4b2a76...</span>
+
+<span class="comment"># Unix Permissions</span>
+chmod 755 <span class="result">= rwxr-xr-x</span>
+umask 022 <span class="result">= files: 644, dirs: 755</span>
+
+<span class="comment"># Regex Testing</span>
+regex /\d+/ test "a1b2c3" <span class="result">= 3 matches</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="conversions">
+                    <pre><code><span class="comment"># Length</span>
+5 miles in km <span class="result">= 8.05 km</span>
+100 cm to inches <span class="result">= 39.37 in</span>
+
+<span class="comment"># Temperature</span>
+100 f to c <span class="result">= 37.78°C</span>
+25 celsius to fahrenheit <span class="result">= 77°F</span>
+
+<span class="comment"># Weight</span>
+10 kg in lbs <span class="result">= 22.05 lbs</span>
+
+<span class="comment"># Data Sizes</span>
+500 mb in gb <span class="result">= 0.49 GB</span>
+1024 mib to gib <span class="result">= 1 GiB</span>
+
+<span class="comment"># Colors</span>
+#FF5733 to rgb <span class="result">= rgb(255, 87, 51)</span>
+rgb(255, 0, 0) to hsl <span class="result">= hsl(0, 100%, 50%)</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="financial">
+                    <pre><code><span class="comment"># Loan Payments</span>
+loan $250000 at 6.5% for 30 years <span class="result">=</span>
+<span class="output">> Monthly: $1,580.17</span>
+<span class="output">> Total: $568,861.22</span>
+<span class="output">> Interest: $318,861.22</span>
+
+<span class="comment"># Mortgage Calculator</span>
+mortgage $350000 at 7% for 30 years <span class="result">=</span>
+<span class="output">> Monthly: $2,328.56</span>
+<span class="output">> Total: $838,281.05</span>
+<span class="output">> Interest: $488,281.05</span>
+<span class="output">> Payoff: Jan 2055</span>
+
+<span class="comment"># Mortgage with Extra Payment</span>
+mortgage $350000 at 7% for 30 years extra $500 <span class="result">=</span>
+<span class="output">> Monthly: $2,328.56 (+ $500.00 extra)</span>
+<span class="output">> Interest Savings: $152,000+</span>
+<span class="output">> Time Saved: 9 years, 8 months</span>
+
+<span class="comment"># Compound Interest</span>
+$10000 at 5% for 10 years compounded monthly <span class="result">=</span>
+<span class="output">> Final: $16,470.09</span>
+<span class="output">> Interest earned: $6,470.09</span>
+
+<span class="comment"># Simple Interest</span>
+simple interest $5000 at 3% for 2 years <span class="result">=</span>
+<span class="output">> Interest: $300.00</span>
+<span class="output">> Total: $5,300.00</span>
+
+<span class="comment"># Investment Growth</span>
+invest $1000 at 7% for 20 years <span class="result">=</span>
+<span class="output">> Final: $3,869.68</span>
+<span class="output">> Growth: $2,869.68 (+286.9%)</span>
+
+<span class="comment"># Tip & Bill Splitting</span>
+tip 20% on $85.50 <span class="result">= Tip: $17.10, Total: $102.60</span>
+$150 split 4 ways with 18% tip <span class="result">=</span>
+<span class="output">> Total: $177.00</span>
+<span class="output">> Per person: $44.25</span></code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="download" class="download">
+        <div class="container">
+            <h2 class="section-title">Download</h2>
+            <p class="section-subtitle">Available for Windows, macOS, and Linux</p>
+
+            <div class="download-grid">
+                <a href="https://github.com/vpoluyaktov/smartcalc/releases/latest" class="download-card">
+                    <div class="download-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+                        </svg>
+                    </div>
+                    <h3>Windows</h3>
+                    <p>Windows 10/11 (64-bit)</p>
+                    <span class="download-file">SmartCalc-windows-amd64.exe</span>
+                </a>
+
+                <a href="https://github.com/vpoluyaktov/smartcalc/releases/latest" class="download-card">
+                    <div class="download-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                        </svg>
+                    </div>
+                    <h3>macOS</h3>
+                    <p>Intel & Apple Silicon</p>
+                    <span class="download-file">SmartCalc-darwin-*.app.zip</span>
+                </a>
+
+                <a href="https://github.com/vpoluyaktov/smartcalc/releases/latest" class="download-card">
+                    <div class="download-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.002c-.06-.135-.12-.2-.18-.264-.14-.135-.276-.135-.415-.2.045.2.089.467.156.666.136.466.272.867.408 1.135v.001c.069.135.138.2.206.27.19.134.39.2.454.333.14.2.17.734-.18 1.333-.355.6-.86.865-1.333.933a3.787 3.787 0 01-.87.068c-.3-.066-.517-.2-.517-.2-.18-.135-.33-.332-.483-.465-.153-.135-.296-.334-.391-.4-.146-.066-.196-.066-.306-.066-.11 0-.236.066-.43.2a4.944 4.944 0 00-.5.467h-.003a2.108 2.108 0 01-1.694.732c-.545-.066-.96-.4-1.168-.666-.106-.135-.17-.267-.156-.334.01-.066.046-.066.122-.066.076 0 .203.066.33.2.128.134.268.266.405.4.324.266.738.464 1.163.399.425-.066.783-.332 1.025-.664l.04-.067c.08-.2.127-.333.127-.467 0-.135-.057-.2-.147-.267-.09-.066-.21-.066-.347-.066-.136 0-.262.066-.38.2-.12.133-.283.333-.47.465-.186.135-.41.267-.67.267-.26 0-.523-.2-.686-.333-.163-.134-.272-.334-.39-.4-.118-.066-.197-.133-.33-.2a1.047 1.047 0 00-.336-.134c-.065-.066-.135-.066-.2-.066-.07 0-.135.066-.135.2 0 .066.003.2.048.333.044.134.135.267.225.4.09.134.18.267.27.4.09.135.157.2.157.267 0 .066-.03.066-.09.066-.06 0-.135-.066-.225-.2-.09-.133-.18-.266-.27-.4-.09-.133-.157-.266-.203-.333-.045-.066-.045-.2-.045-.266 0-.135.03-.2.09-.267.06-.066.135-.066.21-.066.075 0 .15.066.225.133.075.066.15.2.225.333.075.134.15.267.225.4.075.134.15.2.225.267.075.066.135.066.195.066.06 0 .12-.066.12-.2 0-.066-.015-.2-.045-.333-.03-.134-.075-.267-.12-.4-.045-.134-.09-.267-.135-.4-.045-.134-.075-.2-.075-.267 0-.066.015-.133.045-.2.03-.066.075-.066.135-.066.06 0 .135.066.21.2.075.133.15.266.225.4.075.133.15.266.225.4.075.133.135.2.195.266.06.067.12.067.18.067.06 0 .12-.067.12-.2 0-.067-.015-.2-.045-.334-.03-.133-.075-.266-.12-.4-.045-.133-.09-.266-.135-.4-.045-.133-.075-.2-.075-.266 0-.067.015-.134.045-.2.03-.067.075-.067.135-.067z"/>
+                        </svg>
+                    </div>
+                    <h3>Linux</h3>
+                    <p>64-bit Binary</p>
+                    <span class="download-file">SmartCalc-linux-amd64</span>
+                </a>
+            </div>
+
+            <div class="build-source">
+                <h3>Build from Source</h3>
+                <p>Requires Go 1.21+, Node.js 18+, and Wails v2</p>
+                <pre><code>git clone https://github.com/vpoluyaktov/smartcalc.git
+cd smartcalc
+cd frontend && npm install && cd ..
+wails build</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="assets/icon.png" alt="SmartCalc" class="logo-icon">
+                    <span>SmartCalc</span>
+                </div>
+                <p>A powerful, multi-purpose calculator for developers and power users.</p>
+                <div class="footer-links">
+                    <a href="https://github.com/vpoluyaktov/smartcalc" target="_blank">GitHub</a>
+                    <a href="https://github.com/vpoluyaktov/smartcalc/releases" target="_blank">Releases</a>
+                    <a href="https://github.com/vpoluyaktov/smartcalc/issues" target="_blank">Issues</a>
+                </div>
+                <p class="footer-copyright">MIT License &copy; 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
