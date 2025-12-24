@@ -11,6 +11,7 @@ import (
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
+	"smartcalc/internal/geoip"
 	"smartcalc/internal/jwt"
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
@@ -529,6 +530,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 				continue
 			}
 			// Fall through if network eval fails
+		}
+
+		// Try GeoIP lookup
+		if geoip.IsGeoIPExpression(expr) {
+			geoResult, err := geoip.EvalGeoIP(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + geoResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through if geoip eval fails
 		}
 
 		// Try date/time evaluation (with reference support)
