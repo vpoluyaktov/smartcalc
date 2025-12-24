@@ -56,6 +56,14 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Speed: `60 mph to kph`
 - Area: `1 acre to sqft`, `100 sqm to sqft`
 
+### Color Conversions
+- Hex to RGB: `#FF5733 to rgb`, `#FFF to rgb`
+- Hex to HSL: `#FF5733 to hsl`
+- RGB to Hex: `rgb(255, 87, 51) to hex`
+- RGB to HSL: `rgb(255, 0, 0) to hsl`
+- HSL to RGB: `hsl(0, 100%, 50%) to rgb`
+- HSL to Hex: `hsl(240, 100%, 50%) to hex`
+
 ### Percentage Calculations
 - What is X% of Y: `what is 15% of 200`
 - What percent is X of Y: `50 is what % of 200`

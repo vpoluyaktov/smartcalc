@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"smartcalc/internal/cert"
+	"smartcalc/internal/color"
 	"smartcalc/internal/constants"
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
@@ -284,15 +285,34 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			continue
 		}
 		// Skip comment lines (starting with #, allowing leading whitespace)
-		if strings.HasPrefix(strings.TrimLeft(line, " \t"), "#") {
-			continue
+		// But don't skip hex color expressions like "#FF5733 to rgb"
+		trimmedLine := strings.TrimLeft(line, " \t")
+		if strings.HasPrefix(trimmedLine, "#") {
+			// Check if this looks like a hex color expression
+			hexColorPattern := regexp.MustCompile(`^#[0-9a-fA-F]{3,6}\s+(?:to|in)\s+`)
+			if !hexColorPattern.MatchString(trimmedLine) {
+				continue
+			}
 		}
 
 		// Handle inline comments - strip everything after #
+		// But don't treat hex colors (#FF5733) as comments
 		workingLine := line
 		inlineComment := ""
 		if hashIdx := strings.Index(line, "#"); hashIdx >= 0 {
-			workingLine = line[:hashIdx]
+			// Check if this looks like a hex color (# followed by hex digits)
+			isHexColor := false
+			if hashIdx < len(line)-1 {
+				rest := line[hashIdx+1:]
+				// Check if it starts with hex digits (color code)
+				hexPattern := regexp.MustCompile(`^[0-9a-fA-F]{3,6}(?:\s|$)`)
+				if hexPattern.MatchString(rest) {
+					isHexColor = true
+				}
+			}
+			if !isHexColor {
+				workingLine = line[:hashIdx]
+			}
 		}
 
 		eq := findResultEquals(workingLine)
@@ -540,6 +560,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 				continue
 			}
 			// Fall through if geoip eval fails
+		}
+
+		// Try color conversion
+		if color.IsColorExpression(expr) {
+			colorResult, err := color.EvalColor(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + colorResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through if color eval fails
 		}
 
 		// Try date/time evaluation (with reference support)
