@@ -1,6 +1,7 @@
-package geoip
+package network
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -109,35 +110,22 @@ func TestFormatGeoIPResult(t *testing.T) {
 	formatted := formatGeoIPResult(result)
 
 	// Check that all expected fields are present
-	if !contains(formatted, "Mountain View") {
+	if !strings.Contains(formatted, "Mountain View") {
 		t.Error("Expected city in output")
 	}
-	if !contains(formatted, "California") {
+	if !strings.Contains(formatted, "California") {
 		t.Error("Expected region in output")
 	}
-	if !contains(formatted, "United States") {
+	if !strings.Contains(formatted, "United States") {
 		t.Error("Expected country in output")
 	}
-	if !contains(formatted, "Google LLC") {
+	if !strings.Contains(formatted, "Google LLC") {
 		t.Error("Expected ISP in output")
 	}
-	if !contains(formatted, "37.4056") {
+	if !strings.Contains(formatted, "37.4056") {
 		t.Error("Expected latitude in output")
 	}
-	if !contains(formatted, "America/Los_Angeles") {
+	if !strings.Contains(formatted, "America/Los_Angeles") {
 		t.Error("Expected timezone in output")
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
