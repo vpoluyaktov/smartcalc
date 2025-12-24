@@ -2,10 +2,19 @@ package network
 
 import (
 	"fmt"
-	"net"
 	"regexp"
 	"strings"
+	"time"
+
+	"github.com/miekg/dns"
 )
+
+// Default DNS servers to use for lookups (public DNS)
+var dnsServers = []string{
+	"8.8.8.8:53", // Google
+	"1.1.1.1:53", // Cloudflare
+	"9.9.9.9:53", // Quad9
+}
 
 // IsDNSExpression checks if an expression is a DNS lookup expression
 func IsDNSExpression(expr string) bool {
@@ -64,13 +73,38 @@ func EvalDNS(expr string) (string, error) {
 	return lookupDomain(domain)
 }
 
-// lookupDomain performs DNS lookups for a domain
+// queryDNS sends a DNS query to a public DNS server
+func queryDNS(domain string, qtype uint16) (*dns.Msg, error) {
+	c := new(dns.Client)
+	c.Timeout = 5 * time.Second
+
+	m := new(dns.Msg)
+	m.SetQuestion(dns.Fqdn(domain), qtype)
+	m.RecursionDesired = true
+
+	var lastErr error
+	for _, server := range dnsServers {
+		r, _, err := c.Exchange(m, server)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if r.Rcode != dns.RcodeSuccess {
+			lastErr = fmt.Errorf("DNS query failed with rcode: %d", r.Rcode)
+			continue
+		}
+		return r, nil
+	}
+	return nil, lastErr
+}
+
+// lookupDomain performs DNS lookups for a domain using public DNS servers
 func lookupDomain(domain string) (string, error) {
 	var result strings.Builder
 
 	result.WriteString(fmt.Sprintf("> DNS Lookup: %s\n", domain))
 
-	// Follow CNAME chain and collect all records
+	// Follow CNAME chain and collect all records using public DNS
 	cnameChain := followCNAMEChain(domain)
 
 	if len(cnameChain) > 1 {
@@ -96,55 +130,45 @@ func lookupDomain(domain string) (string, error) {
 			}
 		}
 	} else {
-		// Direct A records (no CNAME chain)
-		ips, err := net.LookupIP(domain)
-		if err == nil {
-			var ipv4s, ipv6s []string
-			for _, ip := range ips {
-				if ip.To4() != nil {
-					ipv4s = append(ipv4s, ip.String())
-				} else {
-					ipv6s = append(ipv6s, ip.String())
-				}
+		// Direct A records (no CNAME chain) - use public DNS
+		ipv4s, ipv6s := lookupIPsPublicDNS(domain)
+		if len(ipv4s) > 0 {
+			result.WriteString("> A Records:\n")
+			for _, ip := range ipv4s {
+				result.WriteString(fmt.Sprintf(">   %s\n", ip))
 			}
-			if len(ipv4s) > 0 {
-				result.WriteString("> A Records:\n")
-				for _, ip := range ipv4s {
-					result.WriteString(fmt.Sprintf(">   %s\n", ip))
-				}
-			}
-			if len(ipv6s) > 0 {
-				result.WriteString("> AAAA Records:\n")
-				for _, ip := range ipv6s {
-					result.WriteString(fmt.Sprintf(">   %s\n", ip))
-				}
+		}
+		if len(ipv6s) > 0 {
+			result.WriteString("> AAAA Records:\n")
+			for _, ip := range ipv6s {
+				result.WriteString(fmt.Sprintf(">   %s\n", ip))
 			}
 		}
 	}
 
-	// MX records
-	mxs, err := net.LookupMX(domain)
-	if err == nil && len(mxs) > 0 {
+	// MX records using public DNS
+	mxRecords := lookupMXPublicDNS(domain)
+	if len(mxRecords) > 0 {
 		result.WriteString("> MX Records:\n")
-		for _, mx := range mxs {
-			result.WriteString(fmt.Sprintf(">   %s (priority: %d)\n", strings.TrimSuffix(mx.Host, "."), mx.Pref))
+		for _, mx := range mxRecords {
+			result.WriteString(fmt.Sprintf(">   %s (priority: %d)\n", mx.host, mx.pref))
 		}
 	}
 
-	// NS records
-	nss, err := net.LookupNS(domain)
-	if err == nil && len(nss) > 0 {
+	// NS records using public DNS
+	nsRecords := lookupNSPublicDNS(domain)
+	if len(nsRecords) > 0 {
 		result.WriteString("> NS Records:\n")
-		for _, ns := range nss {
-			result.WriteString(fmt.Sprintf(">   %s\n", strings.TrimSuffix(ns.Host, ".")))
+		for _, ns := range nsRecords {
+			result.WriteString(fmt.Sprintf(">   %s\n", ns))
 		}
 	}
 
-	// TXT records
-	txts, err := net.LookupTXT(domain)
-	if err == nil && len(txts) > 0 {
+	// TXT records using public DNS
+	txtRecords := lookupTXTPublicDNS(domain)
+	if len(txtRecords) > 0 {
 		result.WriteString("> TXT Records:\n")
-		for _, txt := range txts {
+		for _, txt := range txtRecords {
 			// Truncate long TXT records
 			if len(txt) > 80 {
 				txt = txt[:77] + "..."
@@ -161,6 +185,81 @@ func lookupDomain(domain string) (string, error) {
 	return strings.TrimSuffix(output, "\n"), nil
 }
 
+// lookupIPsPublicDNS queries A and AAAA records using public DNS
+func lookupIPsPublicDNS(domain string) (ipv4s, ipv6s []string) {
+	// Query A records
+	r, err := queryDNS(domain, dns.TypeA)
+	if err == nil {
+		for _, ans := range r.Answer {
+			if a, ok := ans.(*dns.A); ok {
+				ipv4s = append(ipv4s, a.A.String())
+			}
+		}
+	}
+
+	// Query AAAA records
+	r, err = queryDNS(domain, dns.TypeAAAA)
+	if err == nil {
+		for _, ans := range r.Answer {
+			if aaaa, ok := ans.(*dns.AAAA); ok {
+				ipv6s = append(ipv6s, aaaa.AAAA.String())
+			}
+		}
+	}
+
+	return ipv4s, ipv6s
+}
+
+type mxRecord struct {
+	host string
+	pref uint16
+}
+
+// lookupMXPublicDNS queries MX records using public DNS
+func lookupMXPublicDNS(domain string) []mxRecord {
+	var records []mxRecord
+	r, err := queryDNS(domain, dns.TypeMX)
+	if err == nil {
+		for _, ans := range r.Answer {
+			if mx, ok := ans.(*dns.MX); ok {
+				records = append(records, mxRecord{
+					host: strings.TrimSuffix(mx.Mx, "."),
+					pref: mx.Preference,
+				})
+			}
+		}
+	}
+	return records
+}
+
+// lookupNSPublicDNS queries NS records using public DNS
+func lookupNSPublicDNS(domain string) []string {
+	var records []string
+	r, err := queryDNS(domain, dns.TypeNS)
+	if err == nil {
+		for _, ans := range r.Answer {
+			if ns, ok := ans.(*dns.NS); ok {
+				records = append(records, strings.TrimSuffix(ns.Ns, "."))
+			}
+		}
+	}
+	return records
+}
+
+// lookupTXTPublicDNS queries TXT records using public DNS
+func lookupTXTPublicDNS(domain string) []string {
+	var records []string
+	r, err := queryDNS(domain, dns.TypeTXT)
+	if err == nil {
+		for _, ans := range r.Answer {
+			if txt, ok := ans.(*dns.TXT); ok {
+				records = append(records, strings.Join(txt.Txt, ""))
+			}
+		}
+	}
+	return records
+}
+
 // cnameEntry represents a step in the CNAME resolution chain
 type cnameEntry struct {
 	name   string
@@ -168,7 +267,21 @@ type cnameEntry struct {
 	ips    []string
 }
 
-// followCNAMEChain follows CNAME records until it reaches A/AAAA records
+// lookupCNAMEPublicDNS queries CNAME records using public DNS
+func lookupCNAMEPublicDNS(domain string) (string, error) {
+	r, err := queryDNS(domain, dns.TypeCNAME)
+	if err != nil {
+		return "", err
+	}
+	for _, ans := range r.Answer {
+		if cname, ok := ans.(*dns.CNAME); ok {
+			return strings.TrimSuffix(cname.Target, "."), nil
+		}
+	}
+	return "", fmt.Errorf("no CNAME record found")
+}
+
+// followCNAMEChain follows CNAME records until it reaches A/AAAA records using public DNS
 func followCNAMEChain(domain string) []cnameEntry {
 	var chain []cnameEntry
 	seen := make(map[string]bool)
@@ -181,25 +294,13 @@ func followCNAMEChain(domain string) []cnameEntry {
 		}
 		seen[current] = true
 
-		// Look up CNAME for current domain
-		cname, err := net.LookupCNAME(current)
-		if err != nil {
-			break
-		}
-
-		cname = strings.TrimSuffix(cname, ".")
-
-		if cname == current || cname == "" {
+		// Look up CNAME for current domain using public DNS
+		cname, err := lookupCNAMEPublicDNS(current)
+		if err != nil || cname == "" || cname == current {
 			// No CNAME, this is the final domain - get A records
-			ips, err := net.LookupIP(current)
-			if err == nil && len(ips) > 0 {
-				var ipStrs []string
-				for _, ip := range ips {
-					if ip.To4() != nil {
-						ipStrs = append(ipStrs, ip.String())
-					}
-				}
-				chain = append(chain, cnameEntry{name: current, ips: ipStrs})
+			ipv4s, _ := lookupIPsPublicDNS(current)
+			if len(ipv4s) > 0 {
+				chain = append(chain, cnameEntry{name: current, ips: ipv4s})
 			}
 			break
 		}
@@ -211,15 +312,9 @@ func followCNAMEChain(domain string) []cnameEntry {
 
 	// If we followed CNAMEs, get the final A records
 	if len(chain) > 0 && len(chain[len(chain)-1].ips) == 0 {
-		ips, err := net.LookupIP(current)
-		if err == nil && len(ips) > 0 {
-			var ipStrs []string
-			for _, ip := range ips {
-				if ip.To4() != nil {
-					ipStrs = append(ipStrs, ip.String())
-				}
-			}
-			chain = append(chain, cnameEntry{name: current, ips: ipStrs})
+		ipv4s, _ := lookupIPsPublicDNS(current)
+		if len(ipv4s) > 0 {
+			chain = append(chain, cnameEntry{name: current, ips: ipv4s})
 		}
 	}
 
