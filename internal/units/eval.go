@@ -61,7 +61,7 @@ func IsUnitExpression(expr string) bool {
 		"kg", "kilograms", "lbs", "pounds", "oz", "ounces", "grams", "tons",
 		"celsius", "fahrenheit", "kelvin",
 		"liters", "gallons", "ml", "cups", "pints", "quarts",
-		"bytes", "kb", "mb", "gb", "tb", "pb",
+		"bytes", "kb", "mb", "gb", "tb", "pb", "kib", "mib", "gib", "tib", "pib",
 		"mph", "kph", "m/s",
 		"acres", "hectares", "sqft", "sqm",
 	}
@@ -119,14 +119,25 @@ var volumeToLiters = map[string]float64{
 }
 
 // Data conversion factors to bytes
+// SI/Decimal units (base 1000): KB, MB, GB, TB, PB
+// IEC/Binary units (base 1024): KiB, MiB, GiB, TiB, PiB
 var dataToBytes = map[string]float64{
+	// Bytes
 	"b": 1, "byte": 1, "bytes": 1,
-	"kb": 1024, "kilobyte": 1024, "kilobytes": 1024,
-	"mb": 1024 * 1024, "megabyte": 1024 * 1024, "megabytes": 1024 * 1024,
-	"gb": 1024 * 1024 * 1024, "gigabyte": 1024 * 1024 * 1024, "gigabytes": 1024 * 1024 * 1024,
-	"tb": 1024 * 1024 * 1024 * 1024, "terabyte": 1024 * 1024 * 1024 * 1024, "terabytes": 1024 * 1024 * 1024 * 1024,
-	"pb": 1024 * 1024 * 1024 * 1024 * 1024, "petabyte": 1024 * 1024 * 1024 * 1024 * 1024, "petabytes": 1024 * 1024 * 1024 * 1024 * 1024,
-	"kib": 1024, "mib": 1024 * 1024, "gib": 1024 * 1024 * 1024, "tib": 1024 * 1024 * 1024 * 1024,
+
+	// SI/Decimal units (base 1000)
+	"kb": 1000, "kilobyte": 1000, "kilobytes": 1000,
+	"mb": 1000 * 1000, "megabyte": 1000 * 1000, "megabytes": 1000 * 1000,
+	"gb": 1000 * 1000 * 1000, "gigabyte": 1000 * 1000 * 1000, "gigabytes": 1000 * 1000 * 1000,
+	"tb": 1000 * 1000 * 1000 * 1000, "terabyte": 1000 * 1000 * 1000 * 1000, "terabytes": 1000 * 1000 * 1000 * 1000,
+	"pb": 1000 * 1000 * 1000 * 1000 * 1000, "petabyte": 1000 * 1000 * 1000 * 1000 * 1000, "petabytes": 1000 * 1000 * 1000 * 1000 * 1000,
+
+	// IEC/Binary units (base 1024)
+	"kib": 1024, "kibibyte": 1024, "kibibytes": 1024,
+	"mib": 1024 * 1024, "mebibyte": 1024 * 1024, "mebibytes": 1024 * 1024,
+	"gib": 1024 * 1024 * 1024, "gibibyte": 1024 * 1024 * 1024, "gibibytes": 1024 * 1024 * 1024,
+	"tib": 1024 * 1024 * 1024 * 1024, "tebibyte": 1024 * 1024 * 1024 * 1024, "tebibytes": 1024 * 1024 * 1024 * 1024,
+	"pib": 1024 * 1024 * 1024 * 1024 * 1024, "pebibyte": 1024 * 1024 * 1024 * 1024 * 1024, "pebibytes": 1024 * 1024 * 1024 * 1024 * 1024,
 }
 
 // Speed conversion factors to m/s
