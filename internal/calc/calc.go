@@ -562,6 +562,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			// Fall through if geoip eval fails
 		}
 
+		// Try "what is my ip" lookup
+		if network.IsMyIPExpression(expr) {
+			myIPResult, err := network.EvalMyIP()
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " =" + myIPResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through if my ip eval fails
+		}
+
 		// Try color conversion
 		if color.IsColorExpression(expr) {
 			colorResult, err := color.EvalColor(expr)

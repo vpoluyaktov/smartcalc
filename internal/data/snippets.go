@@ -168,6 +168,7 @@ func GetSnippetCategories() []SnippetCategory {
 				{"DNS Lookup", "# DNS lookup (aliases: dig, nslookup, dns, lookup, resolve)\ndig google.com =\n\n"},
 				{"WHOIS Lookup", "# Domain registration info\nwhois google.com =\n\n"},
 				{"IP Geolocation", "# IP geolocation (aliases: geoip, ip location, ip lookup, locate ip, where is)\ngeoip 8.8.8.8 =\n\nip lookup 1.1.1.1 =\n\n"},
+				{"My IP Address", "# Get your public IP address\nwhat is my ip =\nmy ip =\n\n"},
 			},
 		},
 		{
