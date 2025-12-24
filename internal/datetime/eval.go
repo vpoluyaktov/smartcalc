@@ -168,9 +168,10 @@ func handleToday(expr, exprLower string) (string, bool) {
 }
 
 func handleTimeConversion(expr, exprLower string) (string, bool) {
-	// Pattern: "6:00 am Seattle in Kiev" or "11am kiev in seattle"
+	// Pattern: "6:00 am Seattle in Kiev" or "11am kiev in seattle" or "2:00 am UTC to PST"
 	// More flexible pattern to handle various time formats
-	re := regexp.MustCompile(`(?i)^(\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?)\s+(.+?)\s+in\s+(.+)$`)
+	// Supports both "in" and "to" as separators
+	re := regexp.MustCompile(`(?i)^(\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?)\s+(.+?)\s+(?:in|to)\s+(.+)$`)
 	matches := re.FindStringSubmatch(expr)
 	if matches == nil {
 		return "", false

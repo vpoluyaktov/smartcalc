@@ -92,6 +92,9 @@ func TestEvalTimeConversion(t *testing.T) {
 	}{
 		{"6:00 am Seattle in Kiev", true},
 		{"11am kiev in seattle", true},
+		{"2:00 am UTC to PST", true},
+		{"3:00 pm EST to PST", true},
+		{"10:00 am PST to EST", true},
 	}
 
 	for _, tt := range tests {
