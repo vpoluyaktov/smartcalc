@@ -531,6 +531,17 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			// Fall through if network eval fails
 		}
 
+		// Try GeoIP lookup
+		if network.IsGeoIPExpression(expr) {
+			geoResult, err := network.EvalGeoIP(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + geoResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+			// Fall through if geoip eval fails
+		}
+
 		// Try date/time evaluation (with reference support)
 		if datetime.IsDateTimeExpression(expr) || strings.Contains(expr, "\\") {
 			// Create resolver for line references

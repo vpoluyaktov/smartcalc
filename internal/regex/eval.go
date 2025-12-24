@@ -8,10 +8,11 @@ import (
 
 // MatchResult represents a single match with its position and groups
 type MatchResult struct {
-	Start  int      // Start position in the test string
-	End    int      // End position in the test string
-	Match  string   // The full match
-	Groups []string // Captured groups (index 0 is the full match)
+	Start      int      // Start position in the test string
+	End        int      // End position in the test string
+	Match      string   // The full match
+	Groups     []string // Captured groups (index 0 is the full match)
+	GroupNames []string // Names of captured groups (empty string if unnamed)
 }
 
 // RegexResult represents the full result of a regex test
@@ -75,6 +76,9 @@ func TestRegex(expr string) RegexResult {
 		return RegexResult{Error: fmt.Sprintf("invalid regex: %s", err.Error())}
 	}
 
+	// Get named capture groups
+	groupNames := re.SubexpNames()
+
 	// Find all matches
 	allMatches := re.FindAllStringSubmatchIndex(testStr, -1)
 
@@ -92,18 +96,26 @@ func TestRegex(expr string) RegexResult {
 	for _, match := range allMatches {
 		if len(match) >= 2 {
 			mr := MatchResult{
-				Start:  match[0],
-				End:    match[1],
-				Match:  testStr[match[0]:match[1]],
-				Groups: make([]string, 0),
+				Start:      match[0],
+				End:        match[1],
+				Match:      testStr[match[0]:match[1]],
+				Groups:     make([]string, 0),
+				GroupNames: make([]string, 0),
 			}
 
 			// Extract captured groups
 			for i := 0; i < len(match); i += 2 {
+				groupIdx := i / 2
 				if match[i] >= 0 && match[i+1] >= 0 {
 					mr.Groups = append(mr.Groups, testStr[match[i]:match[i+1]])
 				} else {
 					mr.Groups = append(mr.Groups, "") // Empty group
+				}
+				// Add group name if available
+				if groupIdx < len(groupNames) {
+					mr.GroupNames = append(mr.GroupNames, groupNames[groupIdx])
+				} else {
+					mr.GroupNames = append(mr.GroupNames, "")
 				}
 			}
 
@@ -253,7 +265,8 @@ func FormatResult(result RegexResult) string {
 
 	// First line: match status with highlighted string
 	if result.MatchCount == 1 {
-		sb.WriteString(fmt.Sprintf("match: %s", result.Highlighted))
+		r := result.Results[0]
+		sb.WriteString(fmt.Sprintf("match [%d-%d]: %s", r.Start, r.End, result.Highlighted))
 	} else {
 		sb.WriteString(fmt.Sprintf("%d matches: %s", result.MatchCount, result.Highlighted))
 	}
@@ -276,10 +289,15 @@ func FormatResult(result RegexResult) string {
 					sb.WriteString("\n> Groups:")
 				}
 				for j := 1; j < len(r.Groups); j++ {
+					// Format group with name if available
+					groupLabel := fmt.Sprintf("[%d]", j)
+					if j < len(r.GroupNames) && r.GroupNames[j] != "" {
+						groupLabel = fmt.Sprintf("[%d:%s]", j, r.GroupNames[j])
+					}
 					if r.Groups[j] != "" {
-						sb.WriteString(fmt.Sprintf("\n>   [%d]: \"%s\"", j, r.Groups[j]))
+						sb.WriteString(fmt.Sprintf("\n>   %s: \"%s\"", groupLabel, r.Groups[j]))
 					} else {
-						sb.WriteString(fmt.Sprintf("\n>   [%d]: (empty)", j))
+						sb.WriteString(fmt.Sprintf("\n>   %s: (empty)", groupLabel))
 					}
 				}
 			}

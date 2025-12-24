@@ -38,6 +38,7 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - IP range check: `is 10.100.0.50 in 10.100.0.0/24`
 - DNS lookup: `dig google.com`, `nslookup github.com` (shows CNAME chain, A/AAAA, MX, NS, TXT records)
 - WHOIS lookup: `whois google.com` (shows registrar, dates, name servers)
+- IP geolocation: `geoip 8.8.8.8` (shows location, ISP, coordinates, timezone)
 
 ### SSL Certificate Decoder
 - Decode certificates: `cert decode https://google.com` or `ssl decode example.com`
@@ -177,6 +178,13 @@ whois google.com =
 > Registrar: MarkMonitor Inc.
 > Created: 1997-09-15T04:00:00Z
 > Expires: 2028-09-14T04:00:00Z
+
+# IP Geolocation
+geoip 8.8.8.8 =
+> Location: Mountain View, California, United States
+> ISP: Google LLC
+> Coords: 37.4056, -122.0775
+> Timezone: America/Los_Angeles
 
 # SSL Certificate
 cert decode https://google.com =

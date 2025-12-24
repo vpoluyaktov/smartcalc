@@ -250,12 +250,12 @@ func TestFormatResult(t *testing.T) {
 		MatchCount:  1,
 		Highlighted: "«hello» world",
 		Results: []MatchResult{
-			{Match: "hello", Groups: []string{"hello"}},
+			{Start: 0, End: 5, Match: "hello", Groups: []string{"hello"}},
 		},
 	}
 	formatted = FormatResult(result)
-	if !strings.HasPrefix(formatted, "match:") {
-		t.Errorf("Expected to start with 'match:', got '%s'", formatted)
+	if !strings.HasPrefix(formatted, "match [0-5]:") {
+		t.Errorf("Expected to start with 'match [0-5]:', got '%s'", formatted)
 	}
 
 	// Test multiple matches
@@ -327,5 +327,50 @@ func TestTestRegex_NestedGroups(t *testing.T) {
 		if groups[i] != expected {
 			t.Errorf("Group %d: expected '%s', got '%s'", i, expected, groups[i])
 		}
+	}
+}
+
+func TestTestRegex_NamedCaptureGroups(t *testing.T) {
+	// Go uses (?P<name>...) syntax for named groups
+	result := TestRegex(`regex /(?P<user>\w+)@(?P<domain>\w+)\.(?P<tld>\w+)/ test "test@example.com"`)
+
+	if !result.Matches {
+		t.Error("Expected match, got no match")
+	}
+
+	r := result.Results[0]
+	// Groups: [0]=full match, [1]=user, [2]=domain, [3]=tld
+	if len(r.Groups) != 4 {
+		t.Fatalf("Expected 4 groups, got %d", len(r.Groups))
+	}
+
+	expectedGroups := []string{"test@example.com", "test", "example", "com"}
+	for i, expected := range expectedGroups {
+		if r.Groups[i] != expected {
+			t.Errorf("Group %d: expected '%s', got '%s'", i, expected, r.Groups[i])
+		}
+	}
+
+	// Check group names
+	expectedNames := []string{"", "user", "domain", "tld"}
+	for i, expected := range expectedNames {
+		if i < len(r.GroupNames) && r.GroupNames[i] != expected {
+			t.Errorf("GroupName %d: expected '%s', got '%s'", i, expected, r.GroupNames[i])
+		}
+	}
+}
+
+func TestEvalRegex_NamedGroupsOutput(t *testing.T) {
+	result, err := EvalRegex(`regex /(?P<name>\w+)=(?P<value>\d+)/ test "count=42"`)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// Should contain named group labels
+	if !strings.Contains(result, "name") {
+		t.Errorf("Expected result to contain group name 'name', got: %s", result)
+	}
+	if !strings.Contains(result, "value") {
+		t.Errorf("Expected result to contain group name 'value', got: %s", result)
 	}
 }
