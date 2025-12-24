@@ -11,6 +11,20 @@ import (
 	"smartcalc/internal/utils"
 )
 
+// EvalFinanceGrammar attempts to evaluate a financial expression using the grammar-based parser.
+// Returns the result string and true if successful, or empty string and false if parsing fails.
+func EvalFinanceGrammar(expr string) (string, bool) {
+	parsed, err := Parse(expr)
+	if err != nil {
+		return "", false
+	}
+	result, err := parsed.Evaluate()
+	if err != nil {
+		return "", false
+	}
+	return result, true
+}
+
 // Handler defines the interface for financial calculation handlers.
 type Handler interface {
 	Handle(expr, exprLower string) (string, bool)
@@ -34,10 +48,17 @@ var handlerChain = []Handler{
 }
 
 // EvalFinance evaluates a financial expression and returns the result.
+// It first tries the grammar-based parser, then falls back to the handler chain.
 func EvalFinance(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
-	exprLower := strings.ToLower(expr)
 
+	// Try grammar-based parsing first
+	if result, ok := EvalFinanceGrammar(expr); ok {
+		return result, nil
+	}
+
+	// Fall back to handler chain for expressions not covered by grammar
+	exprLower := strings.ToLower(expr)
 	for _, h := range handlerChain {
 		if result, ok := h.Handle(expr, exprLower); ok {
 			return result, nil
