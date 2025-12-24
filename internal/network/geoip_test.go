@@ -14,6 +14,7 @@ func TestIsGeoIPExpression(t *testing.T) {
 		{"geoip 1.1.1.1", true},
 		{"geoip 192.168.1.1", true},
 		{"ip location 8.8.8.8", true},
+		{"ip lookup 8.8.8.8", true},
 		{"locate ip 8.8.8.8", true},
 		{"where is 8.8.8.8", true},
 		{"geoip 2001:4860:4860::8888", true},

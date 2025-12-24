@@ -36,6 +36,7 @@ func IsGeoIPExpression(expr string) bool {
 		`^geoip\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 		`^geoip\s+[a-f0-9:]+$`, // IPv6
 		`^ip\s+location\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
+		`^ip\s+lookup\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 		`^locate\s+ip\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 		`^where\s+is\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$`,
 	}
