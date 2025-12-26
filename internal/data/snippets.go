@@ -182,5 +182,20 @@ func GetSnippetCategories() []SnippetCategory {
 				{"HSL to Hex", "hsl(240, 100%, 50%) to hex =\nhsl(60, 100%, 50%) to hex =\n\n"},
 			},
 		},
+		{
+			Name: "Ham Radio",
+			Snippets: []Snippet{
+				{"Frequency to Wavelength", "14.2 MHz to meters =\n146 MHz to m =\n440 MHz to meters =\n\n"},
+				{"Wavelength to Frequency", "2 m to MHz =\n70 cm to MHz =\n20 meters to MHz =\n\n"},
+				{"Dipole Antenna", "dipole for 14.2 MHz =\n\ndipole for 146 MHz =\n\n"},
+				{"Quarter Wave Vertical", "quarter wave for 14.2 MHz =\n\n\n1/4 wave 146 MHz =\n\n"},
+				{"Yagi Antenna", "yagi for 144 MHz =\n\nyagi for 14.2 MHz =\n\n"},
+				{"SWR Calculator", "swr 1.5 =\n\nswr 50 75 =\n\n\n"},
+				{"Power/dBm Conversion", "30 dbm to watts =\n1 watt to dbm =\n100 mw to dbm =\n\n"},
+				{"Decibel Conversion", "3 db to times =\n6 db to times voltage =\n2 times to db =\n\n"},
+				{"Band Information", "ham band 14.2 MHz =\n\nham band 146 MHz =\n\n20m band =\n\n"},
+				{"Velocity Factor", "10m vf=0.66 =\n2m cable vf 0.82 =\n\n"},
+			},
+		},
 	}
 }
