@@ -122,6 +122,18 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Converts timestamps (exp, iat, nbf) to human-readable format
 - Shows token expiration status (valid/expired)
 
+### Ham Radio Utilities
+- Frequency to wavelength: `14.2 MHz to meters`, `146 MHz to m`
+- Wavelength to frequency: `2 m to MHz`, `70 cm to MHz`
+- Dipole antenna calculator: `dipole for 14.2 MHz`
+- Quarter-wave vertical: `quarter wave for 146 MHz`, `1/4 wave 7.1 MHz`
+- Yagi antenna elements: `yagi for 144 MHz`
+- SWR calculator: `swr 1.5`, `swr 50 75` (impedance mismatch)
+- Power/dBm conversion: `30 dbm to watts`, `1 watt to dbm`
+- Decibel conversion: `3 db to times`, `2 times to db`
+- Band information: `ham band 14.2 MHz`, `20m band`
+- Velocity factor: `10m vf=0.66`
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -264,6 +276,23 @@ jwt decode eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.sig =
 > Payload:
 >   {"sub": "1234567890"}
 > Signature: sig
+
+# Ham Radio
+14.2 MHz to meters = 21.112 m
+2 m to MHz = 149.896 MHz
+dipole for 14.2 MHz =
+> Half-wave dipole for 14.200 MHz:
+>   Total length: 9.54 m (31.32 ft)
+>   Each leg: 4.77 m (15.66 ft)
+swr 1.5 =
+> SWR 1.50:1
+>   Reflection coefficient: 0.200
+>   Return loss: 14.0 dB
+>   Power reflected: 4.0%
+30 dbm to watts = 1.000 W
+ham band 14.2 MHz =
+> 14.200 MHz is in the 20 meters band
+>   Band: 14.000 - 14.350 MHz
 ```
 
 ## Installation

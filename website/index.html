@@ -79,7 +79,8 @@
             "SSL certificate analyzer",
             "Regex tester",
             "UUID generator",
-            "Hash functions (MD5, SHA256)"
+            "Hash functions (MD5, SHA256)",
+            "Ham radio utilities (frequency, antenna, SWR calculators)"
         ],
         "aggregateRating": {
             "@type": "AggregateRating",
@@ -252,6 +253,19 @@
                     <p>Decode JWT tokens, analyze SSL certificates, and view certificate chains.</p>
                     <code>jwt decode &lt;token&gt;</code>
                 </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2v20M2 12h20"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/>
+                        </svg>
+                    </div>
+                    <h3>Ham Radio</h3>
+                    <p>Frequency/wavelength conversion, antenna calculators, SWR, dBm/watts, and band info.</p>
+                    <code>dipole for 14.2 MHz</code>
+                </div>
             </div>
         </div>
     </section>
@@ -268,6 +282,7 @@
                 <button class="tab-btn" data-tab="programmer">Programmer</button>
                 <button class="tab-btn" data-tab="conversions">Conversions</button>
                 <button class="tab-btn" data-tab="financial">Financial</button>
+                <button class="tab-btn" data-tab="hamradio">Ham Radio</button>
             </div>
 
             <div class="examples-content">
@@ -418,6 +433,44 @@ tip 20% on $85.50 <span class="result">= Tip: $17.10, Total: $102.60</span>
 $150 split 4 ways with 18% tip <span class="result">=</span>
 <span class="output">> Total: $177.00</span>
 <span class="output">> Per person: $44.25</span></code></pre>
+                </div>
+
+                <div class="tab-content" id="hamradio">
+                    <pre><code><span class="comment"># Frequency to Wavelength</span>
+14.2 MHz to meters <span class="result">= 21.112 m</span>
+146 MHz to m <span class="result">= 2.053 m</span>
+440 MHz to meters <span class="result">= 68.13 cm</span>
+
+<span class="comment"># Wavelength to Frequency</span>
+2 m to MHz <span class="result">= 149.896 MHz</span>
+70 cm to MHz <span class="result">= 428.275 MHz</span>
+
+<span class="comment"># Dipole Antenna Calculator</span>
+dipole for 14.2 MHz <span class="result">=</span>
+<span class="output">> Half-wave dipole for 14.200 MHz:</span>
+<span class="output">>   Total length: 9.54 m (31.32 ft)</span>
+<span class="output">>   Each leg: 4.77 m (15.66 ft)</span>
+
+<span class="comment"># Quarter-Wave Vertical</span>
+quarter wave for 146 MHz <span class="result">=</span>
+<span class="output">> Length: 0.46 m (1.52 ft)</span>
+
+<span class="comment"># SWR Calculator</span>
+swr 1.5 <span class="result">=</span>
+<span class="output">> SWR 1.50:1</span>
+<span class="output">> Reflection coefficient: 0.200</span>
+<span class="output">> Return loss: 14.0 dB</span>
+<span class="output">> Power reflected: 4.0%</span>
+
+<span class="comment"># Power Conversions</span>
+30 dbm to watts <span class="result">= 1.000 W</span>
+1 watt to dbm <span class="result">= 30.0 dBm</span>
+3 db to times <span class="result">= 1.995× (power ratio)</span>
+
+<span class="comment"># Band Information</span>
+ham band 14.2 MHz <span class="result">=</span>
+<span class="output">> 14.200 MHz is in the 20 meters band</span>
+<span class="output">> Band: 14.000 - 14.350 MHz</span></code></pre>
                 </div>
             </div>
         </div>
