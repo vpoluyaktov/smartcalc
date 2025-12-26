@@ -656,27 +656,27 @@ func TestBase64EncodeNoDoubleEvaluation(t *testing.T) {
 	// "base64 encode hello world" should produce "aGVsbG8gd29ybGQ=" (with trailing =)
 	// The trailing = is base64 padding, NOT a result delimiter.
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name       string
+		input      string
+		expected   string
 		notContain string
 	}{
 		{
-			name:     "base64 encode without padding",
-			input:    "base64 encode abc =",
-			expected: "base64 encode abc = YWJj",
+			name:       "base64 encode without padding",
+			input:      "base64 encode abc =",
+			expected:   "base64 encode abc = YWJj",
 			notContain: "",
 		},
 		{
-			name:     "base64 encode with single padding",
-			input:    "base64 encode hello world =",
-			expected: "base64 encode hello world = aGVsbG8gd29ybGQ=",
+			name:       "base64 encode with single padding",
+			input:      "base64 encode hello world =",
+			expected:   "base64 encode hello world = aGVsbG8gd29ybGQ=",
 			notContain: "aGVsbG8gd29ybGQgPSBhR1ZzYkc4Z2QyOXliR1E=", // double-encoded result
 		},
 		{
-			name:     "base64 encode with double padding",
-			input:    "base64 encode test =",
-			expected: "base64 encode test = dGVzdA==",
+			name:       "base64 encode with double padding",
+			input:      "base64 encode test =",
+			expected:   "base64 encode test = dGVzdA==",
 			notContain: "",
 		},
 	}
@@ -685,11 +685,11 @@ func TestBase64EncodeNoDoubleEvaluation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			lines := []string{tt.input}
 			results := EvalLines(lines, 0)
-			
+
 			if results[0].Output != tt.expected {
 				t.Errorf("EvalLines(%q) = %q, want %q", tt.input, results[0].Output, tt.expected)
 			}
-			
+
 			if tt.notContain != "" && contains(results[0].Output, tt.notContain) {
 				t.Errorf("EvalLines(%q) contains %q (double evaluation bug!)", tt.input, tt.notContain)
 			}
@@ -708,4 +708,219 @@ func containsMiddle(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestDateTimeReferenceArithmetic(t *testing.T) {
+	// Test that \N references work with datetime arithmetic
+	// Line 1: comment
+	// Line 2: datetime value
+	// Line 3: \2 + 30 days
+	lines := []string{
+		"now =",
+		"2025-12-26 11:12 EST =",
+		"\\2 + 30 days =",
+	}
+
+	results := EvalLines(lines, 0)
+
+	// Line 2 should be a datetime
+	if !results[1].IsDateTime {
+		t.Errorf("Line 2 should be marked as datetime, got IsDateTime=%v", results[1].IsDateTime)
+	}
+	if results[1].DateTimeStr == "" {
+		t.Errorf("Line 2 should have DateTimeStr set, got empty string")
+	}
+
+	// Line 3 should calculate \2 + 30 days = 2026-01-25
+	if !results[2].HasResult {
+		t.Errorf("Line 3 should have a result")
+	}
+	if !results[2].IsDateTime {
+		t.Errorf("Line 3 should be marked as datetime")
+	}
+	// The result should contain 2026-01-25 (30 days after 2025-12-26)
+	if !contains(results[2].Output, "2026-01-25") {
+		t.Errorf("Line 3 output should contain '2026-01-25', got: %s", results[2].Output)
+	}
+}
+
+func TestDateTimeReferenceArithmeticScenarios(t *testing.T) {
+	tests := []struct {
+		name        string
+		lines       []string
+		checkLine   int
+		shouldPass  bool
+		contains    string
+		notContains string
+	}{
+		{
+			name: "subtraction: \\N - 30 days",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 - 30 days =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2025-11-26",
+		},
+		{
+			name: "addition: \\N + 1 week",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 + 1 week =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2026-01-02",
+		},
+		{
+			name: "addition: \\N + 2 hours",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 + 2 hours =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "13:12",
+		},
+		{
+			name: "chained reference: \\N + days then \\M + days",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 + 10 days =",
+				"\\2 + 5 days =",
+			},
+			checkLine:  2,
+			shouldPass: true,
+			contains:   "2026-01-10", // Dec 26 + 10 days = Jan 5, + 5 days = Jan 10
+		},
+		{
+			name: "reference to 'now' result",
+			lines: []string{
+				"now =",
+				"\\1 + 1 day =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "", // Just check it doesn't error
+		},
+		{
+			name: "reference to 'today' result",
+			lines: []string{
+				"today =",
+				"\\1 + 7 days =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "", // Just check it doesn't error
+		},
+		{
+			name: "invalid reference should show ERR",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\99 + 30 days =",
+			},
+			checkLine:   1,
+			shouldPass:  false,
+			notContains: "2025",
+		},
+		{
+			name: "reference to non-datetime line should not work as datetime",
+			lines: []string{
+				"100 + 50 =",
+				"\\1 + 30 days =",
+			},
+			checkLine:   1,
+			shouldPass:  false,
+			notContains: "2025",
+		},
+		{
+			name: "plain date without time",
+			lines: []string{
+				"2025-12-26 =",
+				"\\1 + 30 days =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2026-01-25",
+		},
+		{
+			name: "date with seconds",
+			lines: []string{
+				"2025-12-26 11:12:30 EST =",
+				"\\1 + 30 days =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2026-01-25",
+		},
+		{
+			name: "addition: \\N + 1 month",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 + 1 month =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2026-01",
+		},
+		{
+			name: "addition: \\N + 1 year",
+			lines: []string{
+				"2025-12-26 11:12 EST =",
+				"\\1 + 1 year =",
+			},
+			checkLine:  1,
+			shouldPass: true,
+			contains:   "2026-12",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			results := EvalLines(tt.lines, 0)
+
+			if tt.shouldPass {
+				if !results[tt.checkLine].HasResult {
+					t.Errorf("Line %d should have a result, got: %s", tt.checkLine+1, results[tt.checkLine].Output)
+					return
+				}
+				if tt.contains != "" && !contains(results[tt.checkLine].Output, tt.contains) {
+					t.Errorf("Line %d output should contain %q, got: %s", tt.checkLine+1, tt.contains, results[tt.checkLine].Output)
+				}
+			} else {
+				// Should either not have result or show ERR
+				if tt.notContains != "" && contains(results[tt.checkLine].Output, tt.notContains) {
+					t.Errorf("Line %d output should NOT contain %q, got: %s", tt.checkLine+1, tt.notContains, results[tt.checkLine].Output)
+				}
+			}
+		})
+	}
+}
+
+func TestTwoDateTimeReferences(t *testing.T) {
+	// Test \1 - \2 (date difference between two datetime references)
+	lines := []string{
+		"2025-12-26 11:12 EST =",
+		"2025-12-01 11:12 EST =",
+		"\\1 - \\2 =",
+	}
+
+	results := EvalLines(lines, 0)
+
+	t.Logf("Line 1: %s", results[0].Output)
+	t.Logf("Line 2: %s", results[1].Output)
+	t.Logf("Line 3: %s", results[2].Output)
+
+	// Line 3 should calculate the difference: 25 days = 3 weeks 4 days
+	if !results[2].HasResult {
+		t.Errorf("Line 3 should have a result, got: %s", results[2].Output)
+	}
+	if contains(results[2].Output, "ERR") {
+		t.Errorf("Line 3 should not show ERR, got: %s", results[2].Output)
+	}
+	// Result is "3 weeks 4 days" (25 days)
+	if !contains(results[2].Output, "3 weeks 4 days") {
+		t.Errorf("Line 3 output should contain '3 weeks 4 days', got: %s", results[2].Output)
+	}
 }

@@ -11,6 +11,7 @@ import (
 // Common date/time formats to try when parsing
 var dateFormats = []string{
 	"2006-01-02 15:04:05 MST",
+	"2006-01-02 15:04 MST",
 	"2006-01-02 15:04:05",
 	"2006-01-02 15:04",
 	"2006-01-02",

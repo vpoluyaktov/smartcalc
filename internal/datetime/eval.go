@@ -40,6 +40,7 @@ var handlerChain = []Handler{
 	HandlerFunc(handleDateRange),
 	HandlerFunc(handleDateDifference),
 	HandlerFunc(handleDurationMultiplication),
+	HandlerFunc(handlePlainDateTime),
 }
 
 // EvalDateTimeWithRefs evaluates a date/time expression with line reference support
@@ -454,6 +455,24 @@ func handleNumberPlusDuration(expr, exprLower string) (string, bool) {
 	}
 
 	return FormatTime(baseTime), true
+}
+
+func handlePlainDateTime(expr, exprLower string) (string, bool) {
+	// Handle plain datetime strings like "2025-12-26 11:12 EST" or "2025-12-26 11:12:00"
+	// This allows them to be stored and referenced by \N
+
+	// First try to parse with timezone suffix (e.g., "2025-12-26 11:12 EST")
+	if t, ok := parseTimeWithTimezone(expr); ok {
+		return FormatTime(t), true
+	}
+
+	// Try to parse as a regular datetime
+	t, err := ParseDateTime(expr, time.Local)
+	if err != nil {
+		return "", false
+	}
+
+	return FormatTime(t), true
 }
 
 func handleDurationMultiplication(expr, exprLower string) (string, bool) {
