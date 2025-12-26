@@ -541,6 +541,40 @@ func TestFormatTimeNoSeconds(t *testing.T) {
 	}
 }
 
+func TestHandlePlainDateTime(t *testing.T) {
+	tests := []struct {
+		expr        string
+		shouldParse bool
+		contains    string
+	}{
+		{"2025-12-26 11:12 EST", true, "2025-12-26"},
+		{"2025-12-26 11:12:00 EST", true, "2025-12-26"},
+		{"2025-12-26 11:12:00", true, "2025-12-26"},
+		{"2025-12-26", true, "2025-12-26"},
+		{"Dec 26, 2025", true, "2025-12-26"},
+		{"not a date", false, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalDateTime(tt.expr)
+			if tt.shouldParse {
+				if err != nil {
+					t.Errorf("EvalDateTime(%q) error: %v", tt.expr, err)
+					return
+				}
+				if tt.contains != "" && !strings.Contains(result, tt.contains) {
+					t.Errorf("EvalDateTime(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("EvalDateTime(%q) expected error, got result: %q", tt.expr, result)
+				}
+			}
+		})
+	}
+}
+
 func TestEvalNowNoSeconds(t *testing.T) {
 	// Verify that "now" output doesn't include seconds
 	result, err := EvalDateTime("now")
