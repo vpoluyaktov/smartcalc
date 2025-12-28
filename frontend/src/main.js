@@ -1023,29 +1023,40 @@ function adjustSnippetReferences(snippet, insertionLine) {
     });
 }
 
-// Insert snippet at cursor
+// Insert snippet at end of document
 async function insertSnippet(snippet) {
-    const pos = editor.state.selection.main.head;
-    const line = editor.state.doc.lineAt(pos);
-    const insertionLine = line.number;
+    // Always insert at the end of the document
+    const docLength = editor.state.doc.length;
+    const lastLine = editor.state.doc.lines;
     
-    // Adjust line references in the snippet
-    const adjustedSnippet = adjustSnippetReferences(snippet, insertionLine);
-    
-    // Insert the snippet
+    // Move cursor to end of document first
     editor.dispatch({
-        changes: { from: pos, insert: adjustedSnippet },
+        selection: { anchor: docLength },
+        scrollIntoView: true,
+    });
+    
+    // Adjust line references in the snippet based on insertion line
+    const adjustedSnippet = adjustSnippetReferences(snippet, lastLine);
+    
+    // Insert the snippet at end of document
+    editor.dispatch({
+        changes: { from: docLength, insert: adjustedSnippet },
+        scrollIntoView: true,
     });
     
     // Evaluate the content
     await evaluateContent();
     
-    // After evaluation, move cursor to end of document (next line after snippet results)
-    const docLength = editor.state.doc.length;
-    editor.dispatch({
-        selection: { anchor: docLength },
+    // Use requestAnimationFrame to ensure cursor positioning happens after
+    // evaluateContent's internal cursor restoration completes
+    requestAnimationFrame(() => {
+        const newDocLength = editor.state.doc.length;
+        editor.dispatch({
+            selection: { anchor: newDocLength },
+            scrollIntoView: true,
+        });
+        editor.focus();
     });
-    editor.focus();
 }
 
 // Modal dialog functions
