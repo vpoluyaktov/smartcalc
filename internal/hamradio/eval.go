@@ -36,6 +36,7 @@ var handlerChain = []Handler{
 	HandlerFunc(handleDecibelConversion),
 	HandlerFunc(handlePowerConversion),
 	HandlerFunc(handleBandInfo),
+	HandlerFunc(handleOhmsLaw),
 }
 
 // EvalHamRadio evaluates a ham radio expression and returns the result.
@@ -69,6 +70,7 @@ func IsHamRadioExpression(expr string) bool {
 		"dbm to watt", "watt to dbm", "dbm to w", "w to dbm",
 		"db to times", "times to db",
 		"ham band", "amateur band", "m band", "cm band",
+		"ohm", "volts", "amps", "watts",
 	}
 
 	for _, kw := range keywords {
@@ -85,6 +87,10 @@ func IsHamRadioExpression(expr string) bool {
 		`(?:quarter[- ]?wave|1/4\s*wave|λ/4)\s+(?:for\s+)?\d+`,
 		`swr\s+\d+`,
 		`\d+\.?\d*\s*dbm`,
+		`\d+\.?\d*\s*(?:v|volts?)\s+\d+\.?\d*\s*(?:a|amps?|ohms?|w|watts?)`,
+		`\d+\.?\d*\s*(?:a|amps?)\s+\d+\.?\d*\s*(?:v|volts?|ohms?|w|watts?)`,
+		`\d+\.?\d*\s*(?:ohms?)\s+\d+\.?\d*\s*(?:v|volts?|a|amps?|w|watts?)`,
+		`\d+\.?\d*\s*(?:w|watts?)\s+\d+\.?\d*\s*(?:v|volts?|a|amps?|ohms?)`,
 	}
 
 	for _, pattern := range patterns {
@@ -529,6 +535,95 @@ func handleBandInfo(expr, exprLower string) (string, bool) {
 	}
 
 	return "", false
+}
+
+// handleOhmsLaw calculates electrical values using Ohm's Law and Power formulas
+// V = I * R, P = V * I, P = I² * R, P = V² / R
+// Examples: "12v 2a", "24v 100ohm", "5a 10ohm", "100w 50ohm"
+func handleOhmsLaw(expr, exprLower string) (string, bool) {
+	// Parse two electrical values
+	// Patterns: "12v 2a", "12 volts 2 amps", "24v 100 ohm", "100w 50 ohm"
+
+	var voltage, current, resistance, power float64
+	var hasV, hasA, hasR, hasP bool
+
+	// Voltage patterns
+	reV := regexp.MustCompile(`(?i)([\d.]+)\s*(?:v|volts?)(?:\s|$)`)
+	if matches := reV.FindStringSubmatch(expr); matches != nil {
+		voltage, _ = strconv.ParseFloat(matches[1], 64)
+		hasV = true
+	}
+
+	// Current patterns
+	reA := regexp.MustCompile(`(?i)([\d.]+)\s*(?:a|amps?|amperes?)(?:\s|$)`)
+	if matches := reA.FindStringSubmatch(expr); matches != nil {
+		current, _ = strconv.ParseFloat(matches[1], 64)
+		hasA = true
+	}
+
+	// Resistance patterns
+	reR := regexp.MustCompile(`(?i)([\d.]+)\s*(?:ohms?|Ω)(?:\s|$)`)
+	if matches := reR.FindStringSubmatch(expr); matches != nil {
+		resistance, _ = strconv.ParseFloat(matches[1], 64)
+		hasR = true
+	}
+
+	// Power patterns
+	reP := regexp.MustCompile(`(?i)([\d.]+)\s*(?:w|watts?)(?:\s|$)`)
+	if matches := reP.FindStringSubmatch(expr); matches != nil {
+		power, _ = strconv.ParseFloat(matches[1], 64)
+		hasP = true
+	}
+
+	// Count how many values we have
+	count := 0
+	if hasV {
+		count++
+	}
+	if hasA {
+		count++
+	}
+	if hasR {
+		count++
+	}
+	if hasP {
+		count++
+	}
+
+	// Need exactly 2 values to calculate the others
+	if count != 2 {
+		return "", false
+	}
+
+	// Calculate missing values using Ohm's Law and Power formulas
+	if hasV && hasA {
+		// V and I given: R = V/I, P = V*I
+		resistance = voltage / current
+		power = voltage * current
+	} else if hasV && hasR {
+		// V and R given: I = V/R, P = V²/R
+		current = voltage / resistance
+		power = (voltage * voltage) / resistance
+	} else if hasV && hasP {
+		// V and P given: I = P/V, R = V²/P
+		current = power / voltage
+		resistance = (voltage * voltage) / power
+	} else if hasA && hasR {
+		// I and R given: V = I*R, P = I²*R
+		voltage = current * resistance
+		power = current * current * resistance
+	} else if hasA && hasP {
+		// I and P given: V = P/I, R = P/I²
+		voltage = power / current
+		resistance = power / (current * current)
+	} else if hasR && hasP {
+		// R and P given: V = √(P*R), I = √(P/R)
+		voltage = math.Sqrt(power * resistance)
+		current = math.Sqrt(power / resistance)
+	}
+
+	return fmt.Sprintf("\n> Voltage: %.3f V\n> Current: %.3f A\n> Resistance: %.3f Ω\n> Power: %.3f W",
+		voltage, current, resistance, power), true
 }
 
 // Helper functions

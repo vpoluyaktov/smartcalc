@@ -195,6 +195,7 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Decibel Conversion", "3 db to times =\n6 db to times voltage =\n2 times to db =\n\n"},
 				{"Band Information", "ham band 14.2 MHz =\n\nham band 146 MHz =\n\n20m band =\n\n"},
 				{"Velocity Factor", "10m vf=0.66 =\n2m cable vf 0.82 =\n\n"},
+				{"Ohm's Law Calculator", "12v 2a =\n\n24v 100ohm =\n\n100w 50ohm =\n\n"},
 			},
 		},
 	}
