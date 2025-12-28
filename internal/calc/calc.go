@@ -12,12 +12,12 @@ import (
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
-	"smartcalc/internal/hamradio"
 	"smartcalc/internal/jwt"
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
 	"smartcalc/internal/permissions"
 	"smartcalc/internal/programmer"
+	"smartcalc/internal/radio"
 	"smartcalc/internal/regex"
 	"smartcalc/internal/stats"
 	"smartcalc/internal/units"
@@ -368,15 +368,15 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			}
 		}
 
-		// Try ham radio calculations
-		if hamradio.IsHamRadioExpression(expr) {
-			hamResult, err := hamradio.EvalHamRadio(expr)
+		// Try radio/electrical calculations
+		if radio.IsRadioExpression(expr) {
+			radioResult, err := radio.EvalRadio(expr)
 			if err == nil {
 				// Multi-line results start with \n>, single-line results don't
-				if strings.HasPrefix(hamResult, "\n>") {
-					results[i].Output = maybeFormat(i, expr) + " =" + hamResult + inlineComment
+				if strings.HasPrefix(radioResult, "\n>") {
+					results[i].Output = maybeFormat(i, expr) + " =" + radioResult + inlineComment
 				} else {
-					results[i].Output = maybeFormat(i, expr) + " = " + hamResult + inlineComment
+					results[i].Output = maybeFormat(i, expr) + " = " + radioResult + inlineComment
 				}
 				results[i].HasResult = true
 				continue
