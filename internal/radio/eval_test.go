@@ -1,11 +1,11 @@
-package hamradio
+package radio
 
 import (
 	"strings"
 	"testing"
 )
 
-func TestIsHamRadioExpression(t *testing.T) {
+func TestIsRadioExpression(t *testing.T) {
 	tests := []struct {
 		expr     string
 		expected bool
@@ -28,9 +28,9 @@ func TestIsHamRadioExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result := IsHamRadioExpression(tt.expr)
+			result := IsRadioExpression(tt.expr)
 			if result != tt.expected {
-				t.Errorf("IsHamRadioExpression(%q) = %v, want %v", tt.expr, result, tt.expected)
+				t.Errorf("IsRadioExpression(%q) = %v, want %v", tt.expr, result, tt.expected)
 			}
 		})
 	}
@@ -51,13 +51,13 @@ func TestFrequencyToWavelength(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			if !strings.Contains(result, tt.contains) {
-				t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
 			}
 		})
 	}
@@ -76,13 +76,13 @@ func TestWavelengthToFrequency(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			if !strings.Contains(result, tt.contains) {
-				t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
 			}
 		})
 	}
@@ -103,14 +103,14 @@ func TestDipoleAntenna(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})
@@ -129,14 +129,14 @@ func TestQuarterWaveVertical(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})
@@ -154,14 +154,14 @@ func TestYagiElements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})
@@ -180,14 +180,14 @@ func TestSWR(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})
@@ -208,13 +208,13 @@ func TestDecibelConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			if !strings.Contains(result, tt.contains) {
-				t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
 			}
 		})
 	}
@@ -233,13 +233,13 @@ func TestPowerConversion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			if !strings.Contains(result, tt.contains) {
-				t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
 			}
 		})
 	}
@@ -261,14 +261,14 @@ func TestBandInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})
@@ -286,13 +286,13 @@ func TestVelocityFactor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			if !strings.Contains(result, tt.contains) {
-				t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
+				t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, tt.contains)
 			}
 		})
 	}
@@ -321,14 +321,14 @@ func TestOhmsLaw(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			result, err := EvalHamRadio(tt.expr)
+			result, err := EvalRadio(tt.expr)
 			if err != nil {
-				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				t.Errorf("EvalRadio(%q) error: %v", tt.expr, err)
 				return
 			}
 			for _, c := range tt.contains {
 				if !strings.Contains(result, c) {
-					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+					t.Errorf("EvalRadio(%q) = %q, want to contain %q", tt.expr, result, c)
 				}
 			}
 		})

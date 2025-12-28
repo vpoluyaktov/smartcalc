@@ -1,4 +1,4 @@
-package hamradio
+package radio
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 // Speed of light in meters per second
 const speedOfLight = 299792458.0
 
-// Handler defines the interface for ham radio expression handlers.
+// Handler defines the interface for radio/electrical expression handlers.
 type Handler interface {
 	Handle(expr, exprLower string) (string, bool)
 }
@@ -24,7 +24,7 @@ func (f HandlerFunc) Handle(expr, exprLower string) (string, bool) {
 	return f(expr, exprLower)
 }
 
-// handlerChain is the ordered list of handlers for ham radio expressions.
+// handlerChain is the ordered list of handlers for radio/electrical expressions.
 var handlerChain = []Handler{
 	HandlerFunc(handleFrequencyToWavelength),
 	HandlerFunc(handleWavelengthToFrequency),
@@ -39,8 +39,8 @@ var handlerChain = []Handler{
 	HandlerFunc(handleOhmsLaw),
 }
 
-// EvalHamRadio evaluates a ham radio expression and returns the result.
-func EvalHamRadio(expr string) (string, error) {
+// EvalRadio evaluates a radio/electrical expression and returns the result.
+func EvalRadio(expr string) (string, error) {
 	expr = strings.TrimSpace(expr)
 	exprLower := strings.ToLower(expr)
 
@@ -50,14 +50,14 @@ func EvalHamRadio(expr string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("unable to evaluate ham radio expression: %s", expr)
+	return "", fmt.Errorf("unable to evaluate radio/electrical expression: %s", expr)
 }
 
-// IsHamRadioExpression checks if an expression looks like a ham radio expression.
-func IsHamRadioExpression(expr string) bool {
+// IsRadioExpression checks if an expression looks like a radio/electrical expression.
+func IsRadioExpression(expr string) bool {
 	exprLower := strings.ToLower(expr)
 
-	// Keywords that indicate ham radio expressions
+	// Keywords that indicate radio/electrical expressions
 	keywords := []string{
 		"mhz to m", "mhz to meters", "mhz in m", "mhz in meters",
 		"khz to m", "khz to meters", "khz in m", "khz in meters",
@@ -69,7 +69,7 @@ func IsHamRadioExpression(expr string) bool {
 		"swr", "vswr",
 		"dbm to watt", "watt to dbm", "dbm to w", "w to dbm",
 		"db to times", "times to db",
-		"ham band", "amateur band", "m band", "cm band",
+		"radio band", "ham band", "amateur band", "m band", "cm band",
 		"ohm", "volts", "amps", "watts",
 	}
 
@@ -489,10 +489,10 @@ var hamBands = map[string]struct {
 }
 
 // handleBandInfo provides information about amateur radio bands
-// Examples: "ham band 14.2 MHz", "amateur band 146 MHz", "20m band"
+// Examples: "radio band 14.2 MHz", "ham band 146 MHz", "20m band"
 func handleBandInfo(expr, exprLower string) (string, bool) {
 	// By frequency
-	re := regexp.MustCompile(`(?i)^(?:ham|amateur)\s+band\s+([\d.]+)\s*(mhz|khz|ghz)?$`)
+	re := regexp.MustCompile(`(?i)^(?:radio|ham|amateur)\s+band\s+([\d.]+)\s*(mhz|khz|ghz)?$`)
 	matches := re.FindStringSubmatch(expr)
 	if matches != nil {
 		freq, _ := strconv.ParseFloat(matches[1], 64)
@@ -522,8 +522,8 @@ func handleBandInfo(expr, exprLower string) (string, bool) {
 		return "not in a standard amateur radio band", true
 	}
 
-	// By band name: "20m band", "ham band 20m", "amateur band 2m"
-	re = regexp.MustCompile(`(?i)^(?:(?:ham|amateur)\s+band\s+)?(\d+\.?\d*)\s*(m|cm)(?:\s+band)?$`)
+	// By band name: "20m band", "radio band 20m", "ham band 2m"
+	re = regexp.MustCompile(`(?i)^(?:(?:radio|ham|amateur)\s+band\s+)?(\d+\.?\d*)\s*(m|cm)(?:\s+band)?$`)
 	matches = re.FindStringSubmatch(expr)
 	if matches != nil {
 		bandName := strings.ToLower(matches[1] + matches[2])

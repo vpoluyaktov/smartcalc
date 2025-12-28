@@ -122,18 +122,18 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Converts timestamps (exp, iat, nbf) to human-readable format
 - Shows token expiration status (valid/expired)
 
-### Ham Radio Utilities
+### Electrical/Radio Utilities
+- Ohm's Law calculator: `12v 2a`, `24v 100ohm`, `100w 50ohm`
+- Power/dBm conversion: `30 dbm to watts`, `1 watt to dbm`
+- Decibel conversion: `3 db to times`, `2 times to db`
 - Frequency to wavelength: `14.2 MHz to meters`, `146 MHz to m`
 - Wavelength to frequency: `2 m to MHz`, `70 cm to MHz`
 - Dipole antenna calculator: `dipole for 14.2 MHz`
 - Quarter-wave vertical: `quarter wave for 146 MHz`, `1/4 wave 7.1 MHz`
 - Yagi antenna elements: `yagi for 144 MHz`
 - SWR calculator: `swr 1.5`, `swr 50 75` (impedance mismatch)
-- Power/dBm conversion: `30 dbm to watts`, `1 watt to dbm`
-- Decibel conversion: `3 db to times`, `2 times to db`
-- Band information: `ham band 14.2 MHz`, `20m band`
+- Band information: `radio band 14.2 MHz`, `20m band`
 - Velocity factor: `10m vf=0.66`
-- Ohm's Law calculator: `12v 2a`, `24v 100ohm`, `100w 50ohm`
 
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
@@ -278,7 +278,13 @@ jwt decode eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.sig =
 >   {"sub": "1234567890"}
 > Signature: sig
 
-# Ham Radio
+# Electrical/Radio
+12v 2a =
+> Voltage: 12.000 V
+> Current: 2.000 A
+> Resistance: 6.000 Ω
+> Power: 24.000 W
+30 dbm to watts = 1.000 W
 14.2 MHz to meters = 21.112 m
 2 m to MHz = 149.896 MHz
 dipole for 14.2 MHz =
@@ -290,15 +296,9 @@ swr 1.5 =
 >   Reflection coefficient: 0.200
 >   Return loss: 14.0 dB
 >   Power reflected: 4.0%
-30 dbm to watts = 1.000 W
-ham band 14.2 MHz =
+radio band 14.2 MHz =
 > 14.200 MHz is in the 20 meters band
->   Band: 14.000 - 14.350 MHz
-12v 2a =
-> Voltage: 12.000 V
-> Current: 2.000 A
-> Resistance: 6.000 Ω
-> Power: 24.000 W
+>   Range: 14.000 - 14.350 MHz
 ```
 
 ## Installation
