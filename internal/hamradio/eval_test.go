@@ -297,3 +297,40 @@ func TestVelocityFactor(t *testing.T) {
 		})
 	}
 }
+
+func TestOhmsLaw(t *testing.T) {
+	tests := []struct {
+		expr     string
+		contains []string
+	}{
+		// Voltage and Current given
+		{"12v 2a", []string{"Voltage: 12.000 V", "Current: 2.000 A", "Resistance: 6.000 Ω", "Power: 24.000 W"}},
+		{"12 volts 2 amps", []string{"Voltage: 12.000 V", "Current: 2.000 A"}},
+		// Voltage and Resistance given
+		{"24v 100ohm", []string{"Voltage: 24.000 V", "Resistance: 100.000 Ω", "Current: 0.240 A", "Power: 5.760 W"}},
+		{"12v 50 ohm", []string{"Voltage: 12.000 V", "Resistance: 50.000 Ω"}},
+		// Current and Resistance given
+		{"2a 10ohm", []string{"Current: 2.000 A", "Resistance: 10.000 Ω", "Voltage: 20.000 V", "Power: 40.000 W"}},
+		// Power and Resistance given
+		{"100w 50ohm", []string{"Power: 100.000 W", "Resistance: 50.000 Ω", "Voltage: 70.711 V", "Current: 1.414 A"}},
+		// Power and Voltage given
+		{"100w 50v", []string{"Power: 100.000 W", "Voltage: 50.000 V", "Current: 2.000 A", "Resistance: 25.000 Ω"}},
+		// Power and Current given
+		{"100w 5a", []string{"Power: 100.000 W", "Current: 5.000 A", "Voltage: 20.000 V", "Resistance: 4.000 Ω"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.expr, func(t *testing.T) {
+			result, err := EvalHamRadio(tt.expr)
+			if err != nil {
+				t.Errorf("EvalHamRadio(%q) error: %v", tt.expr, err)
+				return
+			}
+			for _, c := range tt.contains {
+				if !strings.Contains(result, c) {
+					t.Errorf("EvalHamRadio(%q) = %q, want to contain %q", tt.expr, result, c)
+				}
+			}
+		})
+	}
+}

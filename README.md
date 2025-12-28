@@ -133,6 +133,7 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Decibel conversion: `3 db to times`, `2 times to db`
 - Band information: `ham band 14.2 MHz`, `20m band`
 - Velocity factor: `10m vf=0.66`
+- Ohm's Law calculator: `12v 2a`, `24v 100ohm`, `100w 50ohm`
 
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
@@ -293,6 +294,11 @@ swr 1.5 =
 ham band 14.2 MHz =
 > 14.200 MHz is in the 20 meters band
 >   Band: 14.000 - 14.350 MHz
+12v 2a =
+> Voltage: 12.000 V
+> Current: 2.000 A
+> Resistance: 6.000 Ω
+> Power: 24.000 W
 ```
 
 ## Installation
