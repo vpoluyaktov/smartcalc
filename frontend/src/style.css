@@ -41,9 +41,46 @@ html, body {
     margin-right: 12px;
 }
 
-#version {
+#status-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     flex-shrink: 0;
     white-space: nowrap;
+}
+
+#version-link {
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.2s;
+}
+
+#version-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+#update-notification {
+    font-weight: 500;
+}
+
+#update-notification.hidden {
+    display: none;
+}
+
+#update-link {
+    color: #9ece6a;
+    text-decoration: none;
+    animation: pulse 2s infinite;
+}
+
+#update-link:hover {
+    text-decoration: underline;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 /* CodeMirror base styles */
@@ -136,6 +173,10 @@ html, body {
         background-color: #e9ecef;
         border-top: 1px solid #ced4da;
         color: #495057;
+    }
+
+    #update-link {
+        color: #28a745;
     }
 
     .cm-editor .cm-gutters {

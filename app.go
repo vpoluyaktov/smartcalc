@@ -9,6 +9,7 @@ import (
 
 	"smartcalc/internal/calc"
 	"smartcalc/internal/eval"
+	"smartcalc/internal/updater"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -301,4 +302,19 @@ func (a *App) EvaluateLines(text string, changedLine int) []EvalResult {
 // StripAndEvalReferencingLines strips results from lines with references and re-evaluates them
 func (a *App) StripAndEvalReferencingLines(text string) string {
 	return calc.StripAndEvalReferencingLines(text)
+}
+
+// GetGitHubRepoURL returns the GitHub repository URL
+func (a *App) GetGitHubRepoURL() string {
+	return updater.GitHubRepoURL
+}
+
+// CheckForUpdates checks if there's a newer version available on GitHub
+func (a *App) CheckForUpdates() (*updater.ReleaseInfo, error) {
+	return updater.CheckForUpdates(version)
+}
+
+// OpenURL opens a URL in the default browser
+func (a *App) OpenURL(url string) {
+	runtime.BrowserOpenURL(a.ctx, url)
 }
