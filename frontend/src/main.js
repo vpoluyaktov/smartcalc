@@ -1053,7 +1053,10 @@ async function insertSnippet(snippet) {
         const newDocLength = editor.state.doc.length;
         editor.dispatch({
             selection: { anchor: newDocLength },
-            scrollIntoView: true,
+        });
+        // Use scrollIntoView effect to ensure the last line is visible at the bottom
+        editor.dispatch({
+            effects: EditorView.scrollIntoView(newDocLength, { y: 'end' })
         });
         editor.focus();
     });
