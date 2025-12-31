@@ -4,7 +4,7 @@ import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { keymap, Decoration, ViewPlugin } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { lineNumbers, highlightActiveLineGutter, highlightActiveLine } from '@codemirror/view';
-import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, StripLineResult, HasLineResult, EvaluateLines, StripAndEvalReferencingLines } from '../wailsjs/go/main/App';
+import { Evaluate, GetVersion, OpenFileDialog, SaveFileDialog, ReadFile, WriteFile, AddRecentFile, GetLastFile, AutoSave, AdjustReferences, CopyWithResolvedRefs, SetUnsavedState, Quit, StripLineResult, HasLineResult, EvaluateLines, StripAndEvalReferencingLines, GetGitHubRepoURL, CheckForUpdates, OpenURL } from '../wailsjs/go/main/App';
 import { EventsOn, ClipboardGetText, ClipboardSetText } from '../wailsjs/runtime/runtime';
 
 let editor;
@@ -461,9 +461,37 @@ function initEditor() {
         parent: container,
     });
 
-    // Load version
+    // Load version and set up version link
     GetVersion().then(version => {
-        document.getElementById('version').textContent = `Version ${version}`;
+        const versionLink = document.getElementById('version-link');
+        versionLink.textContent = `Version ${version}`;
+        
+        // Set up click handler to open GitHub repo
+        versionLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            GetGitHubRepoURL().then(url => {
+                OpenURL(url);
+            });
+        });
+    });
+
+    // Check for updates
+    CheckForUpdates().then(release => {
+        if (release) {
+            const updateNotification = document.getElementById('update-notification');
+            const updateLink = document.getElementById('update-link');
+            
+            updateNotification.classList.remove('hidden');
+            updateLink.textContent = `New version ${release.tag_name} available!`;
+            
+            updateLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                OpenURL(release.html_url);
+            });
+        }
+    }).catch(err => {
+        // Silently ignore update check errors (e.g., no network)
+        console.log('Update check failed:', err);
     });
 
     // Set up keyboard shortcuts

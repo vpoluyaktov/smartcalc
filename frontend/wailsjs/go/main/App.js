@@ -14,6 +14,10 @@ export function AutoSave(arg1, arg2) {
   return window['go']['main']['App']['AutoSave'](arg1, arg2);
 }
 
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function CopyWithResolvedRefs(arg1) {
   return window['go']['main']['App']['CopyWithResolvedRefs'](arg1);
 }
@@ -28,6 +32,10 @@ export function EvaluateLines(arg1, arg2) {
 
 export function FindDependentLines(arg1, arg2) {
   return window['go']['main']['App']['FindDependentLines'](arg1, arg2);
+}
+
+export function GetGitHubRepoURL() {
+  return window['go']['main']['App']['GetGitHubRepoURL']();
 }
 
 export function GetLastFile() {
@@ -48,6 +56,10 @@ export function HasLineResult(arg1) {
 
 export function OpenFileDialog() {
   return window['go']['main']['App']['OpenFileDialog']();
+}
+
+export function OpenURL(arg1) {
+  return window['go']['main']['App']['OpenURL'](arg1);
 }
 
 export function Quit() {
