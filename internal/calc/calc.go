@@ -9,6 +9,7 @@ import (
 	"smartcalc/internal/cert"
 	"smartcalc/internal/color"
 	"smartcalc/internal/constants"
+	"smartcalc/internal/cooking"
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
@@ -438,6 +439,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			permResult, err := permissions.EvalPermissions(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + permResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try cooking conversions
+		if cooking.IsCookingExpression(expr) {
+			cookResult, err := cooking.EvalCooking(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + cookResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}

@@ -198,5 +198,16 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Velocity Factor", "10m vf=0.66 =\n2m cable vf 0.82 =\n\n"},
 			},
 		},
+		{
+			Name: "Cooking Conversions",
+			Snippets: []Snippet{
+				{"Volume Conversions", "2 cups to tbsp =\n1 cup to ml =\n3 tbsp to tsp =\n1 pint to cups =\n\n"},
+				{"Butter Measurements", "1 stick butter =\n2 sticks to grams =\n1 cup butter to grams =\n\n"},
+				{"Flour Conversions", "1 cup flour to grams =\n250g flour to cups =\n2 tbsp flour to grams =\n\n"},
+				{"Sugar Conversions", "1 cup sugar to grams =\n1 cup brown sugar to grams =\n100g sugar to cups =\n\n"},
+				{"Common Ingredients", "1 cup honey to grams =\n1 cup rice to grams =\n1 cup oats to grams =\n\n"},
+				{"Oven Temperatures", "350 f to c =\n180 c to f =\ngas mark 4 =\ngas mark 6 to f =\n\n"},
+			},
+		},
 	}
 }

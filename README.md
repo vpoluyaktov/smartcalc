@@ -135,6 +135,12 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Band information: `radio band 14.2 MHz`, `20m band`
 - Velocity factor: `10m vf=0.66`
 
+### Cooking Conversions
+- Volume: `2 cups to tbsp`, `1 cup to ml`, `3 tbsp to tsp`
+- Butter: `1 stick butter`, `2 sticks to grams`
+- Ingredients: `1 cup flour to grams`, `1 cup sugar to grams`
+- Temperature: `350 f to c`, `180 c to f`, `gas mark 4`
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
