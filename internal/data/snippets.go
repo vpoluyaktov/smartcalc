@@ -217,5 +217,14 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Project Estimation", "# How long will 500 man-hours take with 4 developers?\n500 man-hours / 4 men in business weeks =\n500 man-hours / 4 men in business days =\n\n"},
 			},
 		},
+		{
+			Name: "Hourly Cost Calculations",
+			Snippets: []Snippet{
+				{"Weekly Cost", "# Calculate total cost for hourly rate over time\n$35 per hour in week =\n$50 per hour in 2 weeks =\n\n"},
+				{"Monthly Cost", "# Monthly and multi-month costs\n$45 per hour in month =\n$45 per hour in 5 months =\n\n"},
+				{"Yearly Cost", "# Annual cost calculations\n$100 per hour in year =\n$100 per hour in 2 years =\n\n"},
+				{"Cents per Hour", "# Small rates add up!\n25 cents per hour in year =\n50 cents per hour in 2 years =\n\n"},
+			},
+		},
 	}
 }

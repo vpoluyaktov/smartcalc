@@ -972,3 +972,51 @@ func TestManHourCalculation(t *testing.T) {
 		})
 	}
 }
+
+func TestHourlyCostCalculation(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "dollars per hour in week",
+			input:    "$35 per hour in week =",
+			expected: "$35 per hour in week = $5,880.00",
+		},
+		{
+			name:     "dollars per hour in months",
+			input:    "$45 per hour in 5 months =",
+			expected: "$45 per hour in 5 months = $162,000.00",
+		},
+		{
+			name:     "cents per hour in years",
+			input:    "25 cents per hour in 2 years =",
+			expected: "25 cents per hour in 2 years = $4,380.00",
+		},
+		{
+			name:     "dollars per hour in day",
+			input:    "$50 per hour in 1 day =",
+			expected: "$50 per hour in 1 day = $1,200.00",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{tt.input}
+			results := EvalLines(lines, 0)
+
+			if len(results) != 1 {
+				t.Fatalf("EvalLines() returned %d results, want 1", len(results))
+			}
+
+			if results[0].Output != tt.expected {
+				t.Errorf("EvalLines(%q) = %q, want %q", tt.input, results[0].Output, tt.expected)
+			}
+
+			if !results[0].HasResult {
+				t.Errorf("EvalLines(%q) HasResult = false, want true", tt.input)
+			}
+		})
+	}
+}

@@ -611,6 +611,7 @@ func TestAllSnippetCategoriesExist(t *testing.T) {
 		"Electrical/Radio",
 		"Cooking Conversions",
 		"Man-Hour Calculations",
+		"Hourly Cost Calculations",
 	}
 
 	categories := GetSnippetCategories()
