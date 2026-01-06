@@ -141,6 +141,14 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Ingredients: `1 cup flour to grams`, `1 cup sugar to grams`
 - Temperature: `350 f to c`, `180 c to f`, `gas mark 4`
 
+### Man-Hour Calculations
+- Business time (8h/day, 40h/week, 160h/month): `248 man-hours / 3 men in business weeks`
+- Business days: `160 man-hours / 2 men in business days`
+- Business months: `320 man-hours / 2 men in business months`
+- Calendar time (24h/day, 168h/week, 720h/month): `248 man-hours / 3 men in weeks`
+- Calendar days: `72 man-hours / 3 men in days`
+- Calendar months: `1440 man-hours / 2 men in months`
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -305,6 +313,13 @@ swr 1.5 =
 radio band 14.2 MHz =
 > 14.200 MHz is in the 20 meters band
 >   Range: 14.000 - 14.350 MHz
+
+# Man-Hour Calculations
+248 man-hours / 3 men in business weeks = 2.07 business weeks
+160 man-hours / 2 men in business days = 10 business days
+320 man-hours / 2 men in business months = 1 business month
+248 man-hours / 3 men in weeks = 0.49 weeks
+72 man-hours / 3 men in days = 1 day
 ```
 
 ## Installation

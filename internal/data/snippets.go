@@ -209,5 +209,13 @@ func GetSnippetCategories() []SnippetCategory {
 				{"Oven Temperatures", "350 f to c =\n180 c to f =\ngas mark 4 =\ngas mark 6 to f =\n\n"},
 			},
 		},
+		{
+			Name: "Man-Hour Calculations",
+			Snippets: []Snippet{
+				{"Business Time", "# Business time: 8h/day, 40h/week, 160h/month\n248 man-hours / 3 men in business weeks =\n160 man-hours / 2 men in business days =\n320 man-hours / 2 men in business months =\n\n"},
+				{"Calendar Time", "# Calendar time: 24h/day, 168h/week, 720h/month\n248 man-hours / 3 men in weeks =\n72 man-hours / 3 men in days =\n1440 man-hours / 2 men in months =\n\n"},
+				{"Project Estimation", "# How long will 500 man-hours take with 4 developers?\n500 man-hours / 4 men in business weeks =\n500 man-hours / 4 men in business days =\n\n"},
+			},
+		},
 	}
 }
