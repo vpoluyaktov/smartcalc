@@ -149,6 +149,12 @@ A powerful, multi-purpose calculator application with support for mathematical e
 - Calendar days: `72 man-hours / 3 men in days`
 - Calendar months: `1440 man-hours / 2 men in months`
 
+### Hourly Cost Calculations
+- Weekly cost: `$35 per hour in week`, `$50 per hour in 2 weeks`
+- Monthly cost: `$45 per hour in 5 months`
+- Yearly cost: `$100 per hour in year`, `$100 per hour in 2 years`
+- Cents per hour: `25 cents per hour in 2 years`
+
 ### Physical & Mathematical Constants
 - Mathematical: `pi`, `e`, `phi`, `golden ratio`
 - Physical: `speed of light`, `gravity`, `avogadro`, `planck`
@@ -320,6 +326,12 @@ radio band 14.2 MHz =
 320 man-hours / 2 men in business months = 1 business month
 248 man-hours / 3 men in weeks = 0.49 weeks
 72 man-hours / 3 men in days = 1 day
+
+# Hourly Cost Calculations
+$35 per hour in week = $5,880.00
+$45 per hour in 5 months = $162,000.00
+25 cents per hour in 2 years = $4,380.00
+$100 per hour in year = $876,000.00
 ```
 
 ## Installation

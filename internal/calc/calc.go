@@ -13,6 +13,7 @@ import (
 	"smartcalc/internal/datetime"
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
+	"smartcalc/internal/hourlycost"
 	"smartcalc/internal/jwt"
 	"smartcalc/internal/manhour"
 	"smartcalc/internal/network"
@@ -460,6 +461,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			mhResult, err := manhour.EvalManHour(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + mhResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try hourly cost calculations
+		if hourlycost.IsHourlyCostExpression(expr) {
+			hcResult, err := hourlycost.EvalHourlyCost(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + hcResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
