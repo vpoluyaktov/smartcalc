@@ -924,3 +924,51 @@ func TestTwoDateTimeReferences(t *testing.T) {
 		t.Errorf("Line 3 output should contain '3 weeks 4 days', got: %s", results[2].Output)
 	}
 }
+
+func TestManHourCalculation(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "basic man-hour to business weeks",
+			input:    "248 man-hour / 3 men in business weeks =",
+			expected: "248 man-hour / 3 men in business weeks = 2.07 business weeks",
+		},
+		{
+			name:     "exact business week",
+			input:    "120 man-hours / 3 men in business weeks =",
+			expected: "120 man-hours / 3 men in business weeks = 1 business week",
+		},
+		{
+			name:     "man-hours to business days",
+			input:    "80 man-hours / 2 men in business days =",
+			expected: "80 man-hours / 2 men in business days = 5 business days",
+		},
+		{
+			name:     "single business day",
+			input:    "8 man-hour / 1 man in business days =",
+			expected: "8 man-hour / 1 man in business days = 1 business day",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lines := []string{tt.input}
+			results := EvalLines(lines, 0)
+
+			if len(results) != 1 {
+				t.Fatalf("EvalLines() returned %d results, want 1", len(results))
+			}
+
+			if results[0].Output != tt.expected {
+				t.Errorf("EvalLines(%q) = %q, want %q", tt.input, results[0].Output, tt.expected)
+			}
+
+			if !results[0].HasResult {
+				t.Errorf("EvalLines(%q) HasResult = false, want true", tt.input)
+			}
+		})
+	}
+}

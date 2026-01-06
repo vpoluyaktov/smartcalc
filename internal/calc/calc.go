@@ -14,6 +14,7 @@ import (
 	"smartcalc/internal/eval"
 	"smartcalc/internal/finance"
 	"smartcalc/internal/jwt"
+	"smartcalc/internal/manhour"
 	"smartcalc/internal/network"
 	"smartcalc/internal/percentage"
 	"smartcalc/internal/permissions"
@@ -449,6 +450,16 @@ func EvalLines(lines []string, activeLineNum int) []LineResult {
 			cookResult, err := cooking.EvalCooking(expr)
 			if err == nil {
 				results[i].Output = maybeFormat(i, expr) + " = " + cookResult + inlineComment
+				results[i].HasResult = true
+				continue
+			}
+		}
+
+		// Try man-hour calculations
+		if manhour.IsManHourExpression(expr) {
+			mhResult, err := manhour.EvalManHour(expr)
+			if err == nil {
+				results[i].Output = maybeFormat(i, expr) + " = " + mhResult + inlineComment
 				results[i].HasResult = true
 				continue
 			}
